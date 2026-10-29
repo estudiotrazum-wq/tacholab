@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { formatTime, zonedParts } from '@/time-engine/zoned';
-import { renderDisplay } from '@/tachograph/display';
+import { lcdPlain, renderDisplay } from '@/tachograph/display';
 import { openEvent } from '@/time-engine/timeline';
 import { useSimStore } from '@/simulator/store';
 import { useGuidance } from '../hooks/useGuidance';
@@ -131,8 +131,8 @@ export function CabinScreen() {
             cardIn={sim.device.insertedCardId !== null}
             resting={recorded === 'REST'}
             night={light.night}
-            displayTitle={display.title}
-            displayLine={display.lines[0]}
+            displayTitle={lcdPlain(display.lines[0])}
+            displayLine={lcdPlain(display.lines[1])}
             localTime={formatTime(sim.clock.now, local)}
             pulseTacho={assisted && camera === 'driver'}
             hazards={cab.hazards}

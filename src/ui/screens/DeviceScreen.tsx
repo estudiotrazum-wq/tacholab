@@ -5,7 +5,7 @@ import { useGuidance } from '../hooks/useGuidance';
 import { ExercisePanel } from '../components/ExercisePanel';
 import { Tachograph } from '../components/Tachograph';
 import { StatusCard } from '../components/StatusCard';
-import { ControlDock } from '../components/ControlDock';
+import { ControlStrip } from '../components/ControlStrip';
 import { AssistBanner } from '../components/AssistBanner';
 import { WarningDetail } from '../components/WarningDetail';
 import { CardTray } from '../components/CardTray';
@@ -41,7 +41,7 @@ export function DeviceScreen() {
         <ExercisePanel />
         {guide?.source === 'assist' && <AssistBanner hint={guide} />}
         <Tachograph highlight={highlight} />
-        <ControlDock highlight={highlight} inline />
+        <ControlStrip highlight={highlight} />
         {!large && <Speedometer highlight={highlight} compact />}
         {warningsEnabled && <WarningDetail />}
         {!wide && <CardTray highlight={highlight} horizontal />}

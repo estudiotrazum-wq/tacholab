@@ -1,9 +1,7 @@
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
-import { eventDuration } from '@/time-engine/timeline';
-import { HOUR } from '@/time-engine/units';
+import { DEFAULT_SPEED_KMH, ODOMETER_START_KM } from '@/simulator/engine';
 
-const CRUISE = 80;
 const MAX = 120;
 /** Ángulo de la aguja: arco de 240° (de −120° a +120°). */
 const angle = (v: number) => -120 + (Math.min(v, MAX) / MAX) * 240;
@@ -13,10 +11,8 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
   const moving = sim.vehicle.moving;
-  const speed = moving ? CRUISE : 0;
-  // Cuentakilómetros derivado de la conducción registrada a velocidad de crucero.
-  const drivingMs = sim.timeline.events.filter((e) => e.activity === 'DRIVING').reduce((a, e) => a + eventDuration(e, sim.clock.now), 0);
-  const km = 248_310 + (drivingMs / HOUR) * CRUISE;
+  const speed = moving ? (sim.vehicle.speedKmh ?? DEFAULT_SPEED_KMH) : 0;
+  const km = sim.vehicle.odometerKm ?? ODOMETER_START_KM;
 
   return (
     <section aria-label="Vehículo" className={`glass rounded-2xl p-4 ${compact ? 'flex items-center gap-4' : ''}`}>

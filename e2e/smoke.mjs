@@ -78,16 +78,16 @@ try {
 
   const line = (i) => page.getByTestId(`display-line-${i}`).innerText();
   // Mover el camión sin tarjeta genera un aviso que hay que confirmar.
-  assert((await page.getByTestId('display-title').innerText()).includes('AVISO'), 'aviso de conducción sin tarjeta');
+  assert((await line(0)).includes('sin tarjeta'), 'aviso de conducción sin tarjeta');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
-  assert((await line(1)).includes('SIN TARJETA'), 'sin tarjeta al inicio');
-  assert((await page.getByTestId('display-title').innerText()).includes('UTC'), 'la pantalla del tacógrafo muestra la hora UTC');
+  assert((await line(1)).includes('Inserte tarjeta'), 'sin tarjeta al inicio');
+  assert(/\d\d:\d\d/.test(await line(0)) && (await line(0)).includes('km/h'), 'la pantalla de 2 líneas muestra la hora y la velocidad');
 
   // La tarjeta se arrastra desde la bandeja hasta la ranura
   await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
-  assert((await page.getByTestId('display-title').innerText()).includes('BIENVENIDA'), 'inserción muestra bienvenida');
+  assert((await line(0)).includes('Alex Prácticas'), 'inserción muestra el titular de la tarjeta');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
-  assert((await page.getByTestId('display-title').innerText()).includes('PAÍS INICIO'), 'pide país de inicio');
+  assert((await line(0)).includes('País de inicio'), 'pide país de inicio');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
 
   await page.getByRole('button', { name: 'Botón de actividad' }).click();
@@ -99,16 +99,33 @@ try {
 
   // Reloj ×60 durante ~2 s reales ≈ 2 min virtuales
   const before = await page.getByTestId('virtual-clock').innerText();
-  await page.getByTestId('control-dock').getByRole('button', { name: '×60' }).click();
+  await page.getByTestId('clock-speed').fill('4'); // deslizador: ×60
   await page.waitForTimeout(2200);
   await page.getByTestId('play-toggle').click();
   const after = await page.getByTestId('virtual-clock').innerText();
   assert(before !== after, `el reloj acelerado avanza (${before} → ${after})`);
 
+  // Barra de control: deslizador de velocidad del camión y línea de tiempo
+  await page.getByTestId('truck-speed').fill('60');
+  assert((await page.getByTestId('truck-speed').inputValue()) === '60', 'el deslizador ajusta la velocidad del camión');
+  const tl = await page.getByTestId('timeline').boundingBox();
+  const clockBeforeDrag = await page.getByTestId('virtual-clock').innerText();
+  const nowFrac = (await page.getByTestId('timeline').getAttribute('aria-valuenow')) - (await page.getByTestId('timeline').getAttribute('aria-valuemin'));
+  const spanMs = (await page.getByTestId('timeline').getAttribute('aria-valuemax')) - (await page.getByTestId('timeline').getAttribute('aria-valuemin'));
+  const x0 = tl.x + (tl.width * nowFrac) / spanMs;
+  await page.mouse.move(x0 + 1, tl.y + tl.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(x0 + tl.width / 336, tl.y + tl.height / 2, { steps: 5 });
+  await page.mouse.up();
+  assert((await page.getByTestId('virtual-clock').innerText()) !== clockBeforeDrag, 'arrastrar la línea de tiempo hace avanzar el reloj');
+  await page.getByTestId('print').click();
+  assert((await page.getByTestId('ticket').innerText()).includes('IMPRESIÓN DIARIA'), 'la impresora saca el ticket diario');
+  await page.getByRole('button', { name: '✂ Cortar ticket' }).click();
+
   // Saltar hasta el aviso de 4 h 15
   await tool('Siguiente ⏭');
   await tool('Siguiente ⏭');
-  assert((await page.getByTestId('display-title').innerText()).includes('AVISO'), 'aviso de conducción continua en pantalla');
+  assert((await line(0)).includes('4h'), 'aviso de conducción continua en pantalla');
   await page.screenshot({ path: 'e2e/screenshots/03-device-warning.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   // Seguir conduciendo tras el límite genera la infracción.

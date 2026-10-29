@@ -5,7 +5,7 @@ import { deriveSummary } from './derived';
 import { HOUR, MINUTE } from '@/time-engine/units';
 import { driverEvents, sumActivities } from '@/time-engine/timeline';
 import { addZonedDays, startOfZonedDay } from '@/time-engine/zoned';
-import { renderDisplay } from '@/tachograph/display';
+import { lcdLength, lcdPlain, renderDisplay } from '@/tachograph/display';
 import type { Button } from '@/tachograph/types';
 
 const run = (sim: SimState, ...actions: SimAction[]) => actions.reduce(simReducer, sim);
@@ -123,8 +123,9 @@ describe('simulador: tarjeta y actividades', () => {
   it('la pantalla estándar refleja actividad y contadores', () => {
     const s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 90 * MINUTE }, { type: 'DISMISS_NOTICE' });
     const d = renderDisplay(s);
-    expect(d.lines[0]).toBe('COND  1:30');
-    expect(d.lines[1]).toContain('Cont 1:30');
+    expect(lcdPlain(d.lines[0])).toBe('07:30⊙ ◉▣     80km/h');
+    expect(lcdPlain(d.lines[1]).trimEnd()).toBe('◉1h30  ▬0h00');
+    expect(d.lines.every((l) => lcdLength(l) === 20)).toBe(true);
   });
 
   it('conducción sin tarjeta genera aviso y se registra sin conductor', () => {
@@ -174,8 +175,8 @@ describe('simulador: calendario', () => {
   it('la pantalla muestra la hora UTC y la local como referencia', () => {
     const s = run(withCard(), { type: 'DISMISS_NOTICE' }, ...press('UP'));
     const d = renderDisplay(s);
-    expect(d.lines[0]).toBe('UTC   06:00');
-    expect(d.lines[1]).toBe('LOCAL 07:00');
+    expect(lcdPlain(d.lines[0])).toBe('06:00U           UTC');
+    expect(lcdPlain(d.lines[1])).toBe('07:00⊙         local');
   });
 });
 
@@ -219,5 +220,23 @@ describe('simulador: avisos de la Fase 2', () => {
     expect(s.clock.now - start).toBe(45 * MINUTE);
     s = run(s, { type: 'JUMP_NEXT_EVENT' });
     expect(s.clock.now - start).toBe(9 * HOUR);
+  });
+});
+
+describe('simulador: velocidad del camión y cuentakilómetros', () => {
+  it('la velocidad elegida pone el camión en marcha y el cuentakilómetros suma la distancia', () => {
+    let s = run(withCard(), { type: 'SET_VEHICLE_SPEED', kmh: 60 });
+    expect(s.vehicle).toMatchObject({ moving: true, speedKmh: 60 });
+    const odo = s.vehicle.odometerKm ?? 248_310;
+    s = run(s, { type: 'ADVANCE_BY', ms: 2 * HOUR }, { type: 'DISMISS_NOTICE' });
+    expect(s.vehicle.odometerKm! - odo).toBeCloseTo(120, 6);
+    s = run(s, { type: 'SET_VEHICLE_SPEED', kmh: 0 });
+    expect(s.vehicle.moving).toBe(false);
+    expect(deriveSummary(s).recorded).toBe('WORK');
+  });
+
+  it('el limitador impide pasar de 90 km/h', () => {
+    const s = run(withCard(), { type: 'SET_VEHICLE_SPEED', kmh: 140 });
+    expect(s.vehicle.speedKmh).toBe(90);
   });
 });

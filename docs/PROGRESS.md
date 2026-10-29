@@ -2,7 +2,19 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
-## v0.8 — Simulador en una sola pantalla (rama `ui-rediseno`)
+## v0.9 — Tacógrafo más realista y barra de control con deslizadores (rama `ui-rediseno`)
+- [x] Aparato en formato DIN con los elementos comunes a los tacógrafos digitales europeos: **LCD de 2 × 20** con
+      retroiluminación y pictogramas normalizados, teclas ✕ ▲ ▼ OK, **dos ranuras** con tecla 1/2 (tecla 1: actividad;
+      mantener pulsada: expulsar) e **impresora** que saca el ticket diario. Diseño propio, sin imitar ninguna marca
+- [x] Ranura 2 (segundo conductor) visible e informa de que la conducción en equipo llegará más adelante
+- [x] Barra de control bajo el aparato: **línea de tiempo de 14 días** que se arrastra para avanzar (pasos de 15 min,
+      nunca hacia atrás; teclado: → +15 min, ↑ +1 h, AvPág +1 día), **velocidad del reloj** y **velocidad del camión**
+      (0–90 km/h, limitador UE)
+- [x] Velocidad del camión y cuentakilómetros en el motor (`SET_VEHICLE_SPEED`, distancia integrada al avanzar el tiempo)
+- [x] Fuente de matriz de puntos VT323 (OFL) incluida en la aplicación
+- [x] 103 pruebas unitarias + E2E con deslizadores, arrastre de la línea de tiempo e impresión
+
+## v0.8 — Simulador en una sola pantalla
 - [x] La app abre directamente en el simulador; bienvenida con los tres pasos (tarjeta, arrancar, tiempo)
 - [x] Panel único: tarjetas ficticias a la izquierda (se **arrastran a la ranura** o se pulsan), tacógrafo y barra de
       tiempo en el centro, velocímetro con cuentakilómetros y botón **ARRANCAR/PARAR** y estado a la derecha

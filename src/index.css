@@ -175,3 +175,21 @@ body {
   .mirror-road, .hazard-blink { animation: none !important; }
   .cab-camera { transition: none; }
 }
+
+/* LCD del tacógrafo */
+.lcd-text { letter-spacing: 0.02em; text-shadow: 0 0 1px rgba(29, 38, 16, 0.35); }
+.lcd-warning .lcd-text { animation: lcd-blink 1.1s steps(2, jump-none) infinite; }
+@keyframes lcd-blink { 0% { opacity: 1; } 100% { opacity: 0.35; } }
+@keyframes ticket { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@media (prefers-reduced-motion: reduce) { .lcd-warning .lcd-text { animation: none; text-decoration: underline; } }
+
+/* Deslizadores de la barra de control */
+.tl-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; cursor: pointer; }
+.tl-range:disabled { opacity: 0.4; cursor: not-allowed; }
+.tl-range::-webkit-slider-runnable-track { height: 8px; border-radius: 999px; background: linear-gradient(90deg, #22d3ee 0 var(--pct), rgba(255,255,255,0.1) var(--pct) 100%); }
+.tl-range::-moz-range-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); }
+.tl-range::-moz-range-progress { height: 8px; border-radius: 999px; background: #22d3ee; }
+.tl-range::-webkit-slider-thumb { -webkit-appearance: none; margin-top: -8px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(34,211,238,0.35), 0 4px 10px rgba(0,0,0,0.5); }
+.tl-range::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(34,211,238,0.35), 0 4px 10px rgba(0,0,0,0.5); }
+.tl-range:focus-visible { outline: none; }
+.tl-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(34,211,238,0.7); }

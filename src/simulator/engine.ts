@@ -24,6 +24,8 @@ export type SimAction =
   | { type: 'PRESS'; button: Button }
   | { type: 'INSERT_CARD'; cardId: string }
   | { type: 'SET_MOVING'; moving: boolean }
+  /** Velocidad del camión en km/h (0 = parado; máximo 90, limitador de los camiones en la UE). */
+  | { type: 'SET_VEHICLE_SPEED'; kmh: number }
   | { type: 'DISMISS_NOTICE' }
   | { type: 'SET_CONFIG'; patch: Partial<SimConfig> };
 
@@ -80,8 +82,25 @@ function checkWarnings(sim: SimState): SimState {
   return s;
 }
 
+export const DEFAULT_SPEED_KMH = 80;
+export const MAX_SPEED_KMH = 90;
+export const ODOMETER_START_KM = 248_310;
+
+/** Suma al cuentakilómetros la distancia recorrida entre dos estados del reloj. */
+function addDistance(before: SimState, after: SimState): SimState {
+  const dt = after.clock.now - before.clock.now;
+  if (!before.vehicle.moving || dt <= 0) return after;
+  const kmh = before.vehicle.speedKmh ?? DEFAULT_SPEED_KMH;
+  const odometerKm = (before.vehicle.odometerKm ?? ODOMETER_START_KM) + (dt / 3_600_000) * kmh;
+  return { ...after, vehicle: { ...after.vehicle, odometerKm } };
+}
+
 /** Avanza el reloj hasta `target` deteniéndose en cada umbral intermedio. */
 function advanceTo(sim: SimState, target: EpochMs): SimState {
+  return addDistance(sim, advanceClock(sim, target));
+}
+
+function advanceClock(sim: SimState, target: EpochMs): SimState {
   let s = checkWarnings(sim);
   for (let guard = 0; guard < 64; guard++) {
     const stop = nextStop(s);
@@ -319,7 +338,7 @@ function pressButton(sim: SimState, button: Button): SimState {
 
 function setMoving(sim: SimState, moving: boolean): SimState {
   if (sim.vehicle.moving === moving) return sim;
-  let s: SimState = { ...sim, vehicle: { moving } };
+  let s: SimState = { ...sim, vehicle: { ...sim.vehicle, moving } };
   if (moving) {
     s = log(s, 'VEHICLE_START', 'Vehículo en marcha');
     const kind = s.device.screen.kind;
@@ -371,6 +390,12 @@ export function simReducer(sim: SimState, action: SimAction): SimState {
       return checkWarnings(insertCard(sim, action.cardId));
     case 'SET_MOVING':
       return checkWarnings(setMoving(sim, action.moving));
+    case 'SET_VEHICLE_SPEED': {
+      const kmh = Math.round(Math.min(MAX_SPEED_KMH, Math.max(0, action.kmh)));
+      if (kmh === 0) return checkWarnings(setMoving(sim, false));
+      const withSpeed = { ...sim, vehicle: { ...sim.vehicle, speedKmh: kmh } };
+      return checkWarnings(setMoving(withSpeed, true));
+    }
     case 'DISMISS_NOTICE':
       return sim.device.notice ? { ...sim, device: { ...sim.device, notice: null } } : sim;
     case 'SET_CONFIG':

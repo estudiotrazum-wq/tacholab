@@ -41,7 +41,8 @@ export interface SimState {
   version: typeof SIM_STATE_VERSION;
   scenario: ScenarioMeta;
   clock: ClockState;
-  vehicle: { moving: boolean };
+  /** speedKmh: velocidad elegida al circular (por defecto 80); odometerKm: cuentakilómetros. */
+  vehicle: { moving: boolean; speedKmh?: number; odometerKm?: number };
   device: DeviceState;
   cards: Record<string, FictionalCard>;
   timeline: Timeline;

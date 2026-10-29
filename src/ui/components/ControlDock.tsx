@@ -122,7 +122,7 @@ export function ControlDock({ highlight, inline = false }: { highlight: AssistTa
   );
 }
 
-function TimeTools({ onClose }: { onClose: () => void }) {
+export function TimeTools({ onClose }: { onClose: () => void }) {
   const store = useSimStore();
   const sim = store.sim;
   const dispatch = store.dispatch;

@@ -1,21 +1,24 @@
-import { ACTIVITY_SHORT, type Activity, type SelectableActivity } from '@/shared/types';
+import type { Activity, SelectableActivity } from '@/shared/types';
 import { complianceFor, deriveSummary, type SimSummary } from '@/simulator/derived';
 import type { SimState } from '@/simulator/state';
 import { eventDuration, eventsInRange, driverEvents } from '@/time-engine/timeline';
 import { formatDuration } from '@/time-engine/units';
 import { addZonedDays, formatDate, formatTime, startOfZonedDay, zonedParts } from '@/time-engine/zoned';
-import { breakRemainingMs } from '@/regulations/continuousDriving';
+import type { WarningCode } from './types';
 import { COUNTRIES, MENU_ITEMS, type ManualActivity } from './types';
 
 /**
- * Modelo de pantalla del dispositivo ficticio TL-1, derivado del estado.
- * Diseño propio: cabecera + 3 líneas de texto + fila de iconos.
+ * Pantalla del TL-1: LCD de 2 líneas × 20 caracteres, como los tacógrafos
+ * digitales reales. Los pictogramas normalizados se codifican en el texto con
+ * fichas que la interfaz sustituye por dibujos:
+ *   {D} conducción · {W} otros trabajos · {A} disponibilidad · {R} pausa/descanso
+ *   {C} tarjeta · {L} hora local · {U} hora UTC · {?} actividad desconocida · {M} entrada manual
+ * Las fichas ocupan una celda; los textos se ajustan a 20 celdas.
  */
+export const LCD_COLS = 20;
+
 export interface DisplayModel {
-  title: string;
-  lines: [string, string, string];
-  /** Línea seleccionada (cursor), si aplica. */
-  cursor: number | null;
+  lines: [string, string];
   recorded: Activity | null;
   selected: SelectableActivity;
   cardIn: boolean;
@@ -23,27 +26,77 @@ export interface DisplayModel {
   mode: 'normal' | 'warning' | 'notice';
 }
 
-const MANUAL_LABEL: Record<ManualActivity, string> = {
-  REST: 'Descanso',
-  WORK: 'Otros trabajos',
-  AVAILABILITY: 'Disponibilidad',
-  UNKNOWN: 'Desconocida ?',
+export const ACTIVITY_TOKEN: Record<Activity, string> = { DRIVING: '{D}', WORK: '{W}', AVAILABILITY: '{A}', REST: '{R}' };
+const MANUAL_TOKEN: Record<ManualActivity, string> = { REST: '{R}', WORK: '{W}', AVAILABILITY: '{A}', UNKNOWN: '{?}' };
+
+const TOKEN = /\{[DWARCLU?M]\}/g;
+
+/** Longitud visible (cada ficha cuenta como una celda). */
+export function lcdLength(s: string): number {
+  return s.replace(TOKEN, '#').length;
+}
+
+/** Ajusta a 20 celdas: recorta o rellena con espacios. */
+export function fit(s: string): string {
+  let out = '';
+  let n = 0;
+  for (const part of s.split(/(\{[DWARCLU?M]\})/)) {
+    if (!part) continue;
+    const isToken = TOKEN.test(part);
+    TOKEN.lastIndex = 0;
+    const len = isToken ? 1 : part.length;
+    if (n + len > LCD_COLS) {
+      if (!isToken) out += part.slice(0, LCD_COLS - n);
+      n = LCD_COLS;
+      break;
+    }
+    out += part;
+    n += len;
+  }
+  return out + ' '.repeat(LCD_COLS - n);
+}
+
+/** Texto alineado a izquierda y derecha en la misma línea. */
+function spread(left: string, right: string): string {
+  const gap = Math.max(1, LCD_COLS - lcdLength(left) - lcdLength(right));
+  return fit(left + ' '.repeat(gap) + right);
+}
+
+/** Versión de solo texto (para la miniatura de la cabina y lectores de pantalla). */
+export function lcdPlain(s: string): string {
+  const map: Record<string, string> = { '{D}': '◉', '{W}': '⚒', '{A}': '◪', '{R}': '▬', '{C}': '▣', '{L}': '⊙', '{U}': 'U', '{?}': '?', '{M}': 'M' };
+  return s.replace(TOKEN, (t) => map[t] ?? '');
+}
+
+/** Duración en formato de tacógrafo: 4h29, 0h45. */
+function hm(ms: number): string {
+  return formatDuration(ms).replace(':', 'h');
+}
+
+/** Dos líneas a partir de un texto largo (mensajes). */
+function wrap(text: string): [string, string] {
+  const words = text.split(' ');
+  let a = '';
+  let i = 0;
+  while (i < words.length && (a ? `${a} ${words[i]}` : words[i]!).length <= LCD_COLS) a = a ? `${a} ${words[i++]}` : words[i++]!;
+  return [fit(a), fit(words.slice(i).join(' '))];
+}
+
+const WARNING_TEXT: Record<WarningCode, [string, string]> = {
+  CONT_DRIVING_PREWARN: ['!{D} 4h15 PAUSA', 'próxima pausa'],
+  CONT_DRIVING_EXCEEDED: ['!{D} 4h30', 'pausa ahora'],
+  DRIVING_WITHOUT_CARD: ['!{C} sin tarjeta', 'conducción'],
+  DAILY_DRIVING_PREWARN: ['!{D} jornada', 'faltan 15 min'],
+  DAILY_EXTENSION: ['i {D} ampliación', 'a 10h en uso'],
+  DAILY_DRIVING_EXCEEDED: ['!{D} límite diario', 'detenga el vehículo'],
+  WEEKLY_DRIVING_PREWARN: ['!{D} semana 55h', 'límite 56h'],
+  WEEKLY_DRIVING_EXCEEDED: ['!{D} semana 56h', 'límite alcanzado'],
+  BIWEEKLY_DRIVING_PREWARN: ['!{D} 2 semanas 89h', 'límite 90h'],
+  BIWEEKLY_DRIVING_EXCEEDED: ['!{D} 2 semanas 90h', 'límite alcanzado'],
+  DAILY_REST_DUE: ['!{R} descanso diario', 'iniciar ahora'],
+  DAILY_REST_LAST_CALL: ['!{R} descanso diario', 'fuera de plazo'],
+  WEEKLY_REST_DUE: ['!{R} desc. semanal', 'pendiente'],
 };
-
-function short(ms: number, tz: string): string {
-  const p = zonedParts(ms, tz);
-  return `${String(p.day).padStart(2, '0')}/${String(p.month).padStart(2, '0')} ${formatTime(ms, tz)}`;
-}
-
-function window3<T>(items: readonly T[], offset: number): { slice: T[]; offset: number } {
-  const max = Math.max(0, items.length - 3);
-  const o = Math.min(offset, max);
-  return { slice: items.slice(o, o + 3), offset: o };
-}
-
-function pad3(lines: string[]): [string, string, string] {
-  return [lines[0] ?? '', lines[1] ?? '', lines[2] ?? ''];
-}
 
 export function ticketLines(sim: SimState, sum: SimSummary): string[] {
   const tz = sim.scenario.timeZone;
@@ -52,7 +105,7 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
   return [
     `${card?.holderName ?? '—'}`,
     `${card?.displayId ?? ''}`,
-    `Día ${formatDate(now, tz)}`,
+    `Día ${formatDate(now, tz)} (UTC)`,
     `Conducción  ${formatDuration(sum.today.DRIVING)}`,
     `Otros trab. ${formatDuration(sum.today.WORK)}`,
     `Disponib.   ${formatDuration(sum.today.AVAILABILITY)}`,
@@ -65,109 +118,85 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
   ];
 }
 
+function short(ms: number, tz: string): string {
+  const p = zonedParts(ms, tz);
+  return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')} ${formatTime(ms, tz)}`;
+}
+
 export function renderDisplay(sim: SimState): DisplayModel {
   const tz = sim.scenario.timeZone;
   const now = sim.clock.now;
   const d = sim.device;
   const sum = deriveSummary(sim);
   const cur = complianceFor(sim)?.current ?? null;
-  const base = {
-    cursor: null,
-    recorded: sum.recorded,
-    selected: d.selected,
-    cardIn: d.insertedCardId !== null,
-    moving: sim.vehicle.moving,
-  };
+  const card = d.insertedCardId ? sim.cards[d.insertedCardId] : undefined;
+  const speed = sim.vehicle.moving ? (sim.vehicle.speedKmh ?? 80) : 0;
+  const base = { recorded: sum.recorded, selected: d.selected, cardIn: card !== undefined, moving: sim.vehicle.moving };
+  const view = (a: string, b: string, mode: DisplayModel['mode'] = 'normal'): DisplayModel => ({ ...base, mode, lines: [fit(a), fit(b)] });
 
   if (d.warning) {
-    return { ...base, mode: 'warning', title: d.warning.severity === 'info' ? 'i AVISO' : '! AVISO', lines: pad3([d.warning.title, '', 'OK para confirmar']) };
+    const [a, b] = WARNING_TEXT[d.warning.code];
+    return view(a, `${b}`.padEnd(LCD_COLS - 2) + 'OK', 'warning');
   }
-  if (d.notice) {
-    return { ...base, mode: 'notice', title: 'INFO', lines: pad3([d.notice.text]) };
-  }
+  if (d.notice) return { ...base, mode: 'notice', lines: wrap(d.notice.text) };
 
   const s = d.screen;
-  const card = d.insertedCardId ? sim.cards[d.insertedCardId] : undefined;
-  const view = (title: string, lines: string[], cursor: number | null = null): DisplayModel => ({
-    ...base,
-    mode: 'normal',
-    title,
-    lines: pad3(lines),
-    cursor,
-  });
-
+  const act = sum.recorded ? ACTIVITY_TOKEN[sum.recorded] : ' ';
   switch (s.kind) {
     case 'STANDARD': {
-      const curDur = sum.currentEvent ? formatDuration(eventDuration(sum.currentEvent, now)) : '--:--';
       if (s.page === 0) {
-        return view(`${formatTime(now, tz)} UTC   ${formatDate(now, tz).slice(0, 5)}`, [
-          sum.recorded ? `${ACTIVITY_SHORT[sum.recorded]}  ${curDur}` : 'SIN REGISTRO',
-          card ? `Cont ${formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0)}  Jorn ${formatDuration(cur?.dailyDrivingMs ?? 0)}` : 'SIN TARJETA',
-          card ? `Pausa ${formatDuration(sum.continuous?.currentBreakMs ?? 0)}${sum.continuous?.splitFirstTaken ? ' (15✓)' : ''}` : 'Inserte tarjeta',
-        ]);
+        // Línea 1: hora local, actividad, tarjeta y velocidad. Línea 2: conducción continua y pausa acumulada.
+        const left = `${formatTime(now, tz)}{L} ${card ? `${act}{C}` : ''}`;
+        const top = spread(left, `${speed}km/h`);
+        if (!card) return view(top, ' Inserte tarjeta');
+        const c = sum.continuous;
+        return view(top, `{D}${hm(c?.drivingSinceBreakMs ?? 0)}  {R}${hm(c?.currentBreakMs ?? 0)}`);
       }
       if (s.page === 1) {
-        if (!cur) return view('ACUMULADOS', ['Sin tarjeta']);
-        return view('CONDUCCIÓN', [
-          `Jorn.  ${formatDuration(cur.dailyDrivingMs)}/${formatDuration(cur.dailyCapMs)}`,
-          `Sem.  ${formatDuration(cur.weekDrivingMs)}/56:00`,
-          `2 sem ${formatDuration(cur.biweekDrivingMs)}/90:00`,
-        ]);
+        if (!cur) return view('{D} acumulados', ' Sin tarjeta');
+        return view(`{D}jorn ${hm(cur.dailyDrivingMs)}/${hm(cur.dailyCapMs)}`, `sem ${hm(cur.weekDrivingMs)} 2s ${hm(cur.biweekDrivingMs)}`);
       }
-      return view('HORA', [`UTC   ${formatTime(now, 'UTC')}`, `LOCAL ${formatTime(now, sim.scenario.localTimeZone)}`, card ? card.displayId : 'Sin tarjeta']);
+      return view(spread(`${formatTime(now, 'UTC')}{U}`, 'UTC'), spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, 'local'));
     }
     case 'MENU': {
-      const items = MENU_ITEMS.map((m) => m.label);
-      const start = Math.min(Math.max(0, s.index - 1), Math.max(0, items.length - 3));
-      return view(`MENÚ  ${s.index + 1}/${items.length}`, items.slice(start, start + 3), s.index - start);
+      const item = MENU_ITEMS[s.index]!;
+      return view(spread('MENÚ', `${s.index + 1}/${MENU_ITEMS.length}`), `▸${item.label}`);
     }
     case 'TIMES': {
       const c = sum.continuous;
-      return view('TIEMPOS', [
-        `Cont.  ${formatDuration(c?.drivingSinceBreakMs ?? 0)} / 4:30`,
-        c && c.currentBreakMs > 0 ? `Pausa  ${formatDuration(c.currentBreakMs)} faltan ${formatDuration(breakRemainingMs(c))}` : `Pausa  —${c?.splitFirstTaken ? ' (15✓)' : ''}`,
-        `Disponible ${formatDuration(cur?.availableDrivingMs ?? 0)}`,
-      ]);
+      return view(`{D}cont ${hm(c?.drivingSinceBreakMs ?? 0)} /4h30`, `disp ${hm(cur?.availableDrivingMs ?? 0)} {R}${hm(c?.currentBreakMs ?? 0)}`);
     }
     case 'DAY_ACTIVITIES': {
       const dayStart = startOfZonedDay(now, tz);
-      const evs = d.insertedCardId
-        ? eventsInRange(driverEvents(sim.timeline, d.insertedCardId), dayStart, addZonedDays(dayStart, 1, tz), now)
-        : [];
-      const rows = evs.map(
-        (e) => `${formatTime(Math.max(e.start, dayStart), tz)} ${ACTIVITY_SHORT[e.activity]} ${formatDuration(eventDuration(e, now))}${e.source === 'manual' ? ' M' : ''}`,
-      );
-      if (rows.length === 0) return view('HOY', ['Sin actividades']);
-      const w = window3(rows, s.offset);
-      return view(`HOY ${w.offset + 1}-${w.offset + w.slice.length}/${rows.length}`, w.slice);
+      const evs = d.insertedCardId ? eventsInRange(driverEvents(sim.timeline, d.insertedCardId), dayStart, addZonedDays(dayStart, 1, tz), now) : [];
+      if (evs.length === 0) return view('HOY', 'Sin actividades');
+      const i = Math.min(s.offset, evs.length - 1);
+      const e = evs[i]!;
+      return view(spread('HOY', `${i + 1}/${evs.length}`), `${formatTime(Math.max(e.start, dayStart), tz)} ${ACTIVITY_TOKEN[e.activity]} ${hm(eventDuration(e, now))}${e.source === 'manual' ? ' {M}' : ''}`);
     }
     case 'TICKET': {
       const rows = ticketLines(sim, sum);
-      const w = window3(rows, s.offset);
-      return view(`RESUMEN ${w.offset + 1}/${rows.length}`, w.slice);
+      const i = Math.min(s.offset, rows.length - 1);
+      return view(spread('RESUMEN', `${i + 1}/${rows.length}`), rows[i]!);
     }
     case 'DEVICE_INFO':
-      return view('EQUIPO', ['TL-1 EDU  v0.1', 'Simulador educativo', 'NO HOMOLOGADO']);
+      return view('TL-1 EDU   v0.9', 'NO HOMOLOGADO');
     case 'WELCOME': {
       const last = card?.lastWithdrawalAt;
-      return view('BIENVENIDA', [card?.holderName ?? '', 'Última retirada:', last != null ? short(last, tz) : '— primer uso']);
+      return view(`{C} ${card?.holderName ?? ''}`, last != null ? `{C}↑ ${short(last, tz)}` : '{C}↑ primer uso');
     }
     case 'MANUAL_ASK':
-      return view('ENTRADA MANUAL', ['¿Añadir actividad', 'sin tarjeta?', s.yes ? '[SÍ]   no ' : ' sí   [NO]']);
+      return view('¿Entrada manual?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'MANUAL_EDIT': {
-      const n = s.segments.length + 1;
-      return view(
-        `MANUAL #${n}`,
-        [`Desde ${short(s.draft.start, tz)}`, `${s.field === 'activity' ? '▸' : ' '}${MANUAL_LABEL[s.draft.activity]}`, `${s.field === 'end' ? '▸' : ' '}Hasta ${short(s.draft.end, tz)}`],
-        s.field === 'activity' ? 1 : 2,
-      );
+      const a = MANUAL_TOKEN[s.draft.activity];
+      const end = short(s.draft.end, tz);
+      return view(`{M} ${short(s.draft.start, tz)}`, s.field === 'activity' ? `[${a}] ${end}` : ` ${a} [${end}]`);
     }
     case 'MANUAL_CONFIRM':
-      return view('CONFIRMAR', [`${s.segments.length} periodo(s)`, '¿Guardar entrada?', s.yes ? '[SÍ]   no ' : ' sí   [NO]']);
+      return view('¿Confirmar entrada?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'COUNTRY': {
-      const start = Math.min(Math.max(0, s.index - 1), COUNTRIES.length - 3);
-      const rows = COUNTRIES.slice(start, start + 3).map((c) => `${c.code.padEnd(3)}${c.name}`);
-      return view(s.purpose === 'start' ? 'PAÍS INICIO' : 'PAÍS FIN', rows, s.index - start);
+      const c = COUNTRIES[s.index]!;
+      return view(`{L}${s.purpose === 'start' ? 'País de inicio' : 'País de fin'}`, `▸ ${c.code.padEnd(3)}${c.name}`);
     }
   }
 }
