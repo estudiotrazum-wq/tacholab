@@ -1,0 +1,180 @@
+import { describe, expect, it } from 'vitest';
+import { simReducer, type SimAction } from './engine';
+import { createInitialSim, type SimState } from './state';
+import { deriveSummary } from './derived';
+import { HOUR, MINUTE } from '@/time-engine/units';
+import { driverEvents, sumActivities } from '@/time-engine/timeline';
+import { addZonedDays, startOfZonedDay } from '@/time-engine/zoned';
+import { renderDisplay } from '@/tachograph/display';
+import type { Button } from '@/tachograph/types';
+
+const run = (sim: SimState, ...actions: SimAction[]) => actions.reduce(simReducer, sim);
+const press = (...b: Button[]): SimAction[] => b.map((button) => ({ type: 'PRESS', button }));
+
+/** Inserta la tarjeta A y completa el procedimiento (sin entrada manual previa). */
+function withCard(sim = createInitialSim()): SimState {
+  return run(sim, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK'));
+}
+
+describe('simulador: tarjeta y actividades', () => {
+  it('inserción de tarjeta: bienvenida → país → pantalla estándar', () => {
+    let s = run(createInitialSim(), { type: 'INSERT_CARD', cardId: 'card-a' });
+    expect(s.device.screen.kind).toBe('WELCOME');
+    s = run(s, ...press('OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'start' });
+    s = run(s, ...press('OK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.log.map((l) => l.kind)).toEqual(['CARD_IN', 'COUNTRY_START']);
+  });
+
+  it('no permite insertar tarjeta con el vehículo en marcha', () => {
+    const s = run(createInitialSim(), { type: 'SET_MOVING', moving: true }, ...press('OK'), { type: 'INSERT_CARD', cardId: 'card-a' });
+    expect(s.device.insertedCardId).toBeNull();
+    expect(s.device.notice?.text).toMatch(/Detenga/);
+  });
+
+  it('botón de actividad cicla WORK → AVAILABILITY → REST y registra', () => {
+    let s = withCard();
+    expect(s.device.selected).toBe('REST');
+    s = run(s, ...press('ACTIVITY'));
+    expect(s.device.selected).toBe('WORK');
+    s = run(s, { type: 'ADVANCE_BY', ms: 30 * MINUTE }, ...press('ACTIVITY'));
+    expect(s.device.selected).toBe('AVAILABILITY');
+    s = run(s, { type: 'ADVANCE_BY', ms: 10 * MINUTE });
+    const evs = driverEvents(s.timeline, 'card-a');
+    expect(evs.map((e) => e.activity)).toEqual(['WORK', 'AVAILABILITY']);
+    expect(deriveSummary(s).today.WORK).toBe(30 * MINUTE);
+  });
+
+  it('el movimiento registra conducción y al detenerse pasa a otros trabajos', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 2 * HOUR });
+    expect(deriveSummary(s).recorded).toBe('DRIVING');
+    expect(s.device.selected).toBe('REST'); // seleccionado ≠ registrado
+    s = run(s, { type: 'SET_MOVING', moving: false });
+    expect(deriveSummary(s).recorded).toBe('WORK');
+    expect(deriveSummary(s).today.DRIVING).toBe(2 * HOUR);
+  });
+
+  it('no permite cambiar actividad en marcha', () => {
+    const s = run(withCard(), { type: 'SET_MOVING', moving: true }, ...press('ACTIVITY'));
+    expect(s.device.selected).toBe('REST');
+  });
+
+  it('aviso a 4 h 15 y a 4 h 30 con instantes exactos, aunque se salte de golpe', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true });
+    const start = s.clock.now;
+    s = run(s, { type: 'ADVANCE_BY', ms: 5 * HOUR });
+    const warns = s.log.filter((l) => l.kind === 'WARNING');
+    expect(warns.map((w) => w.at - start)).toEqual([255 * MINUTE, 270 * MINUTE]);
+    expect(s.device.warning?.code).toBe('CONT_DRIVING_EXCEEDED');
+    s = run(s, ...press('OK'));
+    expect(s.device.warning).toBeNull();
+  });
+
+  it('pausa de 45 min reinicia el contador mostrado', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 4 * HOUR });
+    s = run(s, { type: 'SET_MOVING', moving: false }, ...press('ACTIVITY', 'ACTIVITY'));
+    expect(s.device.selected).toBe('REST');
+    s = run(s, { type: 'ADVANCE_BY', ms: 45 * MINUTE });
+    expect(deriveSummary(s).continuous?.drivingSinceBreakMs).toBe(0);
+  });
+
+  it('saltar al siguiente evento se detiene en el umbral de 4 h 15', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true });
+    const start = s.clock.now;
+    s = run(s, { type: 'JUMP_NEXT_EVENT' });
+    expect(s.clock.now - start).toBe(255 * MINUTE);
+  });
+
+  it('retirada pide país y guarda la última retirada', () => {
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'end' });
+    s = run(s, ...press('OK'));
+    expect(s.device.insertedCardId).toBeNull();
+    expect(s.cards['card-a']!.lastWithdrawalAt).toBe(s.clock.now);
+  });
+
+  it('entrada manual del periodo sin tarjeta', () => {
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK'));
+    const withdrawnAt = s.clock.now;
+    s = run(s, { type: 'ADVANCE_BY', ms: 10 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK'));
+    expect(s.device.screen.kind).toBe('MANUAL_ASK');
+    // SÍ → actividad REST por defecto → OK → fin por defecto = inserción → OK → confirmar SÍ → país OK
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+    const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
+    expect(manual).toHaveLength(1);
+    expect(manual[0]).toMatchObject({ activity: 'REST', start: withdrawnAt, end: withdrawnAt + 10 * HOUR });
+  });
+
+  it('entrada manual con dos segmentos (trabajo 1 h + descanso)', () => {
+    let s = run(withCard(), ...press('EJECT', 'OK'));
+    const w = s.clock.now;
+    s = run(s, { type: 'ADVANCE_BY', ms: 3 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK'));
+    // actividad: DOWN → WORK; OK → campo fin; fin = inserción; DOWN ×8 = -2 h → 1 h tras retirada
+    s = run(s, ...press('DOWN', 'OK', ...(Array(8).fill('DOWN') as Button[]), 'OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'activity' });
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK'));
+    const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
+    expect(manual.map((e) => [e.activity, (e.end! - e.start) / HOUR])).toEqual([['WORK', 1], ['REST', 2]]);
+    expect(manual[0]!.start).toBe(w);
+  });
+
+  it('la pantalla estándar refleja actividad y contadores', () => {
+    const s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 90 * MINUTE }, { type: 'DISMISS_NOTICE' });
+    const d = renderDisplay(s);
+    expect(d.lines[0]).toBe('COND  1:30');
+    expect(d.lines[1]).toContain('Cont 1:30');
+  });
+
+  it('conducción sin tarjeta genera aviso y se registra sin conductor', () => {
+    const s = run(createInitialSim(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: HOUR });
+    expect(s.device.warning?.code).toBe('DRIVING_WITHOUT_CARD');
+    expect(s.timeline.events[0]).toMatchObject({ activity: 'DRIVING', driverId: null });
+  });
+
+  it('el reloj se detiene al final de las dos semanas', () => {
+    const s0 = createInitialSim();
+    const s = run(s0, { type: 'SET_SPEED', speed: 60 }, { type: 'ADVANCE_BY', ms: 30 * 24 * HOUR });
+    expect(s.clock.now).toBe(s0.scenario.endsAt);
+    expect(s.clock.speed).toBe(0);
+  });
+});
+
+describe('simulador: calendario', () => {
+  it('cambio de semana: el acumulado semanal se reinicia el lunes 00:00 local', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 2 * HOUR }, { type: 'SET_MOVING', moving: false });
+    s = run(s, ...press('ACTIVITY', 'ACTIVITY', 'OK')); // a descanso (y confirmar aviso si lo hubiera)
+    s = run(s, { type: 'ADVANCE_TO', at: s.scenario.weekOneStart + 7 * 24 * HOUR + HOUR });
+    const sum = deriveSummary(s);
+    expect(sum.weekIndex).toBe(2);
+    expect(sum.week.DRIVING).toBe(0);
+    expect(sum.twoWeeks.DRIVING).toBe(2 * HOUR);
+  });
+
+  it('cálculo en UTC: el día del cambio de hora en España (29/03/2026) sigue durando 24 h', () => {
+    let s = withCard(createInitialSim(Date.UTC(2026, 2, 25, 12)));
+    expect(s.scenario.timeZone).toBe('UTC');
+    expect(s.scenario.weekOneStart).toBe(Date.UTC(2026, 2, 23));
+    s = run(s, { type: 'ADVANCE_TO', at: Date.UTC(2026, 2, 30, 10) });
+    const dayStart = startOfZonedDay(Date.UTC(2026, 2, 29, 12), s.scenario.timeZone);
+    const dayEnd = addZonedDays(dayStart, 1, s.scenario.timeZone);
+    expect(dayEnd - dayStart).toBe(24 * HOUR);
+    expect(sumActivities(driverEvents(s.timeline, 'card-a'), dayStart, dayEnd, s.clock.now).REST).toBe(24 * HOUR);
+  });
+
+  it('la semana normativa empieza el lunes 00:00 UTC (domingo 23:30 UTC aún es semana 1)', () => {
+    let s = withCard();
+    s = run(s, { type: 'ADVANCE_TO', at: s.scenario.weekOneStart + 7 * 24 * HOUR - 30 * MINUTE });
+    expect(deriveSummary(s).weekIndex).toBe(1);
+    s = run(s, { type: 'ADVANCE_BY', ms: 30 * MINUTE });
+    expect(deriveSummary(s).weekIndex).toBe(2);
+  });
+
+  it('la pantalla muestra la hora UTC y la local como referencia', () => {
+    const s = run(withCard(), { type: 'DISMISS_NOTICE' }, ...press('UP'));
+    const d = renderDisplay(s);
+    expect(d.lines[0]).toBe('UTC   06:00');
+    expect(d.lines[1]).toBe('LOCAL 07:00');
+  });
+});

@@ -1,0 +1,429 @@
+import { SELECTABLE_ACTIVITIES, type EpochMs, ACTIVITY_LABEL } from '@/shared/types';
+import { advanceClockTo, setSpeed, tickClock, type Speed } from '@/time-engine/clock';
+import { insertManualSegments, switchActivity, type ActivityTarget } from '@/time-engine/timeline';
+import { addZonedDays, formatDateTime, startOfZonedDay } from '@/time-engine/zoned';
+import {
+  computeContinuousDriving,
+  CONTINUOUS_DRIVING_LIMIT,
+  CONTINUOUS_DRIVING_PREWARN,
+  FULL_BREAK,
+  SPLIT_FIRST,
+  SPLIT_SECOND,
+} from '@/regulations/continuousDriving';
+import {
+  COUNTRIES,
+  INSERTION_FLOW,
+  MENU_ITEMS,
+  effectiveActivity,
+  type Button,
+  type DeviceWarning,
+  type Screen,
+} from '@/tachograph/types';
+import { cycleManualActivity, MIN_MANUAL_GAP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
+import { currentDriverEvents } from './derived';
+import type { LogKind, SimConfig, SimState } from './state';
+
+export type SimAction =
+  | { type: 'TICK'; realDeltaMs: number }
+  | { type: 'SET_SPEED'; speed: Speed }
+  | { type: 'ADVANCE_BY'; ms: number }
+  | { type: 'ADVANCE_TO'; at: EpochMs }
+  | { type: 'JUMP_NEXT_EVENT' }
+  | { type: 'PRESS'; button: Button }
+  | { type: 'INSERT_CARD'; cardId: string }
+  | { type: 'SET_MOVING'; moving: boolean }
+  | { type: 'DISMISS_NOTICE' }
+  | { type: 'SET_CONFIG'; patch: Partial<SimConfig> };
+
+// ---------------------------------------------------------------- utilidades
+
+function log(sim: SimState, kind: LogKind, text: string, at: EpochMs = sim.clock.now): SimState {
+  const entry = { id: sim.logSeq, at, kind, text, driverId: sim.device.insertedCardId };
+  return { ...sim, log: [...sim.log, entry], logSeq: sim.logSeq + 1 };
+}
+
+function notice(sim: SimState, text: string): SimState {
+  return {
+    ...sim,
+    device: { ...sim.device, notice: { seq: sim.noticeSeq, text } },
+    noticeSeq: sim.noticeSeq + 1,
+  };
+}
+
+function setScreen(sim: SimState, screen: Screen): SimState {
+  return { ...sim, device: { ...sim.device, screen } };
+}
+
+const STANDARD: Screen = { kind: 'STANDARD', page: 0 };
+
+/** Recalcula qué se registra en la línea temporal a partir del estado actual. */
+function syncTimeline(sim: SimState): SimState {
+  const { device, vehicle } = sim;
+  let target: ActivityTarget | null = null;
+  if (device.insertedCardId) {
+    target = { activity: effectiveActivity(device, vehicle.moving), driverId: device.insertedCardId };
+  } else if (vehicle.moving) {
+    target = { activity: 'DRIVING', driverId: null };
+  }
+  const timeline = switchActivity(sim.timeline, target, sim.clock.now, sim.scenario.id);
+  return timeline === sim.timeline ? sim : { ...sim, timeline };
+}
+
+function raiseWarning(sim: SimState, w: DeviceWarning): SimState {
+  const next = { ...sim, device: { ...sim.device, warning: w } };
+  return log(next, 'WARNING', `${w.title}: ${w.text}`, w.at);
+}
+
+/** Detecta cruces de umbral de conducción continua tras cualquier cambio. */
+function checkWarnings(sim: SimState): SimState {
+  if (!sim.device.insertedCardId) return sim;
+  const status = computeContinuousDriving(currentDriverEvents(sim), sim.clock.now);
+  const acc = status.drivingSinceBreakMs;
+  const flags = sim.device.warnFlags;
+  const crossingAt = (threshold: number) => sim.clock.now - (acc - threshold);
+
+  if (acc < CONTINUOUS_DRIVING_PREWARN) {
+    if (flags.prewarn || flags.exceeded) {
+      return { ...sim, device: { ...sim.device, warnFlags: { prewarn: false, exceeded: false } } };
+    }
+    return sim;
+  }
+  let next = sim;
+  if (acc >= CONTINUOUS_DRIVING_LIMIT && !flags.exceeded) {
+    next = { ...next, device: { ...next.device, warnFlags: { prewarn: true, exceeded: true } } };
+    return raiseWarning(next, {
+      code: 'CONT_DRIVING_EXCEEDED',
+      title: 'Conducción continua superada',
+      text: 'Has superado 4 h 30 min sin una pausa válida. Detén el vehículo y realiza una pausa.',
+      ruleId: 'R561-ART7-CONT',
+      at: crossingAt(CONTINUOUS_DRIVING_LIMIT),
+    });
+  }
+  if (!flags.prewarn) {
+    next = { ...next, device: { ...next.device, warnFlags: { ...flags, prewarn: true } } };
+    return raiseWarning(next, {
+      code: 'CONT_DRIVING_PREWARN',
+      title: 'Pausa próxima',
+      text: 'Llevas 4 h 15 min de conducción continua. Planifica una pausa en los próximos 15 min.',
+      ruleId: 'R561-ART7-CONT',
+      at: crossingAt(CONTINUOUS_DRIVING_PREWARN),
+    });
+  }
+  return next;
+}
+
+/** Avanza el reloj hasta `target` respetando los cruces de umbral intermedios. */
+function advanceTo(sim: SimState, target: EpochMs): SimState {
+  let s = sim;
+  // Detenerse en cada umbral para que los avisos se registren en orden y con su instante exacto.
+  for (let guard = 0; guard < 8; guard++) {
+    const stop = nextThreshold(s);
+    if (stop === null || stop >= target) break;
+    s = checkWarnings({ ...s, clock: advanceClockTo(s.clock, stop) });
+  }
+  return checkWarnings({ ...s, clock: advanceClockTo(s.clock, target) });
+}
+
+/** Próximo instante en que cambia algo relevante de la conducción continua. */
+function nextThreshold(sim: SimState): EpochMs | null {
+  if (!sim.device.insertedCardId) return null;
+  const now = sim.clock.now;
+  const status = computeContinuousDriving(currentDriverEvents(sim), now);
+  const acc = status.drivingSinceBreakMs;
+  if (sim.vehicle.moving) {
+    const t = [CONTINUOUS_DRIVING_PREWARN, CONTINUOUS_DRIVING_LIMIT].find((th) => th > acc);
+    return t === undefined ? null : now + (t - acc);
+  }
+  if (sim.device.selected === 'REST' && status.currentBreakMs > 0 && acc > 0) {
+    const goals = status.splitFirstTaken ? [SPLIT_SECOND] : [SPLIT_FIRST, FULL_BREAK];
+    const g = goals.find((x) => x > status.currentBreakMs);
+    return g === undefined ? null : now + (g - status.currentBreakMs);
+  }
+  return null;
+}
+
+/** Siguiente evento relevante: umbral normativo, medianoche local o fin de escenario. */
+export function nextRelevantEvent(sim: SimState): { at: EpochMs; label: string } {
+  const now = sim.clock.now;
+  const tz = sim.scenario.timeZone;
+  const candidates: { at: EpochMs; label: string }[] = [
+    { at: addZonedDays(startOfZonedDay(now, tz), 1, tz), label: 'Medianoche (cambio de día)' },
+    { at: sim.clock.endsAt, label: 'Fin del escenario' },
+  ];
+  const th = nextThreshold(sim);
+  if (th !== null) candidates.push({ at: th, label: sim.vehicle.moving ? 'Umbral de conducción continua' : 'Pausa completada' });
+  return candidates.filter((c) => c.at > now).sort((a, b) => a.at - b.at)[0] ?? { at: now, label: 'Fin' };
+}
+
+// ---------------------------------------------------------------- tarjeta
+
+function insertCard(sim: SimState, cardId: string): SimState {
+  const card = sim.cards[cardId];
+  if (!card) return notice(sim, 'Tarjeta no válida');
+  if (sim.device.insertedCardId) return notice(sim, 'Ya hay una tarjeta insertada');
+  if (sim.vehicle.moving) return notice(sim, 'Detenga el vehículo para insertar la tarjeta');
+  let s: SimState = {
+    ...sim,
+    device: { ...sim.device, insertedCardId: cardId, insertedAt: sim.clock.now, screen: { kind: 'WELCOME' } },
+  };
+  s = log(s, 'CARD_IN', `Tarjeta ${card.displayId} insertada`);
+  return syncTimeline(s);
+}
+
+function beginWithdrawal(sim: SimState): SimState {
+  if (!sim.device.insertedCardId) return notice(sim, 'No hay tarjeta insertada');
+  if (sim.vehicle.moving) return notice(sim, 'Detenga el vehículo para retirar la tarjeta');
+  if (INSERTION_FLOW.includes(sim.device.screen.kind)) return notice(sim, 'Finalice el procedimiento de inserción');
+  return setScreen(sim, { kind: 'COUNTRY', purpose: 'end', index: 0 });
+}
+
+function completeWithdrawal(sim: SimState): SimState {
+  const id = sim.device.insertedCardId;
+  if (!id) return sim;
+  const card = sim.cards[id]!;
+  let s = log(sim, 'CARD_OUT', `Tarjeta ${card.displayId} retirada`);
+  s = {
+    ...s,
+    cards: { ...s.cards, [id]: { ...card, lastWithdrawalAt: s.clock.now } },
+    device: {
+      ...s.device,
+      insertedCardId: null,
+      insertedAt: null,
+      screen: STANDARD,
+      warnFlags: { prewarn: false, exceeded: false },
+    },
+  };
+  return notice(syncTimeline(s), 'Tarjeta retirada');
+}
+
+function afterWelcome(sim: SimState): SimState {
+  const card = sim.cards[sim.device.insertedCardId ?? ''];
+  const insertedAt = sim.device.insertedAt ?? sim.clock.now;
+  if (card?.lastWithdrawalAt != null && insertedAt - card.lastWithdrawalAt >= MIN_MANUAL_GAP) {
+    return setScreen(sim, { kind: 'MANUAL_ASK', yes: true });
+  }
+  return setScreen(sim, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+}
+
+function manualWindow(sim: SimState): { from: EpochMs; to: EpochMs } {
+  const card = sim.cards[sim.device.insertedCardId ?? '']!;
+  return { from: card.lastWithdrawalAt ?? sim.clock.now, to: sim.device.insertedAt ?? sim.clock.now };
+}
+
+function commitManualEntry(sim: SimState, screen: Extract<Screen, { kind: 'MANUAL_CONFIRM' }>): SimState {
+  const driverId = sim.device.insertedCardId!;
+  const segments = screen.segments.flatMap((s) =>
+    s.activity === 'UNKNOWN' ? [] : [{ activity: s.activity, start: s.start, end: s.end }],
+  );
+  try {
+    const timeline = insertManualSegments(sim.timeline, segments, driverId, sim.scenario.id, sim.clock.now);
+    let s: SimState = { ...sim, timeline };
+    const tz = sim.scenario.timeZone;
+    for (const seg of screen.segments) {
+      s = log(
+        s,
+        'MANUAL_ENTRY',
+        `Entrada manual: ${seg.activity === 'UNKNOWN' ? 'Desconocida' : ACTIVITY_LABEL[seg.activity]} ${formatDateTime(seg.start, tz)} → ${formatDateTime(seg.end, tz)}`,
+      );
+    }
+    return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+  } catch (e) {
+    return notice(setScreen(sim, STANDARD), e instanceof Error ? e.message : 'Entrada manual no válida');
+  }
+}
+
+// ---------------------------------------------------------------- botones
+
+function cycleSelected(sim: SimState): SimState {
+  if (!sim.device.insertedCardId) return notice(sim, 'Inserte una tarjeta');
+  if (sim.vehicle.moving) return notice(sim, 'Con el vehículo en marcha se registra conducción');
+  if (INSERTION_FLOW.includes(sim.device.screen.kind)) return sim;
+  const i = SELECTABLE_ACTIVITIES.indexOf(sim.device.selected);
+  const selected = SELECTABLE_ACTIVITIES[(i + 1) % SELECTABLE_ACTIVITIES.length]!;
+  let s: SimState = { ...sim, device: { ...sim.device, selected, screen: STANDARD } };
+  s = log(s, 'ACTIVITY_SELECTED', `Seleccionado: ${ACTIVITY_LABEL[selected]}`);
+  return syncTimeline(s);
+}
+
+function pressButton(sim: SimState, button: Button): SimState {
+  let s: SimState = sim.device.notice ? { ...sim, device: { ...sim.device, notice: null } } : sim;
+
+  if (s.device.warning) {
+    if (button === 'OK' || button === 'BACK') return { ...s, device: { ...s.device, warning: null } };
+    return s;
+  }
+  if (button === 'ACTIVITY') return cycleSelected(s);
+  if (button === 'EJECT') return beginWithdrawal(s);
+
+  const screen = s.device.screen;
+  const up = button === 'UP';
+  const down = button === 'DOWN';
+  const ok = button === 'OK';
+  const back = button === 'BACK';
+  const wrap = (i: number, n: number) => (i + n) % n;
+
+  switch (screen.kind) {
+    case 'STANDARD': {
+      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 3) as 0 | 1 | 2 });
+      if (ok) return setScreen(s, { kind: 'MENU', index: 0 });
+      if (back) return setScreen(s, STANDARD);
+      return s;
+    }
+    case 'MENU': {
+      if (up || down) return setScreen(s, { kind: 'MENU', index: wrap(screen.index + (down ? 1 : -1), MENU_ITEMS.length) });
+      if (back) return setScreen(s, STANDARD);
+      if (ok) {
+        const item = MENU_ITEMS[screen.index]!;
+        if (item.needsCard && !s.device.insertedCardId) return notice(s, 'Sin tarjeta de conductor');
+        switch (item.id) {
+          case 'TIMES':
+            return setScreen(s, { kind: 'TIMES' });
+          case 'DAY_ACTIVITIES':
+            return setScreen(s, { kind: 'DAY_ACTIVITIES', offset: 0 });
+          case 'TICKET':
+            return setScreen(s, { kind: 'TICKET', offset: 0 });
+          case 'WITHDRAW':
+            return beginWithdrawal(s);
+          case 'DEVICE_INFO':
+            return setScreen(s, { kind: 'DEVICE_INFO' });
+        }
+      }
+      return s;
+    }
+    case 'TIMES':
+    case 'DEVICE_INFO': {
+      if (ok || back) {
+        const index = MENU_ITEMS.findIndex((m) => m.id === screen.kind);
+        return setScreen(s, { kind: 'MENU', index });
+      }
+      return s;
+    }
+    case 'DAY_ACTIVITIES':
+    case 'TICKET': {
+      if (up || down) return setScreen(s, { ...screen, offset: Math.max(0, screen.offset + (down ? 1 : -1)) });
+      if (ok || back) return setScreen(s, { kind: 'MENU', index: MENU_ITEMS.findIndex((m) => m.id === screen.kind) });
+      return s;
+    }
+    case 'WELCOME':
+      return ok || back ? afterWelcome(s) : s;
+    case 'MANUAL_ASK': {
+      if (up || down) return setScreen(s, { kind: 'MANUAL_ASK', yes: !screen.yes });
+      if (ok && screen.yes) {
+        const w = manualWindow(s);
+        return setScreen(s, { kind: 'MANUAL_EDIT', segments: [], draft: newDraft(w.from, w.to), field: 'activity' });
+      }
+      if (ok || back) {
+        s = log(s, 'MANUAL_SKIPPED', 'Sin entrada manual: el periodo sin tarjeta queda como desconocido');
+        return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+      }
+      return s;
+    }
+    case 'MANUAL_EDIT': {
+      const { to } = manualWindow(s);
+      const { draft, segments } = screen;
+      if (screen.field === 'activity') {
+        if (up || down) return setScreen(s, { ...screen, draft: { ...draft, activity: cycleManualActivity(draft.activity, up ? -1 : 1) } });
+        if (ok) return setScreen(s, { ...screen, field: 'end' });
+        if (back) {
+          const prev = segments[segments.length - 1];
+          if (!prev) return setScreen(s, { kind: 'MANUAL_ASK', yes: true });
+          return setScreen(s, { ...screen, segments: segments.slice(0, -1), draft: prev, field: 'activity' });
+        }
+        return s;
+      }
+      if (up || down) return setScreen(s, { ...screen, draft: { ...draft, end: stepManualEnd(draft, up ? 1 : -1, to) } });
+      if (back) return setScreen(s, { ...screen, field: 'activity' });
+      if (ok) {
+        const all = [...segments, draft];
+        if (draft.end >= to) return setScreen(s, { kind: 'MANUAL_CONFIRM', segments: all, yes: true });
+        return setScreen(s, { kind: 'MANUAL_EDIT', segments: all, draft: newDraft(draft.end, to), field: 'activity' });
+      }
+      return s;
+    }
+    case 'MANUAL_CONFIRM': {
+      if (up || down) return setScreen(s, { ...screen, yes: !screen.yes });
+      if (ok && screen.yes) return commitManualEntry(s, screen);
+      if (ok || back) {
+        const last = screen.segments[screen.segments.length - 1]!;
+        return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'end' });
+      }
+      return s;
+    }
+    case 'COUNTRY': {
+      if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), COUNTRIES.length) });
+      if (ok) {
+        const c = COUNTRIES[screen.index]!;
+        if (screen.purpose === 'start') {
+          s = log(s, 'COUNTRY_START', `País de inicio: ${c.name}`);
+          return notice(setScreen(s, STANDARD), 'Tarjeta lista');
+        }
+        s = log(s, 'COUNTRY_END', `País de fin: ${c.name}`);
+        return completeWithdrawal(s);
+      }
+      if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
+      return s;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- vehículo
+
+function setMoving(sim: SimState, moving: boolean): SimState {
+  if (sim.vehicle.moving === moving) return sim;
+  let s: SimState = { ...sim, vehicle: { moving } };
+  if (moving) {
+    s = log(s, 'VEHICLE_START', 'Vehículo en marcha');
+    const kind = s.device.screen.kind;
+    if (INSERTION_FLOW.includes(kind) || (kind === 'COUNTRY' && s.device.screen.kind === 'COUNTRY' && s.device.screen.purpose === 'start')) {
+      s = notice(setScreen(s, STANDARD), 'Procedimiento interrumpido por movimiento');
+    } else if (kind !== 'STANDARD') {
+      s = setScreen(s, STANDARD);
+    }
+    s = syncTimeline(s);
+    if (!s.device.insertedCardId) {
+      s = raiseWarning(s, {
+        code: 'DRIVING_WITHOUT_CARD',
+        title: 'Conducción sin tarjeta',
+        text: 'El vehículo circula sin tarjeta de conductor. La actividad no se asigna a ningún conductor.',
+        ruleId: null,
+        at: s.clock.now,
+      });
+    }
+    return s;
+  }
+  s = log(s, 'VEHICLE_STOP', 'Vehículo detenido');
+  const after = s.config.afterStopActivity;
+  if (after !== 'KEEP') s = { ...s, device: { ...s.device, selected: after } };
+  return syncTimeline(s);
+}
+
+// ---------------------------------------------------------------- reductor
+
+export function simReducer(sim: SimState, action: SimAction): SimState {
+  switch (action.type) {
+    case 'TICK': {
+      if (sim.clock.speed === 0) return sim;
+      const ticked = tickClock(sim.clock, action.realDeltaMs);
+      if (ticked.now === sim.clock.now) return { ...sim, clock: ticked };
+      return advanceTo({ ...sim, clock: { ...ticked, now: sim.clock.now } }, ticked.now);
+    }
+    case 'SET_SPEED':
+      return { ...sim, clock: setSpeed(sim.clock, action.speed) };
+    case 'ADVANCE_BY':
+      return advanceTo(sim, sim.clock.now + Math.max(0, action.ms));
+    case 'ADVANCE_TO':
+      return advanceTo(sim, action.at);
+    case 'JUMP_NEXT_EVENT':
+      return advanceTo(sim, nextRelevantEvent(sim).at);
+    case 'PRESS':
+      return checkWarnings(pressButton(sim, action.button));
+    case 'INSERT_CARD':
+      return checkWarnings(insertCard(sim, action.cardId));
+    case 'SET_MOVING':
+      return checkWarnings(setMoving(sim, action.moving));
+    case 'DISMISS_NOTICE':
+      return sim.device.notice ? { ...sim, device: { ...sim.device, notice: null } } : sim;
+    case 'SET_CONFIG':
+      return { ...sim, config: { ...sim.config, ...action.patch } };
+  }
+}

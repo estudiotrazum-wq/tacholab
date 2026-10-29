@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #05080d;
+  --color-ink-900: #0a1018;
+  --color-ink-800: #111a26;
+  --color-ink-700: #1a2636;
+  --color-ink-600: #273649;
+  --color-accent: #22d3ee;
+  --color-accent-strong: #0ea5e9;
+  --color-lcd-bg: #041a24;
+  --color-lcd-fg: #7df9ff;
+  --color-act-driving: #38bdf8;
+  --color-act-work: #f59e0b;
+  --color-act-availability: #a78bfa;
+  --color-act-rest: #34d399;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--color-ink-950);
+  color: #e2e8f0;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.lcd-glow { text-shadow: 0 0 6px rgba(125, 249, 255, 0.55); }
+.lcd-scan {
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px);
+}
+
+@keyframes assist-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.0); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.45); }
+}
+.assist-target { animation: assist-pulse 1.4s ease-in-out infinite; border-radius: 0.6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .assist-target { animation: none; outline: 2px solid var(--color-accent); }
+  * { transition-duration: 0ms !important; }
+}
+
+/* ---------------------------------------------------------------- cabina */
+.cab-stage { --led: #22d3ee; --road-speed: 0.6s; }
+
+.road-wrap {
+  position: absolute; left: 0; right: 0; top: 40%; bottom: 0;
+  perspective: 220px; perspective-origin: 50% 0%; overflow: hidden;
+}
+.road-plane {
+  position: absolute; bottom: 0; left: 50%; width: 260%; height: 1400%;
+  transform-origin: 50% 100%;
+  transform: translateX(-56%) rotateX(84deg);
+  background: linear-gradient(90deg,
+    transparent 0 24%, #3a3f46 24% 76%, transparent 76% 100%);
+}
+.road-line { position: absolute; top: 0; bottom: 0; width: 0.9%; }
+.road-line.solid { background: #e9e6d8; opacity: 0.85; }
+.road-line.dashed {
+  background: repeating-linear-gradient(to bottom, #f4f1e3 0 70px, transparent 70px 200px);
+  animation: road-move var(--road-speed) linear infinite;
+  animation-play-state: paused;
+}
+.cab-stage.is-moving .road-line.dashed,
+.cab-stage.is-moving .road-shoulder { animation-play-state: running; }
+.road-shoulder {
+  position: absolute; top: 0; bottom: 0; width: 24%;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.12) 0 120px, transparent 120px 240px);
+  animation: road-move var(--road-speed) linear infinite;
+  animation-play-state: paused;
+}
+@keyframes road-move { to { background-position-y: 200px; } }
+
+.led-core { stroke: var(--led); }
+.led-glow { stroke: var(--led); filter: url(#led-blur); opacity: 0.9; }
+.led-fill { fill: var(--led); }
+.cab-stage .led-breathe { animation: led-breathe 4s ease-in-out infinite; }
+@keyframes led-breathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+.cab-stage.is-alert { --led: #f97316; }
+.cab-stage.is-alert .led-breathe { animation: led-alert 0.9s steps(2, jump-none) infinite; }
+@keyframes led-alert { 0% { opacity: 1; } 100% { opacity: 0.25; } }
+
+.cab-charm { transform-box: fill-box; transform-origin: 50% 0%; }
+.cab-stage.is-moving .cab-charm { animation: charm-swing 1.6s ease-in-out infinite; }
+@keyframes charm-swing { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+
+.cab-steam path { animation: steam 2.4s ease-in-out infinite; opacity: 0; }
+.cab-steam path:nth-child(2) { animation-delay: 0.8s; }
+.cab-steam path:nth-child(3) { animation-delay: 1.6s; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(6px); } 40% { opacity: 0.7; } 100% { opacity: 0; transform: translateY(-18px); } }
+
+.cab-star { animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+.cab-hotspot { cursor: pointer; outline: none; }
+.cab-hotspot .hot-ring { opacity: 0; transition: opacity 150ms; }
+.cab-hotspot:hover .hot-ring, .cab-hotspot:focus-visible .hot-ring { opacity: 1; }
+.cab-tacho-ring { animation: tacho-ring 2.2s ease-in-out infinite; }
+@keyframes tacho-ring { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .road-line.dashed, .road-shoulder, .cab-charm, .cab-steam path, .cab-star, .led-breathe, .cab-tacho-ring { animation: none !important; }
+}
+@keyframes honk { 0% { opacity: 0; transform: scale(0.6) rotate(-6deg); } 25% { opacity: 1; transform: scale(1.1) rotate(-6deg); } 100% { opacity: 0; transform: translateY(-30px) scale(1) rotate(-6deg); } }
