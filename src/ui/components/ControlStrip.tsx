@@ -31,7 +31,7 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
   return (
     <section aria-label="Controles de la simulación" className={`glass relative z-10 rounded-2xl p-4 ${highlight === 'CLOCK' ? 'assist-target' : ''}`} data-testid="control-dock">
       {/* Reloj y acciones rápidas */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3" data-tour="time">
         <div className="min-w-0">
           <div className="whitespace-nowrap font-mono text-2xl leading-tight text-white" data-testid="virtual-clock">
             {formatTime(sim.clock.now, tz)}
@@ -100,6 +100,7 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
           onChange={(v) => dispatch({ type: 'SET_VEHICLE_SPEED', kmh: v })}
           valueText={(v) => (v === 0 ? 'Parado' : `${v} km/h`)}
           highlight={highlight === 'VEHICLE'}
+          tour="accelerator"
         />
       </div>
     </section>
@@ -119,10 +120,11 @@ function Slider(p: {
   valueText: (v: number) => string;
   disabled?: boolean;
   highlight?: boolean;
+  tour?: string;
 }) {
   const pct = ((p.value - p.min) / (p.max - p.min)) * 100;
   return (
-    <div className={p.highlight ? 'assist-target rounded-xl p-1' : ''}>
+    <div className={p.highlight ? 'assist-target rounded-xl p-1' : ''} data-tour={p.tour}>
       <div className="flex items-baseline justify-between text-xs">
         <label htmlFor={p.id} className="text-slate-300">{p.label}</label>
         <span className="font-mono text-white">{p.display}</span>

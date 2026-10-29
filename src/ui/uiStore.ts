@@ -4,7 +4,7 @@ import { DEFAULT_ENTITLEMENTS, type Entitlements } from '@/billing/plans';
 import { sectionOf } from './shell/nav';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
-export type View = 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings';
+export type View = 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings' | 'guide';
 export type LearningMode = 'assisted' | 'free';
 
 /** Colores de la iluminación ambiental LED de la cabina. */
@@ -24,9 +24,11 @@ interface Settings {
   ledColor: LedColor;
   /** Solo en desarrollo: vista previa local de contenido premium (no es un permiso real). */
   devPremiumPreview: boolean;
+  /** El tutorial de inicio se ha completado o descartado (ya no se ofrece en el panel). */
+  tutorialDone: boolean;
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false };
 
 function loadSettings(): Settings {
   try {
@@ -56,9 +58,9 @@ export const useUiStore = create<UiStore>((set, get) => ({
   },
   update: (patch) => {
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone }));
     } catch {
       /* sin almacenamiento */
     }

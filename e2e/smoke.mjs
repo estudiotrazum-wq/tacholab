@@ -42,8 +42,10 @@ try {
     await page.getByTestId('time-tools').click();
   };
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Entendido, empezar' }).click();
+  assert(await page.getByTestId('welcome-tutorial').isVisible(), 'la bienvenida ofrece el tutorial de inicio');
+  await page.getByRole('button', { name: 'Explorar por mi cuenta' }).click();
   assert(await page.getByTestId('card-slot').isVisible(), 'la app abre directamente en el simulador');
+  assert(await page.getByTestId('tutorial-invite').isVisible(), 'el panel invita a hacer el tutorial');
   await page.screenshot({ path: 'e2e/screenshots/01-home.png' });
 
   await goTo('Simulador', 'Cabina');
@@ -237,6 +239,56 @@ try {
   assert(await page.getByTestId('control-dock').isVisible(), 'en móvil, modo dispositivo con barra de control fija');
   await goTo('Simulador', 'Panel');
   await page.screenshot({ path: 'e2e/screenshots/05-mobile.png', fullPage: true });
+
+  // Tutorial de inicio completo, con clics reales sobre el simulador
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await page.getByRole('button', { name: 'Guía', exact: true }).click();
+  await page.screenshot({ path: 'e2e/screenshots/13-guide.png', fullPage: true });
+  await page.getByTestId('start-tutorial').click();
+  // Si hay actividad previa, pide confirmar que empieza un turno nuevo
+  if (await page.getByTestId('confirm-ok').isVisible()) await page.getByTestId('confirm-ok').click();
+  const tut = page.getByTestId('tutorial');
+  const title = () => tut.getByRole('heading').innerText();
+  const ok = () => page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  const expectStep = async (t) => assert((await title()) === t, `tutorial: «${t}»`);
+  await expectStep('Tu primer turno con el tacógrafo');
+  await page.getByTestId('tutorial-next').click();
+  await expectStep('El tacógrafo');
+  assert(await page.getByTestId('tutorial-spotlight').isVisible(), 'tutorial: resalta la pieza del paso');
+  await page.screenshot({ path: 'e2e/screenshots/14-tutorial.png' });
+  await page.getByTestId('tutorial-next').click();
+  await expectStep('Mete la tarjeta de conductor');
+  await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
+  await expectStep('Bienvenida');
+  await ok();
+  await expectStep('Última retirada');
+  await ok();
+  await expectStep('País de inicio');
+  await ok();
+  await expectStep('Da el contacto');
+  await page.getByTestId('ignition-on').click();
+  await expectStep('Arranca el motor');
+  await page.getByTestId('ignition-start').click();
+  await expectStep('A conducir');
+  await page.getByTestId('truck-speed').fill('80');
+  await expectStep('Haz pasar el tiempo');
+  await tool('+15 min');
+  await tool('+15 min');
+  await expectStep('Lee la pantalla');
+  await page.getByTestId('tutorial-next').click();
+  await expectStep('Detén el camión');
+  await page.getByTestId('truck-speed').fill('0');
+  await expectStep('Elige la actividad: descanso');
+  await page.getByRole('button', { name: 'Botón de actividad' }).click();
+  await page.getByRole('button', { name: 'Botón de actividad' }).click();
+  await expectStep('Saca la tarjeta');
+  await page.getByTestId('eject-1').click();
+  await expectStep('País de fin e impresión');
+  await ok();
+  await ok();
+  await expectStep('¡Turno completado!');
+  await page.getByTestId('tutorial-finish').click();
+  assert((await page.getByTestId('tutorial').count()) === 0 && (await page.getByTestId('tutorial-invite').count()) === 0, 'tutorial terminado: ya no se ofrece');
 
   assert(errors.length === 0, `sin errores de ejecución en consola${errors.length ? ': ' + errors.join(' | ') : ''}`);
   console.log('\nE2E OK');

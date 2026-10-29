@@ -16,6 +16,10 @@ import { AcademyScreen } from './screens/AcademyScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { ConfirmDialog } from './confirm';
+import { GuideScreen } from './screens/GuideScreen';
+import { TutorialCoach } from './components/TutorialCoach';
+import { useTutorialStore } from '@/tutorial/store';
+import { startTutorial } from './tutorial';
 
 
 export function App() {
@@ -24,7 +28,10 @@ export function App() {
   useEffect(() => {
     useAcademyStore.getState().observe(useSimStore.getState().sim);
     return useSimStore.subscribe((s, prev) => {
-      if (s.sim !== prev.sim) useAcademyStore.getState().observe(s.sim);
+      if (s.sim !== prev.sim) {
+        useAcademyStore.getState().observe(s.sim);
+        useTutorialStore.getState().observe(s.sim);
+      }
     });
   }, []);
   const { view, go, disclaimerAccepted, update, lastViews, learningMode } = useUiStore();
@@ -43,7 +50,8 @@ export function App() {
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-1">
-          <RailButton label={learningMode === 'assisted' ? 'Guía: sí' : 'Guía: no'} icon="help" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
+          <RailButton label="Guía" icon="book" active={view === 'guide'} onClick={() => go('guide')} />
+          <RailButton label={learningMode === 'assisted' ? 'Ayudas: sí' : 'Ayudas: no'} icon="bulb" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
           <RailButton label="Premium" icon="star" active={view === 'premium'} onClick={() => go('premium')} />
           <RailButton label="Ajustes" icon="settings" active={view === 'settings'} onClick={() => go('settings')} />
         </div>
@@ -55,7 +63,10 @@ export function App() {
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-xs font-bold text-slate-950">TL</span>
           <span className="font-semibold text-white">TachoLab <span className="text-gradient">EU</span></span>
           <button type="button" onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} aria-pressed={learningMode === 'assisted'} className={`ml-auto rounded-full px-3 py-1 text-xs ${learningMode === 'assisted' ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400'}`}>
-            Guía {learningMode === 'assisted' ? 'sí' : 'no'}
+            Ayudas {learningMode === 'assisted' ? 'sí' : 'no'}
+          </button>
+          <button type="button" onClick={() => go('guide')} aria-label="Guía y tutorial" className={`grid h-9 w-9 place-items-center rounded-full ${view === 'guide' ? 'bg-white/10 text-white' : 'text-slate-300'}`}>
+            <NavIcon name="book" />
           </button>
           <button type="button" onClick={() => go('settings')} aria-label="Ajustes" className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
             <NavIcon name="settings" />
@@ -73,10 +84,11 @@ export function App() {
           {view === 'academy' && <AcademyScreen />}
           {view === 'premium' && <PremiumScreen />}
           {view === 'settings' && <SettingsScreen />}
+          {view === 'guide' && <GuideScreen />}
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.11 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.12 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 
@@ -96,6 +108,7 @@ export function App() {
       </nav>
 
       <ExerciseResultDialog />
+      <TutorialCoach />
       <ConfirmDialog />
 
       {!disclaimerAccepted && (
@@ -119,9 +132,24 @@ export function App() {
             <p className="mt-5 text-xs leading-relaxed text-slate-400">
               Es un <strong className="text-slate-200">simulador educativo independiente</strong>: no está homologado, no reproduce ningún tacógrafo comercial y no sustituye la formación oficial ni los equipos reales. Los cálculos normativos son orientativos. Solo se usan tarjetas ficticias y los datos se guardan en tu navegador.
             </p>
-            <button type="button" autoFocus onClick={() => update({ disclaimerAccepted: true })} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-slate-900 transition hover:scale-[1.01]">
-              Entendido, empezar
-            </button>
+            <div className="mt-6 grid gap-2 sm:grid-cols-[1fr_auto]">
+              <button
+                type="button"
+                autoFocus
+                data-testid="welcome-tutorial"
+                onClick={() => {
+                  update({ disclaimerAccepted: true });
+                  startTutorial();
+                }}
+                className="rounded-2xl bg-white py-3 font-semibold text-slate-900 transition hover:scale-[1.01]"
+              >
+                ▶ Empezar el tutorial (5 min)
+              </button>
+              <button type="button" onClick={() => update({ disclaimerAccepted: true })} className="rounded-2xl bg-white/10 px-5 py-3 text-sm font-medium text-white hover:bg-white/15">
+                Explorar por mi cuenta
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[11px] text-slate-500">Puedes abrir el tutorial y la guía rápida cuando quieras desde «Guía».</p>
           </div>
         </div>
       )}

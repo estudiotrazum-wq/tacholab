@@ -22,7 +22,7 @@ npm run e2e          # prueba de interacción en navegador real (Playwright; req
 ```
 
 ## Cómo probar el prototipo a mano
-1. Acepta la bienvenida: se abre el simulador. **Arrastra la tarjeta** a la ranura, confirma con OK la bienvenida, la última retirada (y las entradas manuales si las pide) y el país de inicio; gira la **llave de contacto** a II y sube el **acelerador**.
+1. En la bienvenida pulsa **Empezar el tutorial (5 min)**: te guía paso a paso por un turno completo (también desde **Guía** en el menú). Si prefieres explorar: **Arrastra la tarjeta** a la ranura, confirma con OK la bienvenida, la última retirada (y las entradas manuales si las pide) y el país de inicio; gira la **llave de contacto** a II y sube el **acelerador**.
 2. Pulsa la **ranura** para insertar la tarjeta ficticia → ✓ (bienvenida) → ✓ (país).
 3. Pulsa el **botón de actividad** (trabajo → disponibilidad → descanso).
 4. **Iniciar marcha**: el equipo registra conducción automáticamente.

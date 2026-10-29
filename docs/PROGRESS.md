@@ -2,6 +2,19 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.12 — Tutorial de inicio y guía (rama `ui-rediseno`)
+- [x] **Tutorial interactivo** de 16 pasos sobre el simulador real: oscurece la pantalla salvo la pieza del paso,
+      explica qué hacer y avanza solo cuando el alumno lo hace (tarjeta, bienvenida, última retirada, país, llave I y
+      II, acelerador, tiempo, lectura de pantalla, parada, tecla de actividad, ⏏, país de fin e impresión).
+      Atrás / Saltar / Salir; si se cambia de pantalla, invita a volver al Panel
+- [x] Se ofrece en la bienvenida («Empezar el tutorial» o «Explorar por mi cuenta») y con un aviso en el panel
+      hasta completarlo o descartarlo; se repite desde **Guía** en el menú
+- [x] **Guía rápida de consulta**: piezas del tacógrafo, empezar la jornada, entradas manuales, actividades y
+      pictogramas, terminar la jornada, manejo del tiempo, normas básicas con su artículo del R. (CE) 561/2006 y atajos
+- [x] El interruptor de ayudas contextuales pasa a llamarse «Ayudas» para no confundirlo con la guía
+- [x] Pasos del tutorial como lógica pura (`src/tutorial/steps.ts`) probados con el motor: 113 pruebas unitarias +
+      E2E que completa el tutorial con clics reales
+
 ## v0.11 — Extracción de tarjeta como en los equipos reales (rama `ui-rediseno`)
 - [x] **Botón ⏏ de expulsión** junto a cada ranura (con piloto de tarjeta insertada) y **pulsación larga de la tecla 1**
       con barra de progreso, como alternativa habitual en los tacógrafos digitales

@@ -41,7 +41,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   };
 
   return (
-    <section aria-label="Tacógrafo educativo TL-1" className={`relative mx-auto w-full ${compact ? 'max-w-2xl' : 'max-w-4xl'}`}>
+    <section aria-label="Tacógrafo educativo TL-1" data-tour="tachograph" className={`relative mx-auto w-full ${compact ? 'max-w-2xl' : 'max-w-4xl'}`}>
       {/* Ticket impreso: sale por la ranura de la impresora */}
       {ticket && (
         <div className="absolute right-[4%] top-[34%] z-30 w-60 animate-[ticket_700ms_ease-out] rounded-b-sm border-t-4 border-dashed border-slate-400 bg-[#f7f5ee] px-3 pb-2 pt-3 font-mono text-[10px] leading-4 text-slate-800 shadow-2xl" data-testid="ticket">
@@ -72,7 +72,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
                 <span className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.05)_0_1px,transparent_1px_3px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04)_0_1px,transparent_1px_3px)]" aria-hidden="true" />
               </div>
               {/* Teclas de menú */}
-              <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Teclas de menú">
+              <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Teclas de menú" data-tour="keys">
                 <Key label="Retroceder" onClick={() => press('BACK')} className={hl('BACK')} shortcut="Esc">✕</Key>
                 <Key label="Arriba" onClick={() => press('UP')} className={hl('UP_DOWN')} shortcut="↑">▲</Key>
                 <Key label="Abajo" onClick={() => press('DOWN')} className={hl('UP_DOWN')} shortcut="↓">▼</Key>
@@ -181,6 +181,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
       <button
         type="button"
         aria-label={slot === 1 ? 'Botón de actividad' : 'Tecla 2 (segundo conductor)'}
+        data-tour={slot === 1 ? 'activity' : undefined}
         title={slot === 1 ? 'Tecla 1: pulsa para cambiar la actividad (A). Mantén pulsada para sacar la tarjeta (E).' : 'Tecla 2: segundo conductor'}
         onPointerDown={slot === 1 ? startPress : undefined}
         onPointerUp={slot === 1 ? endPress : undefined}
@@ -206,6 +207,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
       <button
         type="button"
         data-testid={slot === 1 ? 'card-slot' : 'card-slot-2'}
+        data-tour={slot === 1 ? 'card-slot' : undefined}
         aria-label={
           slot === 2
             ? 'Ranura 2 (segundo conductor)'
@@ -259,6 +261,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
         aria-label={slot === 1 ? 'Sacar tarjeta 1' : 'Sacar tarjeta 2'}
         title={slot === 1 ? 'Sacar la tarjeta del conductor (E)' : 'Sacar la tarjeta 2'}
         data-testid={`eject-${slot}`}
+        data-tour={slot === 1 ? 'eject' : undefined}
         className={`relative flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] transition active:translate-y-[2px] ${
           card ? 'text-amber-300' : 'text-slate-500'
         } ${slot === 2 ? 'opacity-60' : ''} ${slot === 1 && highlight === 'EJECT' ? 'assist-target' : ''}`}

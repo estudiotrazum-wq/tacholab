@@ -24,7 +24,7 @@ export function StatusCard() {
 
   if (!report) {
     return (
-      <section className="glass rounded-2xl p-5" aria-label="Estado">
+      <section className="glass rounded-2xl p-5" aria-label="Estado" data-tour="status">
         <div className="text-sm font-semibold text-slate-100">Sin tarjeta</div>
         <p className="mt-1 text-sm text-slate-400">Inserta la tarjeta ficticia en la ranura del tacógrafo para que los tiempos se asignen a un conductor.</p>
         <Activity recorded={sum.recorded} selected={sum.selected} />
@@ -40,7 +40,7 @@ export function StatusCard() {
   const ringColor = avail === 0 ? '#f43f5e' : pct < 0.2 ? '#fbbf24' : '#22d3ee';
 
   return (
-    <section className="glass rounded-2xl p-5" aria-label="Estado">
+    <section className="glass rounded-2xl p-5" aria-label="Estado" data-tour="status">
       <div className="flex items-center gap-4">
         <div className="relative h-28 w-28 shrink-0">
           <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden="true">

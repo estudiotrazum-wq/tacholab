@@ -12,13 +12,16 @@ import { CardTray } from '../components/CardTray';
 import { Speedometer } from '../components/Speedometer';
 import { IgnitionKey } from '../components/IgnitionKey';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useTutorialStore } from '@/tutorial/store';
+import { startTutorial } from '../tutorial';
 
 /**
  * Panel del simulador: todo en una pantalla.
  * Tarjetas a la izquierda · tacógrafo y tiempo en el centro · vehículo y estado a la derecha.
  */
 export function DeviceScreen() {
-  const { warningsEnabled } = useUiStore();
+  const { warningsEnabled, tutorialDone, update } = useUiStore();
+  const tutorialActive = useTutorialStore((s) => s.active);
   const guide = useGuidance();
   const highlight = guide?.target ?? null;
   const [help, setHelp] = useState(false);
@@ -39,6 +42,17 @@ export function DeviceScreen() {
 
       {/* Centro: guía, tacógrafo y tiempo */}
       <div className="min-w-0 space-y-4">
+        {!tutorialDone && !tutorialActive && (
+          <div className="glass flex flex-wrap items-center gap-3 rounded-2xl border border-cyan-300/20 px-4 py-3" data-testid="tutorial-invite">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-cyan-400 text-slate-950" aria-hidden="true">▶</span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-white">¿Primera vez? Haz el tutorial de inicio</div>
+              <div className="text-xs text-slate-400">Un turno completo guiado paso a paso: tarjeta, llave, conducción, pausa y retirada.</div>
+            </div>
+            <button type="button" onClick={startTutorial} className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900">Empezar</button>
+            <button type="button" onClick={() => update({ tutorialDone: true })} aria-label="No mostrar más" className="rounded-xl px-2 py-2 text-xs text-slate-400 hover:text-white">Ahora no</button>
+          </div>
+        )}
         <ExercisePanel />
         {guide?.source === 'assist' && <AssistBanner hint={guide} />}
         {/* Llave de contacto a la altura del tacógrafo, como en el salpicadero */}

@@ -38,6 +38,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
     <section
       aria-label="Llave de contacto"
       data-testid="ignition"
+      data-tour="ignition"
       className={`glass flex shrink-0 flex-row items-center gap-3 rounded-2xl p-3 sm:w-36 sm:flex-col sm:gap-2 ${highlight === 'VEHICLE' && !running ? 'assist-target' : ''}`}
     >
       <button
