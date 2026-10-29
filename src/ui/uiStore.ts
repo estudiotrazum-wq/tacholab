@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { browserStorage, KEYS } from '@/persistence/storage';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
-export type View = 'home' | 'cabin' | 'device' | 'history' | 'academy' | 'premium' | 'settings';
+export type View = 'home' | 'cabin' | 'device' | 'history' | 'report' | 'academy' | 'premium' | 'settings';
 export type LearningMode = 'assisted' | 'free';
 
 /** Colores de la iluminación ambiental LED de la cabina. */

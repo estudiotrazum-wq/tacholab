@@ -178,3 +178,46 @@ describe('simulador: calendario', () => {
     expect(d.lines[1]).toBe('LOCAL 07:00');
   });
 });
+
+describe('simulador: avisos de la Fase 2', () => {
+  /** Conduce `min` minutos y confirma los avisos que aparezcan. */
+  const drive = (s: SimState, min: number) =>
+    run(s, { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: min * MINUTE }, { type: 'SET_MOVING', moving: false }, ...press('OK'));
+  const pause = (s: SimState, min: number) => {
+    let x = s;
+    while (x.device.selected !== 'REST') x = run(x, ...press('ACTIVITY'));
+    return run(x, { type: 'ADVANCE_BY', ms: min * MINUTE });
+  };
+  const codes = (s: SimState) => s.log.filter((l) => l.kind === 'WARNING').map((l) => l.text.split(':')[0]);
+
+  it('la ampliación a 10 h avisa como información y al llegar a 10 h avisa del límite', () => {
+    let s = withCard();
+    s = pause(drive(s, 270), 45);
+    s = pause(drive(s, 270), 45);
+    s = drive(s, 30);
+    expect(codes(s)).toContain('Ampliación a 10 h en uso');
+    s = drive(s, 45);
+    expect(codes(s)).toContain('Límite de conducción diaria alcanzado');
+    const exceeded = s.log.find((l) => l.text.startsWith('Límite de conducción diaria alcanzado'))!;
+    expect(exceeded.at - s.scenario.startsAt).toBe((270 + 45 + 270 + 45 + 60) * MINUTE);
+  });
+
+  it('sin descanso, avisa de la hora de iniciar el descanso diario normal y del límite', () => {
+    let s = withCard();
+    s = run(s, ...press('ACTIVITY')); // otros trabajos
+    s = run(s, { type: 'ADVANCE_BY', ms: 16 * HOUR }, ...press('OK'));
+    const rest = s.log.filter((l) => l.text.includes('descanso diario') || l.text.includes('Descanso diario'));
+    expect(rest.map((l) => l.at - s.scenario.startsAt)).toEqual([13 * HOUR, 15 * HOUR]);
+  });
+
+  it('«siguiente evento» se detiene en los hitos de un descanso en curso', () => {
+    let s = pause(drive(withCard(), 60), 1);
+    const start = s.clock.now - MINUTE;
+    s = run(s, { type: 'JUMP_NEXT_EVENT' });
+    expect(s.clock.now - start).toBe(15 * MINUTE);
+    s = run(s, { type: 'JUMP_NEXT_EVENT' }, { type: 'JUMP_NEXT_EVENT' });
+    expect(s.clock.now - start).toBe(45 * MINUTE);
+    s = run(s, { type: 'JUMP_NEXT_EVENT' });
+    expect(s.clock.now - start).toBe(9 * HOUR);
+  });
+});

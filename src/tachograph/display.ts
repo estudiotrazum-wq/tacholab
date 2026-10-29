@@ -1,5 +1,5 @@
 import { ACTIVITY_SHORT, type Activity, type SelectableActivity } from '@/shared/types';
-import { deriveSummary, type SimSummary } from '@/simulator/derived';
+import { complianceFor, deriveSummary, type SimSummary } from '@/simulator/derived';
 import type { SimState } from '@/simulator/state';
 import { eventDuration, eventsInRange, driverEvents } from '@/time-engine/timeline';
 import { formatDuration } from '@/time-engine/units';
@@ -58,6 +58,7 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
     `Disponib.   ${formatDuration(sum.today.AVAILABILITY)}`,
     `Descanso    ${formatDuration(sum.today.REST)}`,
     `Cont. ${formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0)} / 4:30`,
+    `Jornada: ${formatDuration(complianceFor(sim, sum.driverId)?.current.dailyDrivingMs ?? 0)} cond.`,
     `Semana ${sum.weekIndex}: ${formatDuration(sum.week.DRIVING)}`,
     `2 semanas: ${formatDuration(sum.twoWeeks.DRIVING)}`,
     '— Simulador educativo —',
@@ -69,6 +70,7 @@ export function renderDisplay(sim: SimState): DisplayModel {
   const now = sim.clock.now;
   const d = sim.device;
   const sum = deriveSummary(sim);
+  const cur = complianceFor(sim)?.current ?? null;
   const base = {
     cursor: null,
     recorded: sum.recorded,
@@ -78,7 +80,7 @@ export function renderDisplay(sim: SimState): DisplayModel {
   };
 
   if (d.warning) {
-    return { ...base, mode: 'warning', title: '! AVISO', lines: pad3([d.warning.title, '', 'OK para confirmar']) };
+    return { ...base, mode: 'warning', title: d.warning.severity === 'info' ? 'i AVISO' : '! AVISO', lines: pad3([d.warning.title, '', 'OK para confirmar']) };
   }
   if (d.notice) {
     return { ...base, mode: 'notice', title: 'INFO', lines: pad3([d.notice.text]) };
@@ -100,15 +102,16 @@ export function renderDisplay(sim: SimState): DisplayModel {
       if (s.page === 0) {
         return view(`${formatTime(now, tz)} UTC   ${formatDate(now, tz).slice(0, 5)}`, [
           sum.recorded ? `${ACTIVITY_SHORT[sum.recorded]}  ${curDur}` : 'SIN REGISTRO',
-          card ? `Cont ${formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0)}  Día ${formatDuration(sum.today.DRIVING)}` : 'SIN TARJETA',
+          card ? `Cont ${formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0)}  Jorn ${formatDuration(cur?.dailyDrivingMs ?? 0)}` : 'SIN TARJETA',
           card ? `Pausa ${formatDuration(sum.continuous?.currentBreakMs ?? 0)}${sum.continuous?.splitFirstTaken ? ' (15✓)' : ''}` : 'Inserte tarjeta',
         ]);
       }
       if (s.page === 1) {
-        return view('ACUMULADOS', [
-          `Hoy     ${formatDuration(sum.today.DRIVING)}`,
-          `Semana  ${formatDuration(sum.week.DRIVING)}`,
-          `2 sem.  ${formatDuration(sum.twoWeeks.DRIVING)}`,
+        if (!cur) return view('ACUMULADOS', ['Sin tarjeta']);
+        return view('CONDUCCIÓN', [
+          `Jorn.  ${formatDuration(cur.dailyDrivingMs)}/${formatDuration(cur.dailyCapMs)}`,
+          `Sem.  ${formatDuration(cur.weekDrivingMs)}/56:00`,
+          `2 sem ${formatDuration(cur.biweekDrivingMs)}/90:00`,
         ]);
       }
       return view('HORA', [`UTC   ${formatTime(now, 'UTC')}`, `LOCAL ${formatTime(now, sim.scenario.localTimeZone)}`, card ? card.displayId : 'Sin tarjeta']);
@@ -123,7 +126,7 @@ export function renderDisplay(sim: SimState): DisplayModel {
       return view('TIEMPOS', [
         `Cont.  ${formatDuration(c?.drivingSinceBreakMs ?? 0)} / 4:30`,
         c && c.currentBreakMs > 0 ? `Pausa  ${formatDuration(c.currentBreakMs)} faltan ${formatDuration(breakRemainingMs(c))}` : `Pausa  —${c?.splitFirstTaken ? ' (15✓)' : ''}`,
-        `Día ${formatDuration(sum.today.DRIVING)} Sem ${formatDuration(sum.week.DRIVING)}`,
+        `Disponible ${formatDuration(cur?.availableDrivingMs ?? 0)}`,
       ]);
     }
     case 'DAY_ACTIVITIES': {

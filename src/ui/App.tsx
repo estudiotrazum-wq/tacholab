@@ -4,6 +4,7 @@ import { HomeScreen } from './screens/HomeScreen';
 import { CabinScreen } from './screens/CabinScreen';
 import { DeviceScreen } from './screens/DeviceScreen';
 import { HistoryScreen } from './screens/HistoryScreen';
+import { ReportScreen } from './screens/ReportScreen';
 import { AcademyScreen } from './screens/AcademyScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -13,6 +14,7 @@ const NAV: { id: View; label: string }[] = [
   { id: 'cabin', label: 'Cabina' },
   { id: 'device', label: 'Tacógrafo' },
   { id: 'history', label: 'Historial' },
+  { id: 'report', label: 'Informe' },
   { id: 'academy', label: 'Academia' },
   { id: 'premium', label: 'Premium' },
   { id: 'settings', label: 'Ajustes' },
@@ -51,13 +53,14 @@ export function App() {
         {view === 'cabin' && <CabinScreen />}
         {view === 'device' && <DeviceScreen />}
         {view === 'history' && <HistoryScreen />}
+        {view === 'report' && <ReportScreen />}
         {view === 'academy' && <AcademyScreen />}
         {view === 'premium' && <PremiumScreen />}
         {view === 'settings' && <SettingsScreen />}
       </main>
 
       <footer className="border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
-        TachoLab EU v0.2 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+        TachoLab EU v0.3 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
       </footer>
 
       {!disclaimerAccepted && (

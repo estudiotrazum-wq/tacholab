@@ -45,7 +45,23 @@ incluido el orden 15 → 30.
 - (c) *Un descanso cuenta como pausa en cuanto alcanza 45 min.* Coherente con «a menos que tome un período de descanso»
   (art. 7), puesto que todo descanso válido dura más de 45 min.
 
-## Planificadas (Fase 2) — referencias contrastadas
+## Implementadas en la Fase 2 (preliminares) — `src/regulations/compliance.ts`
+Pruebas: `src/regulations/compliance.test.ts` (incluye el escenario de referencia 56 h + 34 h = 90 h, sin infracciones,
+y su variante con una hora más, que supera las 90 h).
+
+**Supuestos de cálculo** (a revisar profesionalmente):
+1. Días y semanas en UTC.
+2. El escenario empieza tras un descanso semanal normal que termina a la hora de inicio, y la semana anterior no tiene
+   conducción (afecta al límite de 90 h y al plazo de seis periodos de 24 h).
+3. Descanso ininterrumpido ≥ 24 h ⇒ descanso semanal; ≥ 9 h ⇒ diario; de 3 h a 9 h ⇒ posible primera parte de un 3 + 9.
+4. La ampliación a 10 h se imputa a la semana UTC en la que empieza la jornada.
+5. La compensación puede ir unida a un descanso diario (se compensa lo que excede de 9 h) o a un semanal normal (lo que
+   excede de 45 h), en una sola vez; un descanso semanal reducido no puede llevarla.
+6. Los huecos sin registro no son descanso.
+7. Al llegar exactamente a un límite (4 h 30, 9/10 h, 56 h, 90 h) el equipo avisa; la infracción simulada se registra
+   solo si se sigue conduciendo.
+
+### Referencias contrastadas
 | Regla | Texto (resumen) | Artículo |
 |---|---|---|
 | Conducción diaria | ≤ 9 h; hasta 10 h no más de dos veces por semana | 6.1 |
@@ -68,6 +84,10 @@ Requisitos de diseño para la Fase 2:
 - El tiempo de conducción diario se delimita por descansos, no por medianoche.
 - Las obligaciones de compensación se modelan con fecha límite y estado `pendiente` más allá del horizonte de 14 días.
 - Diferenciar *aviso*, *infracción simulada* y *requiere contexto*.
+
+## Pendiente
+- Art. 8.8 (lugar del descanso semanal): requiere un dato de ubicación que el simulador no registra.
+- Asignación óptima de descansos que abarcan dos semanas (art. 8.9): ahora se cuenta cada uno una vez, sin optimizar.
 
 ## Módulos separados (desactivados)
 Conducción en equipo (arts. 4 o, 7, 8.5), dos descansos semanales reducidos consecutivos en transporte internacional

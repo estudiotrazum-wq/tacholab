@@ -2,6 +2,7 @@ import type { Activity, SelectableActivity } from '@/shared/types';
 import { computeContinuousDriving, type ContinuousDrivingStatus } from '@/regulations/continuousDriving';
 import { driverEvents, openEvent, sumActivities, type ActivityEvent, type ActivityTotals } from '@/time-engine/timeline';
 import { addZonedDays, startOfZonedDay, startOfZonedWeek } from '@/time-engine/zoned';
+import { analyzeCompliance, type ComplianceReport } from '@/regulations/compliance';
 import type { SimState } from './state';
 
 /**
@@ -45,4 +46,11 @@ export function deriveSummary(sim: SimState, driverOverride?: string): SimSummar
     twoWeeks: sumActivities(events, sim.scenario.weekOneStart, sim.scenario.endsAt, now),
     weekIndex: weekStart >= addZonedDays(sim.scenario.weekOneStart, 7, tz) ? 2 : 1,
   };
+}
+
+/** Informe normativo completo (Fase 2) para un conductor. */
+export function complianceFor(sim: SimState, driverId: string | null = sim.device.insertedCardId): ComplianceReport | null {
+  if (!driverId) return null;
+  const { startsAt, weekOneStart, endsAt, timeZone } = sim.scenario;
+  return analyzeCompliance(driverEvents(sim.timeline, driverId), sim.clock.now, { startsAt, weekOneStart, endsAt, timeZone });
 }

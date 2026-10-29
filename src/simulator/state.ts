@@ -5,8 +5,8 @@ import { initialDevice, type DeviceState } from '@/tachograph/types';
 import { DEFAULT_CARDS, type FictionalCard } from '@/scenarios/cards';
 import { createFreeScenario, REFERENCE_ANCHOR, type ScenarioMeta } from '@/scenarios/scenario';
 
-/** v2: cálculos en UTC (los guardados v1, en hora local, se descartan). */
-export const SIM_STATE_VERSION = 2;
+/** v3: avisos de la Fase 2 (los guardados anteriores se descartan). */
+export const SIM_STATE_VERSION = 3;
 
 export type LogKind =
   | 'CARD_IN'

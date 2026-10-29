@@ -36,9 +36,9 @@ dispositivo interactivo, reloj virtual acelerable, horizonte fijo de **dos seman
 src/
   shared/        tipos comunes (Activity, EpochMs)
   time-engine/   units, zoned (zonas horarias/DST), clock (reloj virtual), timeline (eventos)
-  regulations/   rules (catálogo), continuousDriving (art. 7, preliminar)
+  regulations/   rules (catálogo), continuousDriving (art. 7), compliance (arts. 6 y 8: jornadas, descansos, informe)
   tachograph/    types (máquina de estados), manualEntry, display (modelo de pantalla)
-  simulator/     state, engine (reductor), derived (resúmenes), store (Zustand)
+  simulator/     state, engine (reductor), derived (resúmenes), warnings (avisos derivados del informe), store (Zustand)
   scenarios/     scenario (horizonte 14 días), cards (tarjetas ficticias)
   academy/       assist (modo asistido), exercises (catálogo)
   achievements/  (Fase 5)

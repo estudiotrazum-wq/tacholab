@@ -7,6 +7,7 @@ import { Tachograph } from '../components/Tachograph';
 import { TimeLab } from '../components/TimeLab';
 import { VehiclePanel } from '../components/VehiclePanel';
 import { StatusPanel } from '../components/StatusPanel';
+import { CompliancePanel } from '../components/CompliancePanel';
 import { AssistBanner } from '../components/AssistBanner';
 import { WarningDetail } from '../components/WarningDetail';
 
@@ -82,6 +83,7 @@ export function DeviceScreen() {
       <div className="space-y-4">
         <TimeLab highlight={highlight} />
         <VehiclePanel highlight={highlight} />
+        <CompliancePanel />
         <StatusPanel />
       </div>
     </div>

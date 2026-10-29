@@ -61,10 +61,25 @@ export interface Notice {
   text: string;
 }
 
-export type WarningCode = 'CONT_DRIVING_PREWARN' | 'CONT_DRIVING_EXCEEDED' | 'DRIVING_WITHOUT_CARD';
+export type WarningCode =
+  | 'CONT_DRIVING_PREWARN'
+  | 'CONT_DRIVING_EXCEEDED'
+  | 'DRIVING_WITHOUT_CARD'
+  | 'DAILY_DRIVING_PREWARN'
+  | 'DAILY_EXTENSION'
+  | 'DAILY_DRIVING_EXCEEDED'
+  | 'WEEKLY_DRIVING_PREWARN'
+  | 'WEEKLY_DRIVING_EXCEEDED'
+  | 'BIWEEKLY_DRIVING_PREWARN'
+  | 'BIWEEKLY_DRIVING_EXCEEDED'
+  | 'DAILY_REST_DUE'
+  | 'DAILY_REST_LAST_CALL'
+  | 'WEEKLY_REST_DUE';
 
 export interface DeviceWarning {
   code: WarningCode;
+  /** info = aviso preventivo o informativo; infringement = infracción simulada. */
+  severity: 'info' | 'warning' | 'infringement';
   title: string;
   text: string;
   ruleId: string | null;
@@ -79,7 +94,8 @@ export interface DeviceState {
   screen: Screen;
   notice: Notice | null;
   warning: DeviceWarning | null;
-  warnFlags: { prewarn: boolean; exceeded: boolean };
+  /** Avisos ya emitidos (clave = aviso + periodo al que se refiere). */
+  warnFlags: Record<string, true>;
 }
 
 export function initialDevice(): DeviceState {
@@ -90,7 +106,7 @@ export function initialDevice(): DeviceState {
     screen: { kind: 'STANDARD', page: 0 },
     notice: null,
     warning: null,
-    warnFlags: { prewarn: false, exceeded: false },
+    warnFlags: {},
   };
 }
 

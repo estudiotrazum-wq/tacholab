@@ -80,12 +80,19 @@ try {
   assert((await page.getByTestId('display-title').innerText()).includes('AVISO'), 'aviso de conducción continua en pantalla');
   await page.screenshot({ path: 'e2e/screenshots/03-device-warning.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  // Seguir conduciendo tras el límite genera la infracción.
+  await page.getByRole('button', { name: '+15 min' }).click();
   await page.getByTestId('vehicle-toggle').click();
+  assert((await page.getByTestId('infringement-count').innerText()).includes('1 infracción'), 'el panel normativo cuenta la infracción');
 
   const clockBeforeReload = await page.getByTestId('virtual-clock').innerText();
   await page.reload();
   await page.getByRole('button', { name: 'Tacógrafo', exact: true }).click();
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
+
+  await page.getByRole('button', { name: 'Informe', exact: true }).click();
+  assert((await page.getByTestId('findings').innerText()).includes('4 h 30 min'), 'el informe muestra la infracción de conducción continua con su norma');
+  await page.screenshot({ path: 'e2e/screenshots/06-report.png', fullPage: true });
 
   await page.getByRole('button', { name: 'Historial', exact: true }).click();
   const rows = await page.getByTestId('history-table').locator('tbody tr').count();

@@ -2,6 +2,19 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## Fase 2 — Motor normativo ✅ (preliminar, rama `fase-2-motor-normativo`)
+- [x] Segmentación de la línea temporal en jornadas delimitadas por descansos (no por medianoche)
+- [x] Descanso diario normal / fraccionado 3 + 9 / reducido / insuficiente con la ventana de 24 h (art. 8.2)
+- [x] 9 h / 10 h y ampliaciones por semana, 56 h, 90 h, máximo tres diarios reducidos
+- [x] Descanso semanal normal/reducido, seis periodos de 24 h, dos semanas consecutivas (art. 8.6)
+- [x] Compensaciones con fecha límite; quedan pendientes aunque venzan fuera de las dos semanas
+- [x] Clasificación: infracción simulada / advertencia / requiere contexto / información
+- [x] Avisos del tacógrafo: ampliación, límites diario/semanal/bisemanal, hora de iniciar el descanso diario y el semanal
+- [x] «Siguiente evento» se detiene en los umbrales y en los hitos de descanso (15/30/45 min, 9/11/24/45 h)
+- [x] Panel «Límites normativos» (conducción disponible y factor limitante) y pantalla **Informe**
+- [x] Escenario de referencia 56 h + 34 h validado por pruebas automáticas
+- [x] 70 pruebas unitarias + E2E
+
 ## v0.2
 - [x] Cálculos y pantalla del tacógrafo en **UTC** (semana lunes 00:00 – domingo 24:00 UTC); hora local solo informativa
 - [x] Nueva cabina de camión con LED: carretera animada en perspectiva, día/noche según hora local, retrovisores de camión,
@@ -35,7 +48,12 @@
 - [ ] Sin internacionalización (textos en español en componentes)
 - [ ] Accesibilidad: falta auditoría completa (lectores de pantalla, contraste AA medido)
 
-## Siguiente paso: Fase 2 — Motor normativo
+## Siguiente paso: Fase 3 — Laboratorio de dos semanas
+1. Calendario de 14 días con jornadas, descansos y su clasificación sobre las barras.
+2. Escenario guiado 56 + 34 h cargable (no como bloque aislado) y biblioteca de escenarios.
+3. Varios guardados (según plan) e informe de errores exportable.
+
+## (Histórico) Plan de la Fase 2
 1. ~~Obtener y archivar el texto consolidado vigente~~ (hecho: 31.12.2024). Contrastar la Directiva 2002/15/CE (disponibilidad).
 2. Segmentar la línea temporal en **periodos de trabajo diarios** delimitados por descansos (11 h, 3+9, ≥9 h reducido).
 3. Reglas: 9 h/10 h (contador de ampliaciones por semana), 56 h, 90 h, descansos diarios/semanales, reducciones y

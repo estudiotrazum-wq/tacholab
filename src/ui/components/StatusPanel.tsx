@@ -66,7 +66,7 @@ export function StatusPanel() {
         </tbody>
       </table>
       <p className="mt-2 text-[11px] leading-snug text-slate-500">
-        «Hoy» y «Semana» son acumulados de calendario en UTC (semana: lunes 00:00 – domingo 24:00 UTC). El tiempo de conducción diario normativo, que depende de los descansos, se calculará en la Fase 2.
+        «Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».
       </p>
     </Panel>
   );
