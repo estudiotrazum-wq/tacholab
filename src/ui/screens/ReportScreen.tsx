@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { RULES } from '@/regulations/rules';
 import type { Finding, Obligation } from '@/regulations/compliance';
 import { complianceFor } from '@/simulator/derived';
+import { scenarioDef } from '@/scenarios/library';
+import { driverEvents } from '@/time-engine/timeline';
 import { useSimStore } from '@/simulator/store';
 import { formatDuration } from '@/time-engine/units';
 import { formatDateTime, formatWeekday } from '@/time-engine/zoned';
@@ -31,6 +33,29 @@ export function ReportScreen() {
   const report = useMemo(() => complianceFor(sim, driverId), [sim, driverId]);
   if (!report) return null;
   const finished = sim.clock.now >= sim.clock.endsAt;
+  const def = scenarioDef(sim.scenario.libraryId);
+  const objectives = def?.evaluate?.(report, sim) ?? [];
+
+  const downloadJson = () => {
+    const data = {
+      generadoPor: 'TachoLab EU (simulador educativo, no oficial)',
+      escenario: sim.scenario,
+      evaluadoHasta: new Date(sim.clock.now).toISOString(),
+      normativa: 'Reglamento (CE) 561/2006, texto consolidado 02006R0561-20241231',
+      conductor: sim.cards[driverId]?.displayId,
+      semanas: report.weeks,
+      infracciones: report.findings,
+      obligaciones: report.obligations,
+      jornadas: report.periods,
+      actividades: driverEvents(sim.timeline, driverId),
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tacholab-informe-${sim.scenario.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-4">
@@ -40,9 +65,25 @@ export function ReportScreen() {
           {Object.values(sim.cards).map((c) => <option key={c.id} value={c.id}>{c.holderName}</option>)}
         </select>
         <span className="text-xs text-slate-500">
-          Evaluado hasta {fmt(sim.clock.now)} UTC{finished ? ' · escenario terminado' : ' · escenario en curso'}
+          {sim.scenario.title} · evaluado hasta {fmt(sim.clock.now)} UTC{finished ? ' · escenario terminado' : ' · escenario en curso'}
+        </span>
+        <span className="ml-auto flex gap-2 print:hidden">
+          <button type="button" onClick={() => window.print()} className="rounded-md border border-ink-600 px-3 py-1.5 text-xs hover:border-cyan-700">Imprimir / PDF</button>
+          <button type="button" onClick={downloadJson} data-testid="export-json" className="rounded-md border border-ink-600 px-3 py-1.5 text-xs hover:border-cyan-700">Descargar JSON</button>
         </span>
       </div>
+
+      {objectives.length > 0 && (
+        <Panel title="Objetivos del escenario (comprobación automática)">
+          <ul className="grid gap-2 sm:grid-cols-3" data-testid="objectives">
+            {objectives.map((o) => (
+              <li key={o.text} className={`rounded-lg border px-3 py-2 text-sm ${o.status === 'done' ? 'border-emerald-600/50 text-emerald-200' : o.status === 'failed' ? 'border-rose-600/50 text-rose-200' : 'border-ink-600 text-slate-300'}`}>
+                {o.status === 'done' ? '✓' : o.status === 'failed' ? '✗' : '…'} {o.text}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-4">
         {report.weeks.map((w, i) => (

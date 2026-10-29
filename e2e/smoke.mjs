@@ -21,11 +21,11 @@ async function waitForServer() {
 }
 
 let browser;
+const errors = [];
 try {
   await waitForServer();
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 950 } });
-  const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   mkdirSync('e2e/screenshots', { recursive: true });
@@ -94,10 +94,33 @@ try {
   assert((await page.getByTestId('findings').innerText()).includes('4 h 30 min'), 'el informe muestra la infracción de conducción continua con su norma');
   await page.screenshot({ path: 'e2e/screenshots/06-report.png', fullPage: true });
 
-  await page.getByRole('button', { name: 'Historial', exact: true }).click();
+  await page.getByRole('button', { name: 'Calendario', exact: true }).click();
+  await page.getByTestId('history-table').waitFor();
   const rows = await page.getByTestId('history-table').locator('tbody tr').count();
-  assert(rows >= 2, `el historial muestra registros (${rows})`);
-  await page.screenshot({ path: 'e2e/screenshots/04-history.png', fullPage: true });
+  assert(rows >= 2, `el calendario muestra el registro de actividades (${rows})`);
+  assert((await page.getByTestId('day-detail').count()) === 1, 'el calendario muestra el detalle del día');
+
+  // Biblioteca de escenarios: cargar la referencia 56 + 34 h
+  page.on('dialog', (d) => d.accept());
+  await page.getByRole('button', { name: 'Escenarios', exact: true }).click();
+  assert(await page.getByTestId('load-week2-34').isDisabled(), 'los escenarios premium están bloqueados en el plan gratuito');
+  await page.getByTestId('load-ref-5634').click();
+  await page.getByTestId('history-days').waitFor();
+  await page.screenshot({ path: 'e2e/screenshots/04-calendar.png', fullPage: true });
+  await page.getByRole('button', { name: 'Informe', exact: true }).click();
+  await page.getByTestId('objectives').waitFor();
+  const objectives = await page.getByTestId('objectives').innerText();
+  assert(objectives.includes('✓ Semana 1 con 56 h') && objectives.includes('✓ Semana 2 con 34 h') && objectives.includes('✓ Sin infracciones'), 'la referencia 56 + 34 h cumple todos los objetivos');
+  await page.screenshot({ path: 'e2e/screenshots/07-report-reference.png', fullPage: true });
+
+  // Guardados: el plan gratuito permite uno
+  await page.getByRole('button', { name: 'Escenarios', exact: true }).click();
+  await page.getByTestId('save-slot').click();
+  await page.getByText('Escenario guardado').waitFor();
+  await page.getByTestId('save-slot').click();
+  await page.getByText('Tu plan permite 1').waitFor();
+  assert((await page.getByTestId('slots').locator('li').count()) === 1, 'el plan gratuito limita a un escenario guardado');
+  await page.screenshot({ path: 'e2e/screenshots/08-scenarios.png', fullPage: true });
 
   // Vista móvil
   await page.setViewportSize({ width: 390, height: 844 });
@@ -108,6 +131,7 @@ try {
   console.log('\nE2E OK');
 } catch (e) {
   console.error(e.message);
+  if (errors.length) console.error('Errores en la página:', errors.join(' | '));
   process.exitCode = 1;
 } finally {
   await browser?.close();

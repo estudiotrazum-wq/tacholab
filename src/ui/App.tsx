@@ -3,7 +3,8 @@ import { useSimLoop } from './hooks/useSimLoop';
 import { HomeScreen } from './screens/HomeScreen';
 import { CabinScreen } from './screens/CabinScreen';
 import { DeviceScreen } from './screens/DeviceScreen';
-import { HistoryScreen } from './screens/HistoryScreen';
+import { CalendarScreen } from './screens/CalendarScreen';
+import { ScenariosScreen } from './screens/ScenariosScreen';
 import { ReportScreen } from './screens/ReportScreen';
 import { AcademyScreen } from './screens/AcademyScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
@@ -13,8 +14,9 @@ const NAV: { id: View; label: string }[] = [
   { id: 'home', label: 'Inicio' },
   { id: 'cabin', label: 'Cabina' },
   { id: 'device', label: 'Tacógrafo' },
-  { id: 'history', label: 'Historial' },
+  { id: 'calendar', label: 'Calendario' },
   { id: 'report', label: 'Informe' },
+  { id: 'scenarios', label: 'Escenarios' },
   { id: 'academy', label: 'Academia' },
   { id: 'premium', label: 'Premium' },
   { id: 'settings', label: 'Ajustes' },
@@ -26,7 +28,7 @@ export function App() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-20 border-b border-ink-700 bg-ink-950/90 backdrop-blur">
+      <header className="sticky top-0 z-20 print:hidden border-b border-ink-700 bg-ink-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2">
           <button type="button" onClick={() => go('home')} className="flex items-center gap-2 font-semibold text-white">
             <span className="grid h-7 w-7 place-items-center rounded-md bg-cyan-500/15 font-mono text-xs text-cyan-300">TL</span>
@@ -52,15 +54,16 @@ export function App() {
         {view === 'home' && <HomeScreen />}
         {view === 'cabin' && <CabinScreen />}
         {view === 'device' && <DeviceScreen />}
-        {view === 'history' && <HistoryScreen />}
+        {view === 'calendar' && <CalendarScreen />}
         {view === 'report' && <ReportScreen />}
+        {view === 'scenarios' && <ScenariosScreen />}
         {view === 'academy' && <AcademyScreen />}
         {view === 'premium' && <PremiumScreen />}
         {view === 'settings' && <SettingsScreen />}
       </main>
 
-      <footer className="border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
-        TachoLab EU v0.3 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+      <footer className="print:hidden border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
+        TachoLab EU v0.4 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
       </footer>
 
       {!disclaimerAccepted && (

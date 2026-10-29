@@ -2,6 +2,19 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## Fase 3 — Laboratorio de dos semanas ✅ (rama `fase-3-laboratorio`)
+- [x] Calendario de 14 días (sustituye al historial): actividad, franja con la clasificación normativa de cada descanso
+      (diario normal / fraccionado / reducido / insuficiente, semanal normal / reducido), ▲ infracciones y detalle por día
+- [x] Indicadores: semana 1, semana 2, total, ampliaciones, reducidos, disponible, infracciones y obligaciones pendientes
+- [x] Generador de calendarios coherentes (`scenarios/builder.ts`) y biblioteca de escenarios (`scenarios/library.ts`):
+      práctica libre, **referencia 56 h + 34 h** (gratis), semana 2: completa las 34 h, descanso semanal reducido y
+      compensación, encuentra los errores (premium)
+- [x] Objetivos por escenario con comprobación automática en el Informe
+- [x] Escenarios guardados con límite por plan (1 gratis / 5 premium) y borrado
+- [x] Informe imprimible (PDF desde el navegador) y descargable en JSON
+- [x] Vista previa premium solo en el servidor de desarrollo (no existe en la versión compilada)
+- [x] 77 pruebas unitarias + E2E (carga de la referencia, bloqueo premium, límite de guardados)
+
 ## Fase 2 — Motor normativo ✅ (preliminar, rama `fase-2-motor-normativo`)
 - [x] Segmentación de la línea temporal en jornadas delimitadas por descansos (no por medianoche)
 - [x] Descanso diario normal / fraccionado 3 + 9 / reducido / insuficiente con la ventana de 24 h (art. 8.2)
@@ -48,10 +61,9 @@
 - [ ] Sin internacionalización (textos en español en componentes)
 - [ ] Accesibilidad: falta auditoría completa (lectores de pantalla, contraste AA medido)
 
-## Siguiente paso: Fase 3 — Laboratorio de dos semanas
-1. Calendario de 14 días con jornadas, descansos y su clasificación sobre las barras.
-2. Escenario guiado 56 + 34 h cargable (no como bloque aislado) y biblioteca de escenarios.
-3. Varios guardados (según plan) e informe de errores exportable.
+## Siguiente paso: Fase 4 — Experiencia inmersiva (o Fase 5 — Academia)
+- Fase 4: cámara y transiciones de la cabina, iluminación día/noche más rica, adaptación a tableta y móvil.
+- Fase 5: convertir los escenarios en ejercicios guiados con puntuación, progreso e insignias (los cinco gratuitos primero).
 
 ## (Histórico) Plan de la Fase 2
 1. ~~Obtener y archivar el texto consolidado vigente~~ (hecho: 31.12.2024). Contrastar la Directiva 2002/15/CE (disponibilidad).

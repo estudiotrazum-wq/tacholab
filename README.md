@@ -30,8 +30,9 @@ npm run e2e          # prueba de interacción en navegador real (Playwright; req
 6. Detén el vehículo, selecciona descanso y avanza 45 min: el contador de conducción continua vuelve a 0.
 7. ✓ abre el **menú** (tiempos, actividades de hoy, resumen de jornada, retirada, información).
 8. ⏏ retira la tarjeta; avanza unas horas y vuelve a insertarla para probar la **entrada manual**.
-9. **Historial**: barras de 14 días, tabla de actividades y registro del equipo.
-10. Recarga la página: el estado se conserva (localStorage).
+9. **Calendario**: 14 días con la clasificación de cada descanso, infracciones y detalle por día. **Informe**: infracciones, obligaciones, jornadas y objetivos; se puede imprimir o descargar en JSON.
+10. **Escenarios**: carga la referencia 56 h + 34 h o guarda tu escenario (1 en el plan gratuito).
+11. Recarga la página: el estado se conserva (localStorage).
 
 Todas las horas del tacógrafo y del laboratorio de tiempo son **UTC**; la hora local se muestra solo como referencia.
 

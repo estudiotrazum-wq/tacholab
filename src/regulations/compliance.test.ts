@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { Activity } from '@/shared/types';
 import type { ActivityEvent } from '@/time-engine/timeline';
 import { HOUR, MINUTE } from '@/time-engine/units';
 import { createFreeScenario, REFERENCE_ANCHOR } from '@/scenarios/scenario';
@@ -8,16 +7,8 @@ import { analyzeCompliance, type ComplianceReport } from './compliance';
 const sc = createFreeScenario(REFERENCE_ANCHOR); // lunes 02/11/2026 00:00 UTC; reloj a las 06:00 UTC
 const ctx = { startsAt: sc.startsAt, weekOneStart: sc.weekOneStart, endsAt: sc.endsAt, timeZone: sc.timeZone };
 
-type Step = [Activity, number]; // [actividad, minutos]
-const D = (m: number): Step => ['DRIVING', m];
-const W = (m: number): Step => ['WORK', m];
-const R = (m: number): Step => ['REST', m];
-const Rh = (hours: number): Step => ['REST', hours * 60];
-
-/** Jornada típica de 9 h de conducción con pausa de 45 min. */
-const day9 = (): Step[] => [W(15), D(270), R(45), D(270), W(15)];
-/** Jornada de 10 h de conducción (ampliación). */
-const day10 = (): Step[] => [W(15), D(270), R(45), D(270), R(45), D(60), W(15)];
+import { day10, day9, D, minutes, R, Rh, W, type Step } from '@/scenarios/builder';
+import { reference5634Plan } from '@/scenarios/library';
 
 function build(steps: Step[], start = sc.startsAt, openLast = false): { events: ActivityEvent[]; end: number } {
   let t = start;
@@ -37,7 +28,6 @@ function analyze(steps: Step[], opts: { now?: number; openLast?: boolean } = {})
 const ids = (r: ComplianceReport) => r.findings.filter((f) => f.severity === 'infringement').map((f) => f.ruleId);
 /** Hasta la hora de inicio de la jornada siguiente (06:00 + desfase) con descanso. */
 const restUntilNextDay = (dayMinutes: number, startOffsetMin = 0): Step => R(24 * 60 - dayMinutes + startOffsetMin);
-const minutes = (steps: Step[]) => steps.reduce((a, [, m]) => a + m, 0);
 
 describe('conducción diaria (art. 6.1)', () => {
   it('9 h no es ampliación; el tiempo diario no se reinicia a medianoche', () => {
@@ -169,26 +159,13 @@ describe('escenario formativo de referencia: 56 h + 34 h = 90 h', () => {
    * Semana 1 (lun–sáb): 4 jornadas de 9 h + 2 de 10 h = 56 h, inicio 06:00 UTC, descansos diarios ≥ 11 h.
    * Descanso semanal normal del sábado 16:15 al lunes 13:30 (45 h 15 min).
    * Semana 2: 9 + 9 + 9 + 7 = 34 h y descanso semanal normal hasta el final.
+   * Definido en src/scenarios/library.ts.
    */
+  /** Calendario de la biblioteca de escenarios (fuente única); sin el descanso final hasta el cierre. */
   function reference(): Step[] {
-    const steps: Step[] = [];
-    const days = [day10(), day9(), day10(), day9(), day9(), day9()];
-    days.forEach((d, i) => {
-      steps.push(...d);
-      if (i < days.length - 1) steps.push(restUntilNextDay(minutes(d)));
-    });
-    // Sábado termina a las 16:15; descanso hasta el lunes 13:30 UTC.
-    const satStart = sc.startsAt + 5 * 24 * HOUR;
-    const satEnd = satStart + minutes(days[5]!) * MINUTE;
-    const monday13 = sc.weekOneStart + 7 * 24 * HOUR + 13.5 * HOUR;
-    steps.push(R((monday13 - satEnd) / MINUTE));
-    const day7: Step[] = [W(15), D(270), R(45), D(150), W(15)];
-    const w2 = [day9(), day9(), day9(), day7];
-    w2.forEach((d, i) => {
-      steps.push(...d);
-      steps.push(i < w2.length - 1 ? restUntilNextDay(minutes(d)) : R(0));
-    });
-    return steps.filter(([, m]) => m > 0);
+    const steps = [...reference5634Plan(sc).steps];
+    steps.pop();
+    return steps;
   }
 
   it('es coherente: 56 h + 34 h, sin infracciones y sin obligaciones vencidas', () => {

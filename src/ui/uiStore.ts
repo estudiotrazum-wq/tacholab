@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { browserStorage, KEYS } from '@/persistence/storage';
+import { DEFAULT_ENTITLEMENTS, type Entitlements } from '@/billing/plans';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
-export type View = 'home' | 'cabin' | 'device' | 'history' | 'report' | 'academy' | 'premium' | 'settings';
+export type View = 'home' | 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings';
 export type LearningMode = 'assisted' | 'free';
 
 /** Colores de la iluminación ambiental LED de la cabina. */
@@ -20,9 +21,11 @@ interface Settings {
   disclaimerAccepted: boolean;
   warningsEnabled: boolean;
   ledColor: LedColor;
+  /** Solo en desarrollo: vista previa local de contenido premium (no es un permiso real). */
+  devPremiumPreview: boolean;
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan' };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false };
 
 function loadSettings(): Settings {
   try {
@@ -45,11 +48,21 @@ export const useUiStore = create<UiStore>((set, get) => ({
   go: (view) => set({ view }),
   update: (patch) => {
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview }));
     } catch {
       /* sin almacenamiento */
     }
   },
 }));
+
+/**
+ * Permisos comerciales efectivos en el cliente. En producción siempre «free»
+ * hasta que exista validación en servidor (Fase 6); la vista previa premium
+ * solo funciona en el servidor de desarrollo.
+ */
+export function useEntitlements(): Entitlements {
+  const preview = useUiStore((s) => s.devPremiumPreview);
+  return import.meta.env.DEV && preview ? { plan: 'premium', source: 'local-default' } : DEFAULT_ENTITLEMENTS;
+}

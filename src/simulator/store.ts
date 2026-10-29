@@ -10,6 +10,8 @@ import {
   saveCheckpoint,
   type KeyValueStorage,
 } from '@/persistence/storage';
+import { deleteSlot, listSlots, saveSlot, type SaveResult, type SaveSlot } from '@/persistence/slots';
+import type { ScenarioDef } from '@/scenarios/library';
 
 /** Store del estado operativo de la simulación. La lógica vive en el reductor puro. */
 interface SimStore {
@@ -22,6 +24,11 @@ interface SimStore {
   checkpointSavedAt: () => number | null;
   reset: () => void;
   wipeAllData: () => void;
+  loadScenario: (def: ScenarioDef) => void;
+  slots: () => SaveSlot[];
+  saveSlot: (name: string, limit: number) => SaveResult;
+  loadSlot: (id: string) => boolean;
+  deleteSlot: (id: string) => void;
 }
 
 let storage: KeyValueStorage | null = null;
@@ -59,4 +66,18 @@ export const useSimStore = create<SimStore>((set, get) => ({
     clearAll(getStorage());
     set({ sim: createInitialSim(), dirty: false });
   },
+  loadScenario: (def) => {
+    set({ sim: def.build() });
+    get().persist();
+  },
+  slots: () => listSlots(getStorage()),
+  saveSlot: (name, limit) => saveSlot(getStorage(), get().sim, name, limit),
+  loadSlot: (id) => {
+    const slot = listSlots(getStorage()).find((s) => s.id === id);
+    if (!slot) return false;
+    set({ sim: slot.sim });
+    get().persist();
+    return true;
+  },
+  deleteSlot: (id) => deleteSlot(getStorage(), id),
 }));
