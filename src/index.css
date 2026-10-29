@@ -53,7 +53,8 @@ body {
 
 /* Tarjetas de cristal */
 .glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+  /* Cristal oscuro: lo bastante opaco para leer sobre el atlas */
+  background: linear-gradient(180deg, rgba(14, 22, 38, 0.86), rgba(9, 15, 28, 0.80));
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px -24px rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(14px);
@@ -203,3 +204,25 @@ body {
   100% { transform: translateY(-160%); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .card-eject { animation: none; transform: translateY(-50%); } }
+
+/* Fondo «atlas de carreteras» */
+.atlas-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: #040a16;
+}
+.atlas-vignette {
+  position: absolute;
+  inset: 0;
+  /* Atenúa el centro (donde está el contenido) y los bordes */
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 45%, rgba(4, 9, 19, 0.62), rgba(4, 9, 19, 0.25) 70%, rgba(4, 9, 19, 0.55) 100%),
+    linear-gradient(180deg, rgba(4, 9, 19, 0.35), transparent 20%, transparent 80%, rgba(4, 9, 19, 0.5));
+}
+.atlas-flow { animation: atlas-flow 1.6s linear infinite; }
+@keyframes atlas-flow { to { stroke-dashoffset: -52; } }
+.atlas-ping { animation: atlas-ping 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes atlas-ping { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .atlas-flow, .atlas-ping { animation: none; } }

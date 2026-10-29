@@ -46,6 +46,7 @@ try {
   await page.getByRole('button', { name: 'Explorar por mi cuenta' }).click();
   assert(await page.getByTestId('card-slot').isVisible(), 'la app abre directamente en el simulador');
   assert(await page.getByTestId('tutorial-invite').isVisible(), 'el panel invita a hacer el tutorial');
+  assert(await page.getByTestId('atlas-bg').isVisible(), 'fondo de atlas de carreteras por defecto');
   await page.screenshot({ path: 'e2e/screenshots/01-home.png' });
 
   await goTo('Simulador', 'Cabina');
@@ -298,6 +299,15 @@ try {
   await page.getByTestId('confirm-ok').click();
   assert((await page.getByTestId('virtual-clock').innerText()).startsWith('07:00'), 'repetir la jornada vuelve al momento previo a la inserción');
   assert((await line(1)).includes('Inserte tarjeta'), 'repetir la jornada: la tarjeta vuelve a estar fuera');
+
+  // Apariencia: tema de pantalla nocturno y fondo liso
+  await page.getByRole('button', { name: 'Ajustes' }).first().click();
+  await page.getByTestId('lcd-night').check();
+  await page.getByTestId('bg-plain').check();
+  assert((await page.getByTestId('atlas-bg').count()) === 0, 'se puede cambiar al fondo liso');
+  await page.getByTestId('bg-atlas').check();
+  await page.getByTestId('lcd-classic').check();
+  await goTo('Simulador', 'Panel');
 
   // Sonido: efectos y música country sintetizados sin errores
   await page.getByTestId('sound-button').click();

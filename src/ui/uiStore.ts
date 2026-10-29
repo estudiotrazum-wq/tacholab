@@ -34,9 +34,13 @@ interface Settings {
   volume: number;
   musicVolume: number;
   engineVolume: number;
+  /** Fondo de la aplicación: atlas de carreteras o degradado liso. */
+  background: 'atlas' | 'plain';
+  /** Pantalla del tacógrafo: LCD clásico verde, nocturno (texto claro sobre oscuro) o ámbar. */
+  lcdTheme: 'classic' | 'night' | 'amber';
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '', sfxOn: true, musicOn: false, volume: 0.7, musicVolume: 0.45, engineVolume: 0.5 };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '', sfxOn: true, musicOn: false, volume: 0.7, musicVolume: 0.45, engineVolume: 0.5, background: 'atlas', lcdTheme: 'classic' };
 
 function loadSettings(): Settings {
   try {
@@ -66,9 +70,9 @@ export const useUiStore = create<UiStore>((set, get) => ({
   },
   update: (patch) => {
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme }));
     } catch {
       /* sin almacenamiento */
     }

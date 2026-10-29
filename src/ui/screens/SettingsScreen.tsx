@@ -48,6 +48,41 @@ export function SettingsScreen() {
         </fieldset>
       </Panel>
 
+      <Panel title="Apariencia">
+        <fieldset className="grid gap-2 text-sm sm:grid-cols-2">
+          <legend className="mb-2 text-slate-300">Fondo</legend>
+          {([
+            ['atlas', 'Atlas de carreteras', 'Mapa nocturno con la ruta del camión, que avanza según los kilómetros.'],
+            ['plain', 'Liso', 'Degradado oscuro sin mapa (más sobrio).'],
+          ] as const).map(([v, t, d]) => (
+            <label key={v} className={`flex cursor-pointer items-start gap-2 rounded-xl border p-3 ${ui.background === v ? 'border-cyan-300/50 bg-cyan-400/10' : 'border-white/10'}`}>
+              <input type="radio" name="background" checked={ui.background === v} onChange={() => ui.update({ background: v })} className="mt-1 accent-cyan-400" data-testid={`bg-${v}`} />
+              <span>
+                <span className="text-slate-100">{t}</span>
+                <span className="block text-xs text-slate-400">{d}</span>
+              </span>
+            </label>
+          ))}
+        </fieldset>
+        <fieldset className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+          <legend className="mb-2 text-slate-300">Pantalla del tacógrafo</legend>
+          {([
+            ['classic', 'Clásica', 'LCD verde, el más extendido', 'linear-gradient(180deg,#c9d67a,#b4c262)', '#1d2610'],
+            ['night', 'Nocturna', 'Texto claro sobre fondo oscuro', 'linear-gradient(180deg,#0c1a2b,#08121f)', '#e6f4ff'],
+            ['amber', 'Ámbar', 'Retroiluminación ámbar', 'linear-gradient(180deg,#1a1206,#120c03)', '#ffb547'],
+          ] as const).map(([v, t, d, bg, ink]) => (
+            <label key={v} className={`flex cursor-pointer flex-col gap-2 rounded-xl border p-3 ${ui.lcdTheme === v ? 'border-cyan-300/50 bg-cyan-400/10' : 'border-white/10'}`}>
+              <span className="flex items-center gap-2">
+                <input type="radio" name="lcd" checked={ui.lcdTheme === v} onChange={() => ui.update({ lcdTheme: v })} className="accent-cyan-400" data-testid={`lcd-${v}`} />
+                <span className="text-slate-100">{t}</span>
+              </span>
+              <span className="rounded-md px-2 py-1 font-mono text-sm" style={{ background: bg, color: ink, fontFamily: '"VT323", ui-monospace, monospace' }}>12:40 ⊙ 80km/h</span>
+              <span className="text-xs text-slate-400">{d}</span>
+            </label>
+          ))}
+        </fieldset>
+      </Panel>
+
       <Panel title="Cabina">
         <label className="block text-sm text-slate-300" htmlFor="quality">Calidad visual</label>
         <select id="quality" value={cab.quality} onChange={(e) => cab.set({ quality: e.target.value as Quality })} className="mt-1 rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm">

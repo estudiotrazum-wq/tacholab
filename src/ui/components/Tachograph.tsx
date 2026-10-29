@@ -5,9 +5,17 @@ import type { Button } from '@/tachograph/types';
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
 import { LcdLine } from './Lcd';
+import { useUiStore } from '../uiStore';
 import { sound } from '../audio/sound';
 
 export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
+
+/** Temas de la pantalla: LCD clásico (positivo verde), nocturno (negativo) y ámbar. */
+export const LCD_THEMES = {
+  classic: { on: 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)', off: 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', ink: '#1d2610', inkOff: '#2b3318', glow: '' },
+  night: { on: 'linear-gradient(180deg, #0c1a2b 0%, #08121f 100%)', off: 'linear-gradient(180deg, #070b11 0%, #05080c 100%)', ink: '#e6f4ff', inkOff: '#3a4656', glow: '0 0 6px rgba(125, 211, 252, 0.55)' },
+  amber: { on: 'linear-gradient(180deg, #1a1206 0%, #120c03 100%)', off: 'linear-gradient(180deg, #0b0804 0%, #070502 100%)', ink: '#ffb547', inkOff: '#4a3818', glow: '0 0 7px rgba(255, 170, 51, 0.6)' },
+} as const;
 
 /** Tiempo que hay que mantener pulsada la tecla 1 para expulsar la tarjeta. */
 const LONG_PRESS_MS = 1200;
@@ -24,6 +32,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
   const model = useMemo(() => renderDisplay(sim), [sim]);
+  const lcd = LCD_THEMES[useUiStore((st) => st.lcdTheme)];
   const press = (button: Button) => {
     sound.beep();
     dispatch({ type: 'PRESS', button });
@@ -62,7 +71,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
             <div data-tour="console">
               <div
                 className={`relative overflow-hidden rounded-md border-[3px] border-[#0b0c0e] px-3 py-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.55)] ${model.mode === 'warning' ? 'lcd-warning' : ''}`}
-                style={{ background: model.backlight ? 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)' : 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', transition: 'background 400ms' }}
+                style={{ background: model.backlight ? lcd.on : lcd.off, transition: 'background 400ms' }}
                 data-backlight={model.backlight ? 'on' : 'off'}
                 role="status"
                 aria-live="polite"
@@ -71,7 +80,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
               >
                 {/* El texto se escala con el ancho del visor para que siempre quepan las 20 columnas */}
                 <div style={{ containerType: 'inline-size' }}>
-                <div className="lcd-text leading-[1.05] text-[#1d2610]" style={{ fontFamily: '"VT323", ui-monospace, monospace', fontSize: 'min(2.15rem, calc(100cqw / 10.4))' }}>
+                <div className="lcd-text leading-[1.05]" style={{ color: model.backlight ? lcd.ink : lcd.inkOff, textShadow: lcd.glow && model.backlight ? lcd.glow : undefined, fontFamily: '"VT323", ui-monospace, monospace', fontSize: 'min(2.15rem, calc(100cqw / 10.4))' }}>
                   <LcdLine text={model.lines[0]} testId="display-line-0" />
                   <LcdLine text={model.lines[1]} testId="display-line-1" />
                 </div>

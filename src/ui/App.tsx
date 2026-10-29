@@ -23,6 +23,7 @@ import { startTutorial } from './tutorial';
 import { syncDriverName } from './driverName';
 import { useSound } from './audio/useSound';
 import { SoundButton } from './components/SoundControls';
+import { AtlasBackground } from './background/AtlasBackground';
 import { DriverNameField } from './components/DriverNameField';
 
 
@@ -40,12 +41,13 @@ export function App() {
   }, []);
   useEffect(() => syncDriverName(), []);
   useSound();
+  const background = useUiStore((s) => s.background);
   const { view, go, disclaimerAccepted, update, lastViews, learningMode } = useUiStore();
   const section = sectionOf(view);
 
   return (
     <div className="flex min-h-full">
-      <div className="app-bg" aria-hidden="true" />
+      {background === 'atlas' ? <AtlasBackground /> : <div className="app-bg" aria-hidden="true" />}
 
       {/* Menú lateral (escritorio) */}
       <aside className="sticky top-0 z-30 hidden h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-white/5 bg-[#050913]/70 py-4 backdrop-blur-xl md:flex print:hidden" aria-label="Menú">
@@ -103,7 +105,7 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.17 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.18 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 

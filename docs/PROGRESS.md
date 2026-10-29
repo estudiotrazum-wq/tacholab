@@ -2,6 +2,18 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.18 — Interfaz modernizada: fondo de atlas, llave nueva y temas de pantalla (rama `ui-rediseno`)
+- [x] **Fondo «atlas de carreteras»** nocturno (diseño propio): península ibérica, sur de Francia y noroeste de
+      Italia con relieve, costa iluminada, fronteras, autovías con su denominación, ciudades y rotulación de mares.
+      La ruta Madrid → Lyon va resaltada y el **camión avanza por ella según el cuentakilómetros**; animación
+      desactivada si el sistema pide reducir el movimiento. Opción «Liso» en Ajustes → Apariencia
+- [x] **Llave de contacto moderna**: mando rotativo con bisel, llave de tipo mando a distancia con LED de estado y
+      anillo de LED por posición (0 gris · I ámbar · II verde); botones segmentados con el color de cada estado
+- [x] **Temas de la pantalla del tacógrafo**: clásica (LCD verde), nocturna (texto claro sobre fondo oscuro) y
+      ámbar, con vista previa en Ajustes
+- [x] Tarjetas de cristal más opacas para leer bien sobre el mapa
+- [x] 144 pruebas unitarias + E2E
+
 ## v0.17 — Manejo más realista a partir de un manual de usuario de tacógrafo (rama `ui-rediseno`)
 Referencia de manejo: manual de usuario de un tacógrafo digital de 2.ª generación (enlace aportado por el usuario,
 no se incluye en el repositorio). Se toma solo el modelo de interacción; textos, pictogramas y diseño son propios.
