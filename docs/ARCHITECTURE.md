@@ -44,7 +44,8 @@ src/
   achievements/  (Fase 5)
   billing/       plans (features, precios, entitlements)
   persistence/   storage (localStorage, punto de restauración, borrado), slots (escenarios guardados por plan)
-  ui/            App, screens/, components/, hooks/
+  ui/            App, screens/, components/, hooks/ (useDeviceKeys, useMediaQuery, useSimLoop),
+                 cabin/ (camera, lighting, cabinStore: estado visual separado, CabinScene, CabinInterior)
 e2e/             smoke.mjs (Playwright)
 docs/
 ```

@@ -2,6 +2,20 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## Fase 4 — Experiencia inmersiva ✅ (rama `fase-4-inmersiva`)
+- [x] Cámara con cuatro puntos de vista (conducción, tacógrafo, retrovisor, consola de techo), transiciones y encuadre
+      limitado para no mostrar zonas vacías (`ui/cabin/camera.ts`, probado)
+- [x] Mirada con el ratón (paralaje con profundidad: el paisaje se mueve menos que el interior)
+- [x] El tacógrafo se maneja **dentro de la cabina** (el componente real superpuesto, con teclado)
+- [x] Iluminación continua según la hora local: cielo, sol que recorre el cielo, luna, estrellas, carretera más oscura de
+      noche (`ui/cabin/lighting.ts`, probado)
+- [x] Interruptores funcionales: faros (haz sobre la calzada), luz interior, emergencia (testigos e intermitentes de los
+      espejos) y LED; parasol abatible; panel de techo con color e intensidad de los LED
+- [x] Reflejo del retrovisor con marcas viales en movimiento
+- [x] Calidad visual «Básica» para ordenadores modestos y respeto de «reducir movimiento»
+- [x] Tableta: cabina completa; móvil: modo dispositivo recomendado y barra de control fija
+- [x] 85 pruebas unitarias + E2E con cámaras, interruptores, LED y móvil
+
 ## Fase 3 — Laboratorio de dos semanas ✅ (rama `fase-3-laboratorio`)
 - [x] Calendario de 14 días (sustituye al historial): actividad, franja con la clasificación normativa de cada descanso
       (diario normal / fraccionado / reducido / insuficiente, semanal normal / reducido), ▲ infracciones y detalle por día
@@ -61,9 +75,10 @@
 - [ ] Sin internacionalización (textos en español en componentes)
 - [ ] Accesibilidad: falta auditoría completa (lectores de pantalla, contraste AA medido)
 
-## Siguiente paso: Fase 4 — Experiencia inmersiva (o Fase 5 — Academia)
-- Fase 4: cámara y transiciones de la cabina, iluminación día/noche más rica, adaptación a tableta y móvil.
-- Fase 5: convertir los escenarios en ejercicios guiados con puntuación, progreso e insignias (los cinco gratuitos primero).
+## Siguiente paso: Fase 5 — Academia
+- Ejercicios guiados con puntuación, progreso e insignias (los cinco gratuitos primero), reutilizando los escenarios y
+  el modo asistido.
+- Posible evolución visual futura: cabina en React Three Fiber (la cámara y la iluminación ya están separadas del dibujo).
 
 ## (Histórico) Plan de la Fase 2
 1. ~~Obtener y archivar el texto consolidado vigente~~ (hecho: 31.12.2024). Contrastar la Directiva 2002/15/CE (disponibilidad).

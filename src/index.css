@@ -103,3 +103,27 @@ body {
   .road-line.dashed, .road-shoulder, .cab-charm, .cab-steam path, .cab-star, .led-breathe, .cab-tacho-ring { animation: none !important; }
 }
 @keyframes honk { 0% { opacity: 0; transform: scale(0.6) rotate(-6deg); } 25% { opacity: 1; transform: scale(1.1) rotate(-6deg); } 100% { opacity: 0; transform: translateY(-30px) scale(1) rotate(-6deg); } }
+
+/* Fase 4: cámara, luces y calidad */
+.cab-stage { --led-intensity: 0.85; }
+.cab-stage .led-glow { opacity: calc(0.9 * var(--led-intensity)); }
+.cab-stage .led-core { opacity: calc(0.4 + 0.6 * var(--led-intensity)); }
+.cab-stage.led-off .led-glow, .cab-stage.led-off [fill="url(#ledwash)"] { opacity: 0; }
+.cab-stage.led-off .led-core { opacity: 0.12; }
+.cab-camera { transition: transform 750ms cubic-bezier(.4, 0, .2, 1); will-change: transform; }
+.cab-camera.is-looking { transition: transform 300ms ease-out; }
+.cab-scene { transition: transform 300ms ease-out; }
+.mirror-road { animation: mirror-road var(--road-speed) linear infinite; animation-play-state: paused; }
+.cab-stage.is-moving .mirror-road { animation-play-state: running; }
+@keyframes mirror-road { to { stroke-dashoffset: -16; } }
+.hazard-blink { animation: hazard 0.8s steps(2, jump-none) infinite; }
+@keyframes hazard { 0% { opacity: 1; } 100% { opacity: 0.15; } }
+/* Calidad baja: sin desenfoques ni animaciones decorativas (ordenadores modestos) */
+.cab-stage.q-low .led-glow, .cab-stage.q-low [filter] { display: none; }
+.cab-stage.q-low .road-line.dashed, .cab-stage.q-low .road-shoulder, .cab-stage.q-low .cab-charm,
+.cab-stage.q-low .cab-steam path, .cab-stage.q-low .cab-star, .cab-stage.q-low .led-breathe, .cab-stage.q-low .mirror-road { animation: none !important; }
+.cab-stage.q-low .cab-camera { transition-duration: 200ms; }
+@media (prefers-reduced-motion: reduce) {
+  .mirror-road, .hazard-blink { animation: none !important; }
+  .cab-camera { transition: none; }
+}

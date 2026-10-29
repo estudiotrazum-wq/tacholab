@@ -15,6 +15,7 @@ export const KEYS = {
   checkpoint: 'tacholab.v1.checkpoint',
   settings: 'tacholab.v1.settings',
   slots: 'tacholab.v1.slots',
+  cabin: 'tacholab.v1.cabin',
 } as const;
 
 export interface Checkpoint {

@@ -63,7 +63,7 @@ export function App() {
       </main>
 
       <footer className="print:hidden border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
-        TachoLab EU v0.4 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+        TachoLab EU v0.5 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
       </footer>
 
       {!disclaimerAccepted && (

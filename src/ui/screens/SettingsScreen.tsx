@@ -2,12 +2,14 @@ import { useSimStore } from '@/simulator/store';
 import type { SimConfig } from '@/simulator/state';
 import { useUiStore } from '../uiStore';
 import { Panel } from '../components/Panel';
+import { useCabinStore, type Quality } from '../cabin/cabinStore';
 
 export function SettingsScreen() {
   const ui = useUiStore();
   const config = useSimStore((s) => s.sim.config);
   const dispatch = useSimStore((s) => s.dispatch);
   const wipe = useSimStore((s) => s.wipeAllData);
+  const cab = useCabinStore();
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
@@ -30,6 +32,15 @@ export function SettingsScreen() {
             <span className="text-slate-100">Mostrar explicación normativa de los avisos</span>
           </label>
         </fieldset>
+      </Panel>
+
+      <Panel title="Cabina">
+        <label className="block text-sm text-slate-300" htmlFor="quality">Calidad visual</label>
+        <select id="quality" value={cab.quality} onChange={(e) => cab.set({ quality: e.target.value as Quality })} className="mt-1 rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">
+          <option value="high">Alta (luces difuminadas, animaciones y mirada con el ratón)</option>
+          <option value="low">Básica (para ordenadores modestos)</option>
+        </select>
+        <p className="mt-1 text-xs text-slate-500">Con «Básica» se desactivan los desenfoques y las animaciones decorativas. Si tu sistema pide reducir el movimiento, se respeta siempre.</p>
       </Panel>
 
       <Panel title="Comportamiento del equipo (aproximación pedagógica)">

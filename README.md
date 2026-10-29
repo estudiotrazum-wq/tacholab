@@ -36,7 +36,7 @@ npm run e2e          # prueba de interacción en navegador real (Playwright; req
 
 Todas las horas del tacógrafo y del laboratorio de tiempo son **UTC**; la hora local se muestra solo como referencia.
 
-En la **cabina**: pulsa el tacógrafo, el selector de marcha N/D, los colores LED del techo o el centro del volante (claxon).
+En la **cabina**: pulsa el tacógrafo (se maneja allí mismo), el retrovisor, la consola del techo (color e intensidad de los LED), el parasol, los interruptores (faros, luz interior, emergencia, LED), el selector de marcha N/D o el claxon. Teclas 1–4: cámaras. En Ajustes hay una calidad visual «Básica» para ordenadores modestos.
 
 Atajos (vista Tacógrafo): ↑ ↓ · Enter (✓) · Esc (✕) · A actividad · E expulsar · I insertar · M marcha · Espacio pausa/×60.
 

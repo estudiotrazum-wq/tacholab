@@ -41,8 +41,27 @@ try {
   await page.getByTestId('cab-gear').click();
   assert((await page.getByTestId('cab-gear').getAttribute('aria-label')).includes('detener'), 'el selector de marcha pone el camión en marcha');
   await page.getByTestId('cab-gear').click();
+  // Interruptores y cámaras (Fase 4)
+  const beamBefore = await page.getByTestId('headlight-beam').count();
+  await page.getByTestId('switch-headlights').click();
+  assert((await page.getByTestId('headlight-beam').count()) !== beamBefore, 'el interruptor de faros enciende o apaga el haz');
+  await page.getByTestId('switch-headlights').click();
+  await page.getByTestId('switch-interiorLight').click();
+  assert((await page.getByTestId('dome-light').count()) === 1, 'la luz interior se enciende');
+  await page.getByTestId('cab-mirror').click();
+  await page.waitForTimeout(900);
+  assert((await page.getByTestId('cab-stage').getAttribute('data-camera')) === 'mirror', 'la cámara se acerca al retrovisor');
+  await page.keyboard.press('4');
+  await page.getByTestId('roof-panel').waitFor();
+  await page.getByTestId('led-brightness').fill('0.4');
+  assert((await page.getByTestId('cab-stage').getAttribute('style')).includes('--led-intensity: 0.4'), 'la intensidad de los LED se ajusta');
+  await page.getByTestId('camera-back').click();
   await page.screenshot({ path: 'e2e/screenshots/02-cabin.png' });
+  // El tacógrafo se maneja dentro de la cabina
   await page.getByTestId('cabin-tachograph').click();
+  await page.getByTestId('cab-device').waitFor();
+  assert((await page.getByTestId('cab-device').getByTestId('tacho-display').count()) === 1, 'el tacógrafo se maneja dentro de la cabina');
+  await page.getByRole('button', { name: 'Laboratorio completo →' }).click();
   await page.getByTestId('tacho-display').waitFor();
   assert(true, 'transición de cabina a tacógrafo');
 
@@ -122,8 +141,12 @@ try {
   assert((await page.getByTestId('slots').locator('li').count()) === 1, 'el plan gratuito limita a un escenario guardado');
   await page.screenshot({ path: 'e2e/screenshots/08-scenarios.png', fullPage: true });
 
-  // Vista móvil
+  // Vista móvil: modo dispositivo recomendado y barra de control fija
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Cabina', exact: true }).click();
+  await page.getByRole('button', { name: 'Abrir el modo dispositivo' }).click();
+  await page.getByTestId('mobile-bar').waitFor();
+  assert(await page.getByTestId('mobile-bar').isVisible(), 'en móvil, modo dispositivo con barra de control fija');
   await page.getByRole('button', { name: 'Tacógrafo', exact: true }).click();
   await page.screenshot({ path: 'e2e/screenshots/05-mobile.png', fullPage: true });
 
