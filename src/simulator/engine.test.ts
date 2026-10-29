@@ -6,7 +6,7 @@ import { HOUR, MINUTE } from '@/time-engine/units';
 import { driverEvents, sumActivities } from '@/time-engine/timeline';
 import { addZonedDays, startOfZonedDay } from '@/time-engine/zoned';
 import { lcdLength, lcdPlain, renderDisplay } from '@/tachograph/display';
-import type { Button } from '@/tachograph/types';
+import { menuPosition, type Button, type MenuItemId } from '@/tachograph/types';
 
 const run = (sim: SimState, ...actions: SimAction[]) => actions.reduce(simReducer, sim);
 const press = (...b: Button[]): SimAction[] => b.map((button) => ({ type: 'PRESS', button }));
@@ -150,18 +150,21 @@ describe('simulador: tarjeta y actividades', () => {
     expect(s.device.screen.kind).toBe('LAST_WITHDRAWAL');
     s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('MANUAL_ASK');
-    // SÍ → actividad (descanso) → hora → minutos (fin = inserción) → país y comunidad de fin anterior → confirmar → país y comunidad de inicio
+    // SÍ → actividad (descanso) → hora → minutos (fin = inserción) → país y comunidad de comienzo → confirmar
     s = run(s, ...press('OK', 'OK', 'OK', 'OK'));
-    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'prev-end' });
+    // Tras las entradas manuales: país (y comunidad) de comienzo y confirmación
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'manual-start' });
+    expect(lcdPlain(renderDisplay(s).lines[0])).toContain('País comienzo');
     s = run(s, ...press('OK'));
-    expect(s.device.screen).toMatchObject({ kind: 'REGION', purpose: 'prev-end' });
+    expect(s.device.screen).toMatchObject({ kind: 'REGION', purpose: 'manual-start' });
     s = run(s, ...press('BACK'));
-    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'prev-end' });
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'manual-start' });
     s = run(s, ...press('OK', 'DOWN', 'OK'));
     expect(s.device.screen.kind).toBe('MANUAL_CONFIRM');
-    s = run(s, ...press('OK', 'OK', 'OK'));
+    s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
-    expect(s.log.some((l) => l.text === 'País de fin de la jornada anterior: España (Aragón)')).toBe(true);
+    expect(s.device.notice?.text).toBe('Listo para conducir');
+    expect(s.log.at(-1)?.text).toBe('País de inicio: España (Aragón)');
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual).toHaveLength(1);
     expect(manual[0]).toMatchObject({ activity: 'REST', start: withdrawnAt, end: withdrawnAt + 10 * HOUR });
@@ -176,8 +179,8 @@ describe('simulador: tarjeta y actividades', () => {
     expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'minute' });
     s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'activity' });
-    // Segundo tramo: descanso hasta la inserción → país y comunidad de fin anterior → confirmar → país y comunidad de inicio
-    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK'));
+    // Segundo tramo: descanso hasta la inserción → país y comunidad de comienzo → confirmar
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK', 'OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual.map((e) => [e.activity, (e.end! - e.start) / HOUR])).toEqual([['WORK', 1], ['REST', 2]]);
@@ -187,9 +190,12 @@ describe('simulador: tarjeta y actividades', () => {
   it('la pantalla estándar refleja actividad y contadores', () => {
     const s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 90 * MINUTE }, { type: 'DISMISS_NOTICE' });
     const d = renderDisplay(s);
-    // Req. 160: hora local, modo de funcionamiento, conductor 1 (conducción continua + descanso acumulado) y conductor 2
-    expect(lcdPlain(d.lines[0])).toBe('07:30⊙ ⛟      80km/h');
-    expect(lcdPlain(d.lines[1])).toBe('1◉1h30 ▬0h00     2 -');
+    // Estándar: hora local, modo, velocidad; ranura 1 (tarjeta y actividad), cuentakilómetros y ranura 2
+    expect(lcdPlain(d.lines[0])).toBe('08:30⊙ ⛟      80km/h'); // 07:30 UTC = 08:30 hora local (Madrid)
+    expect(lcdPlain(d.lines[1])).toBe('1▣◉   248430.0km  -2');
+    // ▼ Tiempos del conductor (req. 160): conducción continua y descanso acumulado
+    const t = renderDisplay(run(s, ...press('DOWN')));
+    expect(lcdPlain(t.lines[0]).trimEnd()).toBe('1◉1h30 ▬0h00');
     expect(d.lines.every((l) => lcdLength(l) === 20)).toBe(true);
   });
 
@@ -336,7 +342,8 @@ describe('simulador: nombre del titular', () => {
     expect(s.cards['card-a']!.holderName).toBe('María José Núñez');
     expect(s.cards['card-a']!.displayId).toBe('SIM-ES-0000-A1');
     s = run(s, { type: 'INSERT_CARD', cardId: 'card-a' });
-    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('María José Núñez');
+    expect(lcdPlain(renderDisplay(s).lines[0])).toBe('1▣ María José Núñez ');
+    expect(lcdPlain(renderDisplay(s).lines[1])).toBe('07:00⊙      06:00UTC'); // hora local de Madrid (UTC+1)
   });
 
   it('rechaza nombres vacíos, demasiado largos o con símbolos', () => {
@@ -352,8 +359,8 @@ describe('simulador: nombre del titular', () => {
 describe('tacógrafo: tiempo de conducción restante', () => {
   it('▼ desde la pantalla principal muestra lo que queda hasta la pausa y hasta el fin de la jornada', () => {
     let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'ADVANCE_BY', ms: 75 * MINUTE }, { type: 'DISMISS_NOTICE' });
-    s = run(s, ...press('DOWN'));
-    expect(s.device.screen).toMatchObject({ kind: 'STANDARD', page: 1 });
+    s = run(s, ...press('DOWN', 'DOWN'));
+    expect(s.device.screen).toMatchObject({ kind: 'STANDARD', page: 2 });
     const d = renderDisplay(s);
     expect(lcdPlain(d.lines[0])).toBe('⊙hasta pausa    3h15'.replace('⊙', lcdPlain('{D}')));
     expect(lcdPlain(d.lines[1])).toContain('fin jornada');
@@ -364,14 +371,16 @@ describe('tacógrafo: tiempo de conducción restante', () => {
 describe('tacógrafo: pantalla por defecto sin conducir', () => {
   it('muestra la duración de la actividad actual y no la conducción continua', () => {
     let s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: HOUR }, { type: 'SET_MOVING', moving: false });
-    s = run(s, { type: 'ADVANCE_BY', ms: 20 * MINUTE }, { type: 'DISMISS_NOTICE' });
-    expect(lcdPlain(renderDisplay(s).lines[1])).toMatch(/^1⚒0h20 ▬0h00/);
+    s = run(s, { type: 'ADVANCE_BY', ms: 20 * MINUTE }, { type: 'DISMISS_NOTICE' }, ...press('DOWN'));
+    expect(lcdPlain(renderDisplay(s).lines[0])).toMatch(/^1⚒0h20 ▬0h00/);
   });
 });
 
-const menuTo = (sim: ReturnType<typeof withCard>, id: string) => {
-  const idx = ['TIMES', 'DAY_ACTIVITIES', 'TICKET', 'WITHDRAW', 'DEVICE_INFO', 'BORDER', 'FERRY', 'OUT'].indexOf(id);
-  return run(sim, { type: 'DISMISS_NOTICE' }, ...press('OK', ...(Array(idx).fill('DOWN') as Button[]), 'OK'));
+/** Abre una función del menú: OK → menú principal → OK → función → OK. */
+const menuTo = (sim: ReturnType<typeof withCard>, id: MenuItemId) => {
+  const { group, index } = menuPosition(id);
+  const downs = (n: number) => Array(n).fill('DOWN') as Button[];
+  return run(sim, { type: 'DISMISS_NOTICE' }, ...press('OK', ...downs(group), 'OK', ...downs(index), 'OK'));
 };
 
 describe('tacógrafo: cruce de frontera y condiciones específicas', () => {
@@ -460,5 +469,62 @@ describe('reloj rápido', () => {
     s = run(s, { type: 'TICK', realDeltaMs: 2000 });
     expect(s.device.warning?.code).toBe('CONT_DRIVING_PREWARN');
     expect(s.clock.speed).toBe(60);
+  });
+});
+
+describe('tacógrafo: avisos de pausa y última retirada', () => {
+  it('el aviso de 4 h 15 muestra «1 ¡Pausa!» con los tiempos del conductor', () => {
+    const s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'ADVANCE_BY', ms: 255 * MINUTE });
+    const d = renderDisplay(s);
+    expect(d.mode).toBe('warning');
+    expect(lcdPlain(d.lines[0])).toMatch(/^1 ¡Pausa! +OK$/);
+    expect(lcdPlain(d.lines[1]).trimEnd()).toBe('1◉4h15 ▬0h00');
+  });
+
+  it('la última retirada se muestra en hora local', () => {
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'OK', 'OK'));
+    s = run(s, { type: 'ADVANCE_BY', ms: HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK'));
+    expect(lcdPlain(renderDisplay(s).lines[1])).toBe('▣↑ 02.11.26 08:00⊙  ');
+  });
+});
+
+describe('tacógrafo: país propuesto', () => {
+  it('se propone primero el último país introducido', () => {
+    // Inicio en Francia (sin comunidad), retirada: el país de fin propuesto es Francia
+    let s = run(createInitialSim(), { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'DOWN', 'DOWN', 'OK'));
+    expect(s.log.at(-1)?.text).toBe('País de inicio: Francia');
+    s = run(s, { type: 'DISMISS_NOTICE' }, ...press('EJECT'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'end', index: 2 });
+    s = run(s, ...press('OK', 'OK'));
+    expect(s.log.some((l) => l.text === 'País de fin: Francia')).toBe(true);
+  });
+});
+
+describe('tacógrafo: menú de dos niveles', () => {
+  it('menús principales y funciones; ✕ vuelve al nivel anterior', () => {
+    let s = run(withCard(), { type: 'DISMISS_NOTICE' }, ...press('OK'));
+    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('Imprimir conduc.1');
+    s = run(s, ...press('DOWN', 'OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'SUBMENU', group: 1, index: 0 });
+    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('País comienzo');
+    s = run(s, ...press('BACK'));
+    expect(s.device.screen).toMatchObject({ kind: 'MENU', index: 1 });
+    s = run(s, ...press('BACK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+  });
+
+  it('el menú solo se abre con el vehículo parado', () => {
+    const s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 60 }, { type: 'DISMISS_NOTICE' }, ...press('OK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.device.notice?.text).toBe('Menú solo con el vehículo parado');
+  });
+
+  it('impresión desde el menú y país final sin retirar la tarjeta', () => {
+    let s = menuTo(withCard(), 'PRINT_DAY');
+    expect(s.device.printout?.lines).toContain('IMPRESIÓN DIARIA (24 h)');
+    s = menuTo(s, 'ENTRY_END');
+    s = run(s, ...press('OK', 'OK'));
+    expect(s.log.at(-1)).toMatchObject({ kind: 'COUNTRY_END', text: 'País de fin: España (Andalucía)' });
+    expect(s.device.insertedCardId).toBe('card-a');
   });
 });

@@ -38,7 +38,7 @@ const SCRIPT: Record<string, SimAction[]> = {
   'ignition-start': [{ type: 'SET_IGNITION', position: 'start' }],
   drive: [{ type: 'SET_VEHICLE_SPEED', kmh: 80 }],
   time: [{ type: 'ADVANCE_BY', ms: 15 * MINUTE }, { type: 'ADVANCE_BY', ms: 15 * MINUTE }],
-  read: press('DOWN'),
+  read: press('DOWN', 'DOWN'),
   stop: [{ type: 'SET_VEHICLE_SPEED', kmh: 0 }],
   activity: press('ACTIVITY', 'ACTIVITY'),
   eject: press('EJECT'),

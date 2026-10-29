@@ -7,7 +7,8 @@ import {
   INSERTION_FLOW,
   SPAIN_REGIONS,
   type SpecificCondition,
-  MENU_ITEMS,
+  MENU,
+  menuPosition,
   effectiveActivity,
   type Button,
   type DeviceWarning,
@@ -164,7 +165,7 @@ function beginWithdrawal(sim: SimState): SimState {
   if (!sim.device.insertedCardId) return notice(sim, 'No hay tarjeta insertada');
   if (sim.vehicle.moving) return notice(sim, 'Detenga el vehículo para retirar la tarjeta');
   if (INSERTION_FLOW.includes(sim.device.screen.kind)) return notice(sim, 'Finalice el procedimiento de inserción');
-  return setScreen(sim, { kind: 'COUNTRY', purpose: 'end', index: 0 });
+  return setScreen(sim, { kind: 'COUNTRY', purpose: 'end', index: lastCountry(sim) });
 }
 
 function completeWithdrawal(sim: SimState): SimState {
@@ -235,7 +236,7 @@ function afterWelcome(sim: SimState): SimState {
   if (card?.lastWithdrawalAt != null && insertedAt - card.lastWithdrawalAt >= MIN_MANUAL_GAP) {
     return setScreen(sim, { kind: 'MANUAL_ASK', yes: true });
   }
-  return setScreen(sim, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+  return setScreen(sim, { kind: 'COUNTRY', purpose: 'start', index: lastCountry(sim) });
 }
 
 function manualWindow(sim: SimState): { from: EpochMs; to: EpochMs } {
@@ -259,8 +260,8 @@ function commitManualEntry(sim: SimState, screen: Extract<Screen, { kind: 'MANUA
         `Entrada manual: ${seg.activity === 'UNKNOWN' ? 'Desconocida' : ACTIVITY_LABEL[seg.activity]} ${formatDateTime(seg.start, tz)} → ${formatDateTime(seg.end, tz)}`,
       );
     }
-    s = log(s, 'COUNTRY_END', `País de fin de la jornada anterior: ${screen.prevCountry}`);
-    return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+    s = log(s, 'COUNTRY_START', `País de inicio: ${screen.startCountry}`);
+    return notice(setScreen(s, STANDARD), 'Listo para conducir');
   } catch (e) {
     return notice(setScreen(sim, STANDARD), e instanceof Error ? e.message : 'Entrada manual no válida');
   }
@@ -298,50 +299,60 @@ function pressButton(sim: SimState, button: Button): SimState {
 
   switch (screen.kind) {
     case 'STANDARD': {
-      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 4) as 0 | 1 | 2 | 3 });
-      if (ok) return setScreen(s, { kind: 'MENU', index: 0 });
+      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 5) as 0 | 1 | 2 | 3 | 4 });
+      if (ok) return s.vehicle.moving ? notice(s, 'Menú solo con el vehículo parado') : setScreen(s, { kind: 'MENU', index: 0 });
       if (back) return setScreen(s, STANDARD);
       return s;
     }
     case 'MENU': {
-      if (up || down) return setScreen(s, { kind: 'MENU', index: wrap(screen.index + (down ? 1 : -1), MENU_ITEMS.length) });
+      if (up || down) return setScreen(s, { kind: 'MENU', index: wrap(screen.index + (down ? 1 : -1), MENU.length) });
       if (back) return setScreen(s, STANDARD);
       if (ok) {
-        const item = MENU_ITEMS[screen.index]!;
-        if (item.needsCard && !s.device.insertedCardId) return notice(s, 'Sin tarjeta de conductor');
+        const group = MENU[screen.index]!;
+        if (group.needsCard && !s.device.insertedCardId) return notice(s, 'Sin tarjeta de conductor');
+        if (group.id === 'INFO') return setScreen(s, { kind: 'DEVICE_INFO' });
+        return setScreen(s, { kind: 'SUBMENU', group: screen.index, index: 0 });
+      }
+      return s;
+    }
+    case 'SUBMENU': {
+      const group = MENU[screen.group]!;
+      if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), group.items.length) });
+      if (back) return setScreen(s, { kind: 'MENU', index: screen.group });
+      if (ok) {
+        const item = group.items[screen.index]!;
         switch (item.id) {
+          case 'PRINT_DAY':
+            return notice(setScreen(printDaily(s), STANDARD), 'Imprimiendo…');
+          case 'ENTRY_START':
+            return setScreen(s, { kind: 'COUNTRY', purpose: 'entry-start', index: lastCountry(s) });
+          case 'ENTRY_END':
+            return setScreen(s, { kind: 'COUNTRY', purpose: 'entry-end', index: lastCountry(s) });
+          case 'BORDER':
+            return setScreen(s, { kind: 'COUNTRY', purpose: 'border', index: lastCountry(s) });
+          case 'FERRY':
+            if (!s.device.insertedCardId) return notice(s, 'Sin tarjeta de conductor');
+            return toggleCondition(s, 'FERRY');
+          case 'OUT':
+            return toggleCondition(s, 'OUT');
           case 'TIMES':
             return setScreen(s, { kind: 'TIMES' });
           case 'DAY_ACTIVITIES':
             return setScreen(s, { kind: 'DAY_ACTIVITIES', offset: 0 });
           case 'TICKET':
             return setScreen(s, { kind: 'TICKET', offset: 0 });
-          case 'WITHDRAW':
-            return beginWithdrawal(s);
-          case 'DEVICE_INFO':
-            return setScreen(s, { kind: 'DEVICE_INFO' });
-          case 'BORDER':
-            if (s.vehicle.moving) return notice(s, 'Detenga el vehículo para introducir el país');
-            return setScreen(s, { kind: 'COUNTRY', purpose: 'border', index: 0 });
-          case 'FERRY':
-          case 'OUT':
-            return toggleCondition(s, item.id);
         }
       }
       return s;
     }
+    case 'DEVICE_INFO':
+      return ok || back ? setScreen(s, { kind: 'MENU', index: MENU.findIndex((g) => g.id === 'INFO') }) : s;
     case 'TIMES':
-    case 'DEVICE_INFO': {
-      if (ok || back) {
-        const index = MENU_ITEMS.findIndex((m) => m.id === screen.kind);
-        return setScreen(s, { kind: 'MENU', index });
-      }
-      return s;
-    }
+      return ok || back ? setScreen(s, { kind: 'SUBMENU', ...menuPosition('TIMES') }) : s;
     case 'DAY_ACTIVITIES':
     case 'TICKET': {
       if (up || down) return setScreen(s, { ...screen, offset: Math.max(0, screen.offset + (down ? 1 : -1)) });
-      if (ok || back) return setScreen(s, { kind: 'MENU', index: MENU_ITEMS.findIndex((m) => m.id === screen.kind) });
+      if (ok || back) return setScreen(s, { kind: 'SUBMENU', ...menuPosition(screen.kind) });
       return s;
     }
     case 'WELCOME':
@@ -356,14 +367,14 @@ function pressButton(sim: SimState, button: Button): SimState {
       }
       if (ok || back) {
         s = log(s, 'MANUAL_SKIPPED', 'Sin entrada manual: el periodo sin tarjeta queda como desconocido');
-        return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: 0 });
+        return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: lastCountry(s) });
       }
       return s;
     }
     case 'WITHDRAW_PRINT':
       if (up || down) return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: !screen.yes });
       if (ok) return completeWithdrawal(screen.yes ? printDaily(s) : s);
-      if (back) return setScreen(s, { kind: 'COUNTRY', purpose: 'end', index: 0 });
+      if (back) return setScreen(s, { kind: 'COUNTRY', purpose: 'end', index: lastCountry(s) });
       return s;
     case 'MANUAL_EDIT': {
       const { to } = manualWindow(s);
@@ -385,7 +396,7 @@ function pressButton(sim: SimState, button: Button): SimState {
       if (ok && screen.field === 'hour') return setScreen(s, { ...screen, field: 'minute' });
       if (ok) {
         const all = [...segments, draft];
-        if (draft.end >= to) return setScreen(s, { kind: 'COUNTRY', purpose: 'prev-end', index: 0, segments: all });
+        if (draft.end >= to) return setScreen(s, { kind: 'COUNTRY', purpose: 'manual-start', index: lastCountry(s), segments: all });
         return setScreen(s, { kind: 'MANUAL_EDIT', segments: all, draft: newDraft(draft.end, to), field: 'activity' });
       }
       return s;
@@ -404,12 +415,15 @@ function pressButton(sim: SimState, button: Button): SimState {
       if (ok) {
         const c = COUNTRIES[screen.index]!;
         // En España se pide además la comunidad autónoma.
-        if (c.code === 'E') return setScreen(s, { ...screen, kind: 'REGION', index: 0 });
-        return confirmPlace(s, screen, c.name);
+        if (c.code === 'E') return setScreen(s, { ...screen, kind: 'REGION', index: s.device.lastPlace?.region ?? 0 });
+        return confirmPlace(rememberPlace(s, screen.index, null), screen, c.name);
       }
       if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
-      if (back && screen.purpose === 'border') return setScreen(s, { kind: 'MENU', index: MENU_ITEMS.findIndex((m) => m.id === 'BORDER') });
-      if (back && screen.purpose === 'prev-end') {
+      if (back && (screen.purpose === 'border' || screen.purpose === 'entry-start' || screen.purpose === 'entry-end')) {
+        const item = screen.purpose === 'border' ? 'BORDER' : screen.purpose === 'entry-start' ? 'ENTRY_START' : 'ENTRY_END';
+        return setScreen(s, { kind: 'SUBMENU', ...menuPosition(item) });
+      }
+      if (back && screen.purpose === 'manual-start') {
         const last = screen.segments[screen.segments.length - 1]!;
         return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'minute' });
       }
@@ -417,7 +431,7 @@ function pressButton(sim: SimState, button: Button): SimState {
     }
     case 'REGION': {
       if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), SPAIN_REGIONS.length) });
-      if (ok) return confirmPlace(s, screen, `España (${SPAIN_REGIONS[screen.index]!.name})`);
+      if (ok) return confirmPlace(rememberPlace(s, 0, screen.index), screen, `España (${SPAIN_REGIONS[screen.index]!.name})`);
       if (back) return setScreen(s, { ...screen, kind: 'COUNTRY', index: 0 });
       return s;
     }
@@ -426,10 +440,19 @@ function pressButton(sim: SimState, button: Button): SimState {
 
 type PlaceScreen = Extract<Screen, { kind: 'COUNTRY' | 'REGION' }>;
 
+/** Índice del país propuesto: el último introducido (como hacen los equipos), o España. */
+function lastCountry(sim: SimState): number {
+  return sim.device.lastPlace?.country ?? 0;
+}
+
+function rememberPlace(sim: SimState, country: number, region: number | null): SimState {
+  return { ...sim, device: { ...sim.device, lastPlace: { country, region } } };
+}
+
 /** Lugar confirmado (país, y en España la comunidad autónoma): sigue el procedimiento correspondiente. */
 function confirmPlace(sim: SimState, screen: PlaceScreen, place: string): SimState {
-  if (screen.purpose === 'prev-end') {
-    return setScreen(sim, { kind: 'MANUAL_CONFIRM', segments: screen.segments, yes: true, prevCountry: place });
+  if (screen.purpose === 'manual-start') {
+    return setScreen(sim, { kind: 'MANUAL_CONFIRM', segments: screen.segments, yes: true, startCountry: place });
   }
   if (screen.purpose === 'start') {
     const s = log(sim, 'COUNTRY_START', `País de inicio: ${place}`);
@@ -439,6 +462,9 @@ function confirmPlace(sim: SimState, screen: PlaceScreen, place: string): SimSta
     const s = log(sim, 'COUNTRY_BORDER', `Cruce de frontera: entrada en ${place}`);
     return notice(setScreen(s, STANDARD), 'País registrado');
   }
+  // Entradas de país desde el menú (sin insertar ni retirar la tarjeta)
+  if (screen.purpose === 'entry-start') return notice(setScreen(log(sim, 'COUNTRY_START', `País de inicio: ${place}`), STANDARD), 'País registrado');
+  if (screen.purpose === 'entry-end') return notice(setScreen(log(sim, 'COUNTRY_END', `País de fin: ${place}`), STANDARD), 'País registrado');
   const s = log(sim, 'COUNTRY_END', `País de fin: ${place}`);
   return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: false });
 }

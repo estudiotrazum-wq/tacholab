@@ -6,7 +6,7 @@ import { eventDuration, eventsInRange, driverEvents } from '@/time-engine/timeli
 import { formatDuration } from '@/time-engine/units';
 import { addZonedDays, formatDate, formatTime, startOfZonedDay, zonedParts } from '@/time-engine/zoned';
 import type { WarningCode } from './types';
-import { COUNTRIES, MENU_ITEMS, SPAIN_REGIONS, type ManualActivity } from './types';
+import { COUNTRIES, MENU, SPAIN_REGIONS, type ManualActivity } from './types';
 
 /**
  * Pantalla del TL-1: LCD de 2 líneas × 20 caracteres, como los tacógrafos
@@ -143,9 +143,15 @@ function currentActivityMs(sim: SimState, driverId: string, now: number): number
   return Math.max(0, now - start);
 }
 
-function short(ms: number, tz: string): string {
+function short(ms: number, tz: string, year = false): string {
   const p = zonedParts(ms, tz);
-  return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')} ${formatTime(ms, tz)}`;
+  const yy = year ? `.${String(p.year % 100).padStart(2, '0')}` : '';
+  return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')}${yy} ${formatTime(ms, tz)}`;
+}
+
+/** Lectura del cuentakilómetros con un decimal. */
+function odometer(sim: SimState): string {
+  return (sim.vehicle.odometerKm ?? 248_310).toFixed(1);
 }
 
 export function renderDisplay(sim: SimState): DisplayModel {
@@ -160,7 +166,13 @@ export function renderDisplay(sim: SimState): DisplayModel {
   const view = (a: string, b: string, mode: DisplayModel['mode'] = 'normal'): DisplayModel => ({ ...base, mode, lines: [fit(a), fit(b)] });
 
   if (d.warning) {
-    const [a, b] = WARNING_TEXT[d.warning.code];
+    const code = d.warning.code;
+    if (code === 'CONT_DRIVING_PREWARN' || code === 'CONT_DRIVING_EXCEEDED') {
+      // «1 ¡Pausa!» con la conducción continua y el descanso acumulado del conductor 1
+      const c = sum.continuous;
+      return view(spread('1 ¡Pausa!', 'OK'), `1{D}${hm(c?.drivingSinceBreakMs ?? 0)} {R}${hm(c?.currentBreakMs ?? 0)}`, 'warning');
+    }
+    const [a, b] = WARNING_TEXT[code];
     return view(a, `${b}`.padEnd(LCD_COLS - 2) + 'OK', 'warning');
   }
   if (d.notice) return { ...base, mode: 'notice', lines: wrap(d.notice.text) };
@@ -170,38 +182,49 @@ export function renderDisplay(sim: SimState): DisplayModel {
   switch (s.kind) {
     case 'STANDARD': {
       if (s.page === 0) {
-        // Pantalla por defecto (anexo IC del R. 2016/799, req. 160 y 164):
-        // línea 1: hora local, modo de funcionamiento, condición específica abierta y velocidad;
-        // línea 2: conductor 1 (actividad y, si conduce, conducción continua; si no, duración de la actividad;
-        // después el descanso acumulado) y actividad del segundo conductor (ranura 2).
+        // Pantalla estándar (a): hora local, modo de funcionamiento, condición abierta y velocidad;
+        // abajo, ranura 1 (tarjeta y actividad), cuentakilómetros y actividad de la ranura 2.
         const cond = d.condition === 'FERRY' ? '{F}' : d.condition === 'OUT' ? '{X}' : '';
-        const top = spread(`${formatTime(now, tz)}{L} {O}${cond}`, `${speed}km/h`);
+        const top = spread(`${formatTime(now, sim.scenario.localTimeZone)}{L} {O}${cond}`, `${speed}km/h`);
         if (!card) return view(top, spread(' Inserte tarjeta', '2 -'));
+        return view(top, spread(`1{C}${act}`, `${odometer(sim)}km  -2`));
+      }
+      if (s.page === 1) {
+        // Tiempos del conductor (b), anexo IC req. 160: si conduce, conducción continua y descanso acumulado;
+        // si no, duración de la actividad actual y descanso acumulado. Debajo, el segundo conductor.
+        if (!card) return view(' 1 sin tarjeta', ' 2 sin tarjeta');
         const c = sum.continuous;
         const driving = sum.recorded === 'DRIVING';
         const t = driving ? (c?.drivingSinceBreakMs ?? 0) : currentActivityMs(sim, d.insertedCardId!, now);
-        return view(top, spread(`1${act}${hm(t)} {R}${hm(c?.currentBreakMs ?? 0)}`, '2 -'));
+        return view(`1${act}${hm(t)} {R}${hm(c?.currentBreakMs ?? 0)}`, ' 2 sin tarjeta');
       }
-      if (s.page === 1) {
+      if (s.page === 2) {
         // Tiempo de conducción restante: hasta la pausa obligatoria (art. 7) y hasta el límite diario (art. 6.1).
         if (!cur) return view('{D} restante', ' Sin tarjeta');
         const remCont = Math.max(0, CONTINUOUS_DRIVING_LIMIT - (sum.continuous?.drivingSinceBreakMs ?? 0));
         const remDay = Math.max(0, cur.dailyCapMs - cur.dailyDrivingMs);
         return view(spread('{D}hasta pausa', hm(remCont)), spread('{D}fin jornada', hm(remDay)));
       }
-      if (s.page === 2) {
+      if (s.page === 3) {
         if (!cur) return view('{D} acumulados', ' Sin tarjeta');
         return view(`{D}jorn ${hm(cur.dailyDrivingMs)}/${hm(cur.dailyCapMs)}`, `sem ${hm(cur.weekDrivingMs)} 2s ${hm(cur.biweekDrivingMs)}`);
       }
       return view(spread(`${formatTime(now, 'UTC')}{U}`, 'UTC'), spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, 'local'));
     }
     case 'MENU': {
-      const item = MENU_ITEMS[s.index]!;
+      const group = MENU[s.index]!;
+      return view(spread('MENÚ', `${s.index + 1}/${MENU.length}`), `▸${group.label}`);
+    }
+    case 'SUBMENU': {
+      const group = MENU[s.group]!;
+      const item = group.items[s.index]!;
       const label =
-        item.id === 'FERRY' ? (d.condition === 'FERRY' ? '{F}Fin ferry/tren' : '{F}Inicio ferry/tren')
-        : item.id === 'OUT' ? (d.condition === 'OUT' ? '{X}Fin fuera ámbito' : '{X}Inicio fuera ámbito')
+        item.id === 'FERRY' ? (d.condition === 'FERRY' ? '{F}Final ferry/tren' : '{F}Comienzo ferry/tren')
+        : item.id === 'OUT' ? (d.condition === 'OUT' ? '{X}Final OUT' : '{X}Comienzo OUT')
+        : item.id === 'ENTRY_START' ? '{L}País comienzo'
+        : item.id === 'ENTRY_END' ? '{L}País final'
         : item.label;
-      return view(spread('MENÚ', `${s.index + 1}/${MENU_ITEMS.length}`), `▸${label}`);
+      return view(spread(group.label, group.items.length > 1 ? `${s.index + 1}/${group.items.length}` : ''), `▸${label}`);
     }
     case 'TIMES': {
       const c = sum.continuous;
@@ -221,13 +244,15 @@ export function renderDisplay(sim: SimState): DisplayModel {
       return view(spread('RESUMEN', `${i + 1}/${rows.length}`), rows[i]!);
     }
     case 'DEVICE_INFO':
-      return view('TL-1 EDU   v0.9', 'NO HOMOLOGADO');
+      return view('TL-1 EDU   simulador', 'NO HOMOLOGADO');
     case 'WELCOME':
-      return view(spread('Bienvenido/a', `${formatTime(now, sim.scenario.localTimeZone)}{L}`), `{C} ${card?.holderName ?? ''}`);
+      // Nombre del titular y hora local y UTC (unos segundos, como en los equipos reales)
+      return view(`1{C} ${card?.holderName ?? ''}`, spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, `${formatTime(now, 'UTC')}UTC`));
     case 'LAST_WITHDRAWAL': {
       // Fin de la jornada anterior: fecha y hora de la última retirada de la tarjeta.
       const last = card?.lastWithdrawalAt;
-      return view('Última retirada', last != null ? `{C}↑ ${short(last, tz)} UTC` : '{C}↑ primer uso');
+      // En hora local, como la muestran los equipos
+      return view('Última retirada', last != null ? `{C}↑ ${short(last, sim.scenario.localTimeZone, true)}{L}` : '{C}↑ primer uso');
     }
     case 'MANUAL_ASK':
       return view('¿Entrada manual?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
@@ -248,12 +273,12 @@ export function renderDisplay(sim: SimState): DisplayModel {
       return view('{M}¿Confirmar?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'COUNTRY': {
       const c = COUNTRIES[s.index]!;
-      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'prev-end' ? '{M}País fin jornada' : s.purpose === 'border' ? '{L}País: frontera' : '{L}País de fin';
+      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'manual-start' ? '{M}País comienzo' : s.purpose === 'border' ? '{L}País: frontera' : s.purpose === 'entry-start' ? '{L}País comienzo' : s.purpose === 'entry-end' ? '{L}País final' : '{L}País de fin';
       return view(title, `▸ ${c.code.padEnd(3)}${c.name}`);
     }
     case 'REGION': {
       const r = SPAIN_REGIONS[s.index]!;
-      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'prev-end' ? '{M}E Región fin' : s.purpose === 'border' ? '{L}E Región entrada' : '{L}E Región de fin';
+      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'manual-start' ? '{M}E Región comienzo' : s.purpose === 'border' ? '{L}E Región entrada' : s.purpose === 'entry-start' ? '{L}E Región comienzo' : s.purpose === 'entry-end' ? '{L}E Región final' : '{L}E Región de fin';
       return view(title, `▸${r.code.padEnd(4)}${r.name}`);
     }
   }

@@ -50,7 +50,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: 'welcome',
     title: 'Bienvenida',
-    text: 'El tacógrafo te saluda con tu nombre y la hora local. Pulsa OK para seguir.',
+    text: 'El tacógrafo muestra tu nombre, la hora local (⊙) y la hora UTC, que es la que usa para registrar. Pulsa OK para seguir.',
     target: 'console',
     assist: 'OK',
     done: (s) => screen(s) !== 'WELCOME',
@@ -58,7 +58,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: 'last-withdrawal',
     title: 'Última retirada',
-    text: 'Muestra cuándo sacaste la tarjeta por última vez (en UTC). Como es tu primer uso, pone «primer uso». Pulsa OK.',
+    text: 'Muestra cuándo sacaste la tarjeta por última vez (en hora local). Como es tu primer uso, pone «primer uso». Pulsa OK.',
     hint: 'Si hubiera un hueco desde la última retirada, ahora te pediría las entradas manuales. Lo practicarás en el ejercicio 2 de la Academia.',
     target: 'console',
     assist: 'OK',
@@ -108,11 +108,11 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: 'read',
     title: '¿Cuánto te queda de conducción?',
-    text: 'En la pantalla principal ves arriba la hora, la actividad y la velocidad, y abajo la conducción desde tu última pausa. Pulsa ▼ para ver el tiempo que te queda: hasta la pausa obligatoria (4 h 30 seguidas) y hasta el final de la jornada.',
-    hint: 'Con ▲ ▼ recorres las pantallas: restante, acumulados (día, semana y dos semanas) y hora UTC y local. El panel «Te limita» de la derecha es una ayuda del simulador que amplía esta información; no forma parte del tacógrafo.',
+    text: 'La pantalla estándar muestra hora, velocidad, tu actividad y el cuentakilómetros. Pulsa ▼ para ver tus tiempos (conducción continua y descanso acumulado) y ▼ otra vez para ver cuánto te queda: hasta la pausa obligatoria (4 h 30 seguidas) y hasta el final de la jornada.',
+    hint: 'Con ▲ ▼ recorres: estándar, tiempos, restante, acumulados y hora UTC/local. El panel «Te limita» de la derecha es una ayuda del simulador, no parte del tacógrafo.',
     target: 'console',
     assist: 'UP_DOWN',
-    done: (s) => s.device.screen.kind === 'STANDARD' && s.device.screen.page === 1,
+    done: (s) => s.device.screen.kind === 'STANDARD' && s.device.screen.page === 2,
   },
   {
     id: 'stop',

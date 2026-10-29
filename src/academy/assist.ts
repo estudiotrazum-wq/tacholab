@@ -30,8 +30,8 @@ export function assistHint(sim: SimState): AssistHint {
     case 'MANUAL_CONFIRM':
       return { text: 'Revisa y confirma la entrada manual con ✓.', target: 'OK' };
     case 'COUNTRY':
-      return d.screen.purpose === 'prev-end'
-        ? { text: 'Indica en qué país terminó tu jornada anterior (▲▼) y pulsa OK.', target: 'UP_DOWN' }
+      return d.screen.purpose === 'manual-start'
+        ? { text: 'Entradas manuales listas: indica el país donde empiezas hoy (▲▼) y pulsa OK.', target: 'UP_DOWN' }
         : d.screen.purpose === 'start'
           ? { text: 'Indica el país donde empiezas hoy (▲▼) y pulsa OK.', target: 'UP_DOWN' }
           : d.screen.purpose === 'border'

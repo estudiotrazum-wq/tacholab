@@ -61,9 +61,9 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
   });
 
   it('2 · tarjeta con entrada manual: 100 puntos', () => {
-    // Bienvenida, última retirada, SÍ, actividad, hora, minutos, país y comunidad de fin anterior, confirmar, país y comunidad de inicio
-    const { result, sim, session } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
-    expect(session.stepIndex).toBe(8);
+    // Bienvenida, última retirada, SÍ, actividad, hora, minutos, país y comunidad de comienzo, confirmar
+    const { result, sim, session } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
+    expect(session.stepIndex).toBe(7);
     expect(sim.device.screen.kind).toBe('STANDARD');
     expect(result).toMatchObject({ passed: true, score: 100 });
   });

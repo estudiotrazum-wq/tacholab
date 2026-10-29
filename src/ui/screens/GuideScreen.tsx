@@ -46,7 +46,8 @@ export function GuideScreen() {
         <Card n="1" title="Las piezas del tacógrafo">
           <Dl
             items={[
-              ['Pantalla', 'Por defecto: hora local, modo de funcionamiento y velocidad; abajo, conductor 1 (conducción continua o duración de la actividad, y descanso acumulado) y conductor 2. Con ▲ ▼: tiempo restante, acumulados y hora UTC/local.'],
+              ['Pantalla', 'Estándar: hora local, modo y velocidad; abajo, tarjeta y actividad del conductor 1, cuentakilómetros y conductor 2. Con ▼: tiempos del conductor (conducción continua o duración de la actividad, y descanso), tiempo restante, acumulados y hora UTC/local.'],
+              ['Menú (OK)', 'Solo parado. Imprimir conduc.1 · Entrada conduc.1 (país comienzo, país final, cruce frontera) · Entrada vehículo (OUT, ferry/tren) · Visualizar cond.1 · Información.'],
               ['✕ ▲ ▼ OK', 'Volver, moverse por las opciones y confirmar / abrir el menú.'],
               ['Tecla 1 / 2', 'Pulsación corta: cambia la actividad del conductor 1 o 2. Mantener pulsada: sacar la tarjeta.'],
               ['⏏', 'Botón de expulsión junto a cada ranura.'],
@@ -60,8 +61,8 @@ export function GuideScreen() {
           <Steps
             items={[
               'Con el camión parado, mete la tarjeta en la ranura 1 (conductor).',
-              'Bienvenida: tu nombre y la hora local → OK.',
-              'Última retirada: fecha y hora UTC en que sacaste la tarjeta → OK.',
+              'Bienvenida: tu nombre, la hora local y la hora UTC → OK.',
+              'Última retirada: fecha y hora (local) en que sacaste la tarjeta → OK.',
               'Si hay un hueco sin tarjeta: «¿Entrada manual?» → ver punto 3.',
               'País de inicio con ▲ ▼ → OK. En España, también la comunidad autónoma → OK. «Listo para conducir».',
               'Llave a I y luego a II para arrancar.',
@@ -78,8 +79,8 @@ export function GuideScreen() {
               '«¿Entrada manual?» SÍ → OK.',
               'Para cada tramo: actividad (▲ ▼) → OK → hora de fin → OK → minutos → OK.',
               'Si el tramo no llega hasta la inserción, se abre otro tramo.',
-              'País (y en España, comunidad autónoma) de fin de la jornada anterior → OK.',
-              '«¿Confirmar?» → OK. Después, país de inicio.',
+              'País de comienzo (y en España, comunidad autónoma) → OK.',
+              '«¿Confirmar?» → OK: listo para conducir.',
             ]}
           />
           <p className="mt-2 text-xs text-slate-400">Si respondes NO, ese periodo queda como desconocido. Practícalo en el ejercicio 2 de la Academia.</p>
@@ -133,8 +134,8 @@ export function GuideScreen() {
         <Card n="7" title="Frontera, ferry/tren y fuera de ámbito">
           <Dl
             items={[
-              ['Frontera', 'Al entrar en otro país, en la primera parada: OK → menú «País: cruce frontera» → país → OK (art. 34.7 R. 165/2014).'],
-              ['Ferry/tren', 'Ya a bordo y antes de apagar el motor: menú «Inicio ferry/tren». Se cierra al salir conduciendo, al sacar la tarjeta o desde el menú.'],
+              ['Frontera', 'Al entrar en otro país, en la primera parada: OK → «Entrada conduc.1» → «Cruce frontera» → país → OK (art. 34.7 R. 165/2014).'],
+              ['Ferry/tren', 'Ya a bordo y antes de apagar el motor: OK → «Entrada vehículo» → «Comienzo ferry/tren». Se cierra al salir conduciendo, al sacar la tarjeta o desde el menú.'],
               ['Art. 9', 'A bordo, el descanso puede interrumpirse hasta 2 veces, sin pasar de 1 h en total, si tienes cama o litera.'],
               ['Fuera ámbito', 'Transporte no sujeto al R. 561/2006. Se cierra al meter o sacar la tarjeta.'],
             ]}

@@ -87,8 +87,8 @@ try {
 
   // La tarjeta se arrastra desde la bandeja hasta la ranura
   await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
-  assert((await line(0)).includes('Bienvenido'), 'inserción: pantalla de bienvenida');
-  assert((await line(1)).includes('Alex Prácticas'), 'inserción muestra el titular de la tarjeta');
+  assert((await line(0)).includes('Alex Prácticas'), 'inserción muestra el titular de la tarjeta');
+  assert((await line(1)).includes('UTC'), 'bienvenida con la hora local y la hora UTC');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await line(0)).includes('Última retirada'), 'muestra la última retirada de la tarjeta');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
@@ -146,7 +146,7 @@ try {
   // Saltar hasta el aviso de 4 h 15
   await tool('Siguiente ⏭');
   await tool('Siguiente ⏭');
-  assert((await line(0)).includes('4h'), 'aviso de conducción continua en pantalla');
+  assert((await line(0)).includes('Pausa') && (await line(1)).includes('4h'), 'aviso de conducción continua en pantalla («1 ¡Pausa!» con los tiempos)');
   await page.screenshot({ path: 'e2e/screenshots/03-device-warning.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   // Seguir conduciendo tras el límite genera la infracción.
@@ -160,13 +160,17 @@ try {
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
 
   // Menú: cruce de frontera y trayecto en ferry/tren
-  const menu = async (downs) => {
+  /** Menú de dos niveles: OK → menú principal (group) → OK → función (item) → OK. */
+  const menu = async (group, item) => {
+    const down = async (n) => { for (let i = 0; i < n; i++) await page.getByRole('button', { name: 'Abajo' }).click(); };
     await page.getByRole('button', { name: 'Confirmar / menú' }).click();
-    for (let i = 0; i < downs; i++) await page.getByRole('button', { name: 'Abajo' }).click();
+    await down(group);
+    await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+    await down(item);
     await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   };
   const lcd = () => page.getByTestId('tacho-display').getAttribute('aria-label');
-  await menu(5);
+  await menu(1, 2); // Entrada conduc.1 → Cruce frontera
   assert((await line(0)).includes('País: frontera'), 'menú: país por cruce de frontera');
   await page.getByRole('button', { name: 'Abajo' }).click();
   await page.getByRole('button', { name: 'Abajo' }).click();
@@ -174,11 +178,11 @@ try {
   assert((await line(0)).includes('País registrado'), 'cruce de frontera registrado (Francia)');
   const dismiss = () => page.getByRole('button', { name: 'Retroceder' }).click(); // quita el mensaje sin abrir el menú
   await dismiss();
-  await menu(6);
+  await menu(2, 1); // Entrada vehículo → Ferry/tren
   await dismiss();
   assert((await lcd()).includes('⛴'), 'ferry/tren: el pictograma aparece en la pantalla por defecto');
   await page.screenshot({ path: 'e2e/screenshots/15-ferry.png' });
-  await menu(6);
+  await menu(2, 1);
   await dismiss();
   assert(!(await lcd()).includes('⛴'), 'ferry/tren: se cierra desde el menú');
 
@@ -195,6 +199,9 @@ try {
   // b) Botón ⏏ de la ranura → país de fin → ¿imprimir 24 h? SÍ → ticket y tarjeta fuera
   await page.getByTestId('eject-1').click();
   assert((await line(0)).includes('País de fin'), 'el botón ⏏ pide el país de fin');
+  assert((await line(1)).includes('Francia'), 'se propone el último país introducido (Francia, tras cruzar la frontera)');
+  await page.getByRole('button', { name: 'Arriba' }).click();
+  await page.getByRole('button', { name: 'Arriba' }).click();
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await line(0)).includes('Región de fin'), 'en España pide la comunidad autónoma de fin');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
@@ -328,7 +335,7 @@ try {
   await expectStep('Mete la tarjeta de conductor');
   await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
   await expectStep('Bienvenida');
-  assert((await line(1)).includes('María José'), 'el tacógrafo da la bienvenida con el nombre del alumno');
+  assert((await line(0)).includes('María José'), 'el tacógrafo da la bienvenida con el nombre del alumno');
   await ok();
   await expectStep('Última retirada');
   await ok();
@@ -345,6 +352,8 @@ try {
   await tool('+15 min');
   await tool('+15 min');
   await expectStep('¿Cuánto te queda de conducción?');
+  await page.getByRole('button', { name: 'Abajo' }).click();
+  assert((await line(0)).startsWith('1') && (await line(0)).includes('h'), 'el tacógrafo muestra los tiempos del conductor');
   await page.getByRole('button', { name: 'Abajo' }).click();
   assert((await line(0)).includes('hasta pausa') && (await line(1)).includes('fin jornada'), 'el tacógrafo muestra el tiempo de conducción restante');
   await expectStep('Detén el camión');

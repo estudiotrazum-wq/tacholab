@@ -2,6 +2,21 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.17 — Manejo más realista a partir de un manual de usuario de tacógrafo (rama `ui-rediseno`)
+Referencia de manejo: manual de usuario de un tacógrafo digital de 2.ª generación (enlace aportado por el usuario,
+no se incluye en el repositorio). Se toma solo el modelo de interacción; textos, pictogramas y diseño son propios.
+- [x] **Pantallas** con ▲ ▼: estándar (hora local, modo, velocidad; tarjeta y actividad del conductor 1,
+      cuentakilómetros y conductor 2) → tiempos del conductor (req. 160) → tiempo restante → acumulados → UTC/local
+- [x] **Bienvenida** con nombre, hora local y hora UTC; **última retirada** en hora local
+- [x] **Avisos de pausa** «1 ¡Pausa!» con la conducción continua y el descanso acumulado
+- [x] **Entrada manual**: tras los tramos se pide el **país de comienzo** (y comunidad) y después **¿Confirmar?**
+- [x] **País propuesto**: el último introducido aparece primero
+- [x] **Menú de dos niveles**, solo con el vehículo parado: Imprimir conduc.1 (24h act. diaria) · Entrada conduc.1
+      (país comienzo, país final, cruce frontera) · Entrada vehículo (OUT, ferry/tren) · Visualizar cond.1
+      (24h act. diaria, tiempos, resumen) · Información equipo
+- [x] Corrección: la pantalla estándar mostraba la hora UTC con el símbolo de hora local
+- [x] 140 pruebas unitarias + E2E
+
 ## v0.16 — Reloj más rápido y motor más suave (rama `ui-rediseno`)
 - [x] Velocidades del reloj ×300 (5 min/s), ×900 (15 min/s) y ×3600 (1 h/s): las 4 h 30 se alcanzan en segundos.
       Desde ×300, el reloj **se pausa solo** en el instante exacto de cada aviso nuevo para poder reaccionar

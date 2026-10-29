@@ -21,9 +21,9 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
     deviceState: 'Pantalla principal, sin tarjeta.',
     build: () => exerciseSim('buttons', 'Ejercicio 1: conocer los botones'),
     steps: [
-      { text: 'Pulsa ▼ para ver la segunda página de la pantalla principal.', target: 'UP_DOWN', done: (c) => has(c, 'page:1') },
-      { text: 'Pulsa ▼ otra vez: la tercera página muestra la hora UTC y la hora local.', target: 'UP_DOWN', done: (c) => has(c, 'page:2') },
-      { text: 'Pulsa ✓ para abrir el menú.', target: 'OK', done: (c) => has(c, 'screen:MENU') },
+      { text: 'Pulsa ▼ para ver los tiempos del conductor (sin tarjeta, aparecen vacíos).', target: 'UP_DOWN', done: (c) => has(c, 'page:1') },
+      { text: 'Pulsa ▼ otra vez: el tiempo de conducción restante (con tarjeta).', target: 'UP_DOWN', done: (c) => has(c, 'page:2') },
+      { text: 'Pulsa ✓ para abrir el menú (solo con el vehículo parado).', target: 'OK', done: (c) => has(c, 'screen:MENU') },
       { text: 'Con ▲ ▼ busca «Información equipo» y ábrelo con ✓.', target: 'UP_DOWN', done: (c) => has(c, 'screen:DEVICE_INFO') },
       { text: 'Pulsa ✕ hasta volver a la pantalla principal.', target: 'BACK', done: (c) => has(c, 'screen:STANDARD') },
       { text: 'Pulsa el botón de actividad: sin tarjeta, el equipo te pedirá que la insertes.', target: 'ACTIVITY', done: (c) => has(c, 'notice:Inserte una tarjeta') },
@@ -31,7 +31,7 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
     success: [{ text: 'Has usado ▲ ▼, ✓, ✕ y el botón de actividad', check: (c) => c.allStepsDone }],
     errors: [],
     explanation:
-      '▲ ▼ recorren páginas y opciones; ✓ abre el menú y confirma; ✕ retrocede. El botón de actividad solo funciona con tarjeta y con el vehículo parado: en marcha, el equipo registra conducción automáticamente. Recuerda: este dispositivo es ficticio y los equipos reales varían según el fabricante y la generación.',
+      '▲ ▼ recorren las pantallas (estándar, tiempos del conductor, tiempo restante, acumulados, hora UTC) y las opciones; ✓ abre el menú de dos niveles (imprimir, entradas, visualizar) y confirma; ✕ retrocede. El botón de actividad solo funciona con tarjeta y con el vehículo parado: en marcha, el equipo registra conducción automáticamente. Recuerda: este dispositivo es ficticio y los equipos reales varían según el fabricante y la generación.',
   },
   {
     id: 'insert-card',
@@ -39,7 +39,7 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
     title: 'Insertar una tarjeta ficticia',
     feature: 'academy-basic',
     status: 'available',
-    objective: 'Seguir el procedimiento de inserción: bienvenida, última retirada, entrada manual, país de fin de la jornada anterior y país de inicio.',
+    objective: 'Seguir el procedimiento de inserción: bienvenida, última retirada, entrada manual, país de comienzo (y comunidad autónoma) y confirmación.',
     situation: 'Ayer retiraste la tarjeta a las 20:00 UTC y descansaste en casa. Son las 06:00 UTC del lunes.',
     deviceState: 'Sin tarjeta. La tarjeta guarda la hora de la última retirada.',
     build: () => {
@@ -52,9 +52,8 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
       { text: 'Comprueba la última retirada (fin de la jornada anterior) y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_ASK') },
       { text: 'Elige SÍ para hacer la entrada manual del tiempo sin tarjeta y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_EDIT') },
       { text: 'Deja la cama (descanso) como actividad y pulsa OK; la hora y los minutos de fin ya llegan hasta ahora: OK y OK.', target: 'OK', done: (c) => has(c, 'screen:COUNTRY') },
-      { text: 'Indica el país donde terminó la jornada anterior (España) y la comunidad autónoma, con OK en cada pantalla.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
-      { text: 'Confirma la entrada manual con SÍ.', target: 'OK', done: (c) => logged(c, 'MANUAL_ENTRY') },
-      { text: 'Selecciona el país de inicio (España) y la comunidad autónoma, y confírmalos: el equipo muestra «Listo para conducir».', target: 'OK', done: (c) => logged(c, 'COUNTRY_START') },
+      { text: 'Indica el país de comienzo (España) y la comunidad autónoma, con OK en cada pantalla.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
+      { text: 'Confirma la entrada con SÍ: el equipo muestra «Listo para conducir».', target: 'OK', done: (c) => logged(c, 'MANUAL_ENTRY') && logged(c, 'COUNTRY_START') },
     ],
     success: [
       {

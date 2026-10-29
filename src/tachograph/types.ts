@@ -12,22 +12,64 @@ export interface ManualDraftSegment {
   end: EpochMs;
 }
 
-export const MENU_ITEMS = [
-  { id: 'TIMES', label: 'Tiempos conductor', needsCard: true },
-  { id: 'DAY_ACTIVITIES', label: 'Actividades de hoy', needsCard: true },
-  { id: 'TICKET', label: 'Resumen de jornada', needsCard: true },
-  { id: 'WITHDRAW', label: 'Retirar tarjeta', needsCard: true },
-  { id: 'DEVICE_INFO', label: 'Información equipo', needsCard: false },
-  /** País en el que se entra tras cruzar una frontera (art. 34.7 R. 165/2014). */
-  { id: 'BORDER', label: 'País: cruce frontera', needsCard: true },
-  /** Condiciones específicas (anexo IC, req. 62). */
-  { id: 'FERRY', label: 'Ferry/tren', needsCard: true },
-  { id: 'OUT', label: 'Fuera de ámbito', needsCard: false },
+/**
+ * Menú de dos niveles, como en los tacógrafos digitales: menús principales (imprimir, entradas,
+ * visualizar) y sus funciones. Solo con el vehículo parado.
+ */
+export const MENU = [
+  {
+    id: 'PRINT_D1',
+    label: 'Imprimir conduc.1',
+    needsCard: true,
+    items: [{ id: 'PRINT_DAY', label: '24h act. diaria' }],
+  },
+  {
+    id: 'ENTRY_D1',
+    label: 'Entrada conduc.1',
+    needsCard: true,
+    items: [
+      { id: 'ENTRY_START', label: 'País comienzo' },
+      { id: 'ENTRY_END', label: 'País final' },
+      /** País en el que se entra tras cruzar una frontera (art. 34.7 R. 165/2014). */
+      { id: 'BORDER', label: 'Cruce frontera' },
+    ],
+  },
+  {
+    id: 'ENTRY_VEH',
+    label: 'Entrada vehículo',
+    needsCard: false,
+    /** Condiciones específicas (anexo IC, req. 62). */
+    items: [
+      { id: 'OUT', label: 'Fuera de ámbito' },
+      { id: 'FERRY', label: 'Ferry/tren' },
+    ],
+  },
+  {
+    id: 'SHOW_D1',
+    label: 'Visualizar cond.1',
+    needsCard: true,
+    items: [
+      { id: 'DAY_ACTIVITIES', label: '24h act. diaria' },
+      { id: 'TIMES', label: 'Tiempos' },
+      { id: 'TICKET', label: 'Resumen jornada' },
+    ],
+  },
+  { id: 'INFO', label: 'Información equipo', needsCard: false, items: [] },
 ] as const;
+export type MenuGroupId = (typeof MENU)[number]['id'];
+export type MenuItemId = (typeof MENU)[number]['items'][number]['id'];
 
 /** Condición específica abierta en el tacógrafo (anexo IC del R. 2016/799, requisito 62). */
 export type SpecificCondition = 'FERRY' | 'OUT';
-export type MenuItemId = (typeof MENU_ITEMS)[number]['id'];
+
+/** Menú principal y función del menú en que está cada pantalla de consulta (para volver con ✕). */
+export function menuPosition(item: MenuItemId): { group: number; index: number } {
+  for (let g = 0; g < MENU.length; g++) {
+    const i = (MENU[g]!.items as readonly { id: string }[]).findIndex((x) => x.id === item);
+    if (i >= 0) return { group: g, index: i };
+  }
+  return { group: 0, index: 0 };
+}
 
 /**
  * Regiones de España (comunidades autónomas) que el tacógrafo pide tras elegir España como país de
@@ -67,8 +109,8 @@ export const COUNTRIES = [
 
 /** Máquina de estados de pantallas del dispositivo. */
 export type Screen =
-  /** 0: principal · 1: tiempo restante de conducción · 2: acumulados · 3: hora UTC y local. */
-  | { kind: 'STANDARD'; page: 0 | 1 | 2 | 3 }
+  /** 0: estándar · 1: tiempos del conductor · 2: tiempo restante · 3: acumulados · 4: hora UTC y local. */
+  | { kind: 'STANDARD'; page: 0 | 1 | 2 | 3 | 4 }
   | { kind: 'WELCOME' }
   /** Fecha y hora de la última retirada (fin de la jornada anterior). */
   | { kind: 'LAST_WITHDRAWAL' }
@@ -80,16 +122,18 @@ export type Screen =
       /** Campo en edición: actividad, hora de fin o minutos de fin. */
       field: 'activity' | 'hour' | 'minute';
     }
-  | { kind: 'MANUAL_CONFIRM'; segments: ManualDraftSegment[]; yes: boolean; prevCountry: string }
-  /** start: país de inicio · end: país de fin al retirar · prev-end: país de fin de la jornada anterior (entrada manual). */
-  | { kind: 'COUNTRY'; purpose: 'start' | 'end' | 'border'; index: number }
-  | { kind: 'COUNTRY'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
+  | { kind: 'MANUAL_CONFIRM'; segments: ManualDraftSegment[]; yes: boolean; startCountry: string }
+  /** start: país de inicio · end: país de fin al retirar · border: cruce de frontera · manual-start: país de comienzo tras las entradas manuales. */
+  | { kind: 'COUNTRY'; purpose: 'start' | 'end' | 'border' | 'entry-start' | 'entry-end'; index: number }
+  | { kind: 'COUNTRY'; purpose: 'manual-start'; index: number; segments: ManualDraftSegment[] }
   /** Comunidad autónoma, solo cuando el país elegido es España. */
-  | { kind: 'REGION'; purpose: 'start' | 'end' | 'border'; index: number }
-  | { kind: 'REGION'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
+  | { kind: 'REGION'; purpose: 'start' | 'end' | 'border' | 'entry-start' | 'entry-end'; index: number }
+  | { kind: 'REGION'; purpose: 'manual-start'; index: number; segments: ManualDraftSegment[] }
   /** Al retirar la tarjeta: ¿imprimir el resumen de 24 h antes de expulsarla? */
   | { kind: 'WITHDRAW_PRINT'; yes: boolean }
   | { kind: 'MENU'; index: number }
+  /** Funciones del menú principal `group`. */
+  | { kind: 'SUBMENU'; group: number; index: number }
   | { kind: 'TIMES' }
   | { kind: 'DAY_ACTIVITIES'; offset: number }
   | { kind: 'TICKET'; offset: number }
@@ -142,6 +186,8 @@ export interface DeviceState {
   warnFlags: Record<string, true>;
   /** Último ticket impreso (la interfaz lo muestra saliendo de la impresora). */
   printout?: Printout | null;
+  /** Último lugar introducido: se propone primero en la siguiente selección de país (índices de las listas). */
+  lastPlace?: { country: number; region: number | null };
   /** Condición específica abierta: trayecto en transbordador/tren o fuera de ámbito. */
   condition?: SpecificCondition | null;
 }
