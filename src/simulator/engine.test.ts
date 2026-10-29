@@ -13,17 +13,22 @@ const press = (...b: Button[]): SimAction[] => b.map((button) => ({ type: 'PRESS
 
 /** Inserta la tarjeta A y completa el procedimiento (sin entrada manual previa). */
 function withCard(sim = createInitialSim()): SimState {
-  return run(sim, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK'));
+  // Bienvenida → última retirada (primer uso) → país de inicio
+  return run(sim, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK'));
 }
 
 describe('simulador: tarjeta y actividades', () => {
-  it('inserción de tarjeta: bienvenida → país → pantalla estándar', () => {
+  it('inserción de tarjeta: bienvenida → última retirada → país de inicio → listo para conducir', () => {
     let s = run(createInitialSim(), { type: 'INSERT_CARD', cardId: 'card-a' });
     expect(s.device.screen.kind).toBe('WELCOME');
+    s = run(s, ...press('OK'));
+    expect(s.device.screen.kind).toBe('LAST_WITHDRAWAL');
+    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('primer uso');
     s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'start' });
     s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.device.notice?.text).toBe('Listo para conducir');
     expect(s.log.map((l) => l.kind)).toEqual(['CARD_IN', 'COUNTRY_START']);
   });
 
@@ -98,10 +103,17 @@ describe('simulador: tarjeta y actividades', () => {
     let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK'));
     const withdrawnAt = s.clock.now;
     s = run(s, { type: 'ADVANCE_BY', ms: 10 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK'));
+    expect(s.device.screen.kind).toBe('LAST_WITHDRAWAL');
+    s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('MANUAL_ASK');
-    // SÍ → actividad REST por defecto → OK → fin por defecto = inserción → OK → confirmar SÍ → país OK
-    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK'));
+    // SÍ → actividad (descanso) → hora → minutos (fin = inserción) → país de fin anterior → confirmar → país de inicio
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'prev-end' });
+    s = run(s, ...press('OK'));
+    expect(s.device.screen.kind).toBe('MANUAL_CONFIRM');
+    s = run(s, ...press('OK', 'OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.log.some((l) => l.text === 'País de fin de la jornada anterior: España')).toBe(true);
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual).toHaveLength(1);
     expect(manual[0]).toMatchObject({ activity: 'REST', start: withdrawnAt, end: withdrawnAt + 10 * HOUR });
@@ -110,11 +122,14 @@ describe('simulador: tarjeta y actividades', () => {
   it('entrada manual con dos segmentos (trabajo 1 h + descanso)', () => {
     let s = run(withCard(), ...press('EJECT', 'OK'));
     const w = s.clock.now;
-    s = run(s, { type: 'ADVANCE_BY', ms: 3 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK'));
-    // actividad: DOWN → WORK; OK → campo fin; fin = inserción; DOWN ×8 = -2 h → 1 h tras retirada
-    s = run(s, ...press('DOWN', 'OK', ...(Array(8).fill('DOWN') as Button[]), 'OK'));
+    s = run(s, { type: 'ADVANCE_BY', ms: 3 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK'));
+    // actividad: DOWN → otros trabajos; OK → hora: DOWN ×2 = −2 h (1 h tras la retirada); OK → minutos; OK
+    s = run(s, ...press('DOWN', 'OK', 'DOWN', 'DOWN', 'OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'minute' });
+    s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'activity' });
-    s = run(s, ...press('OK', 'OK', 'OK', 'OK'));
+    // Segundo tramo: descanso hasta la inserción → país de fin anterior → confirmar → país de inicio
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK', 'OK'));
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual.map((e) => [e.activity, (e.end! - e.start) / HOUR])).toEqual([['WORK', 1], ['REST', 2]]);
     expect(manual[0]!.start).toBe(w);
@@ -225,7 +240,7 @@ describe('simulador: avisos de la Fase 2', () => {
 
 describe('simulador: velocidad del camión y cuentakilómetros', () => {
   it('la velocidad elegida pone el camión en marcha y el cuentakilómetros suma la distancia', () => {
-    let s = run(withCard(), { type: 'SET_VEHICLE_SPEED', kmh: 60 });
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 60 });
     expect(s.vehicle).toMatchObject({ moving: true, speedKmh: 60 });
     const odo = s.vehicle.odometerKm ?? 248_310;
     s = run(s, { type: 'ADVANCE_BY', ms: 2 * HOUR }, { type: 'DISMISS_NOTICE' });
@@ -236,7 +251,31 @@ describe('simulador: velocidad del camión y cuentakilómetros', () => {
   });
 
   it('el limitador impide pasar de 90 km/h', () => {
-    const s = run(withCard(), { type: 'SET_VEHICLE_SPEED', kmh: 140 });
+    const s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 140 });
     expect(s.vehicle.speedKmh).toBe(90);
+  });
+});
+
+describe('simulador: llave de contacto', () => {
+  it('sin motor arrancado el acelerador no mueve el camión', () => {
+    const s = run(withCard(), { type: 'SET_VEHICLE_SPEED', kmh: 50 });
+    expect(s.vehicle.moving).toBe(false);
+    expect(s.device.notice?.text).toBe('Arranque el motor con la llave');
+  });
+
+  it('0 → I → arranque; quitar el contacto detiene el camión y apaga la retroiluminación', () => {
+    let s = withCard();
+    expect(renderDisplay(s).backlight).toBe(false);
+    s = run(s, { type: 'SET_IGNITION', position: 'on' });
+    expect(renderDisplay(s).backlight).toBe(true);
+    s = run(s, { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 });
+    expect(s.vehicle).toMatchObject({ moving: true, ignition: 'running' });
+    s = run(s, { type: 'SET_IGNITION', position: 'off' });
+    expect(s.vehicle).toMatchObject({ moving: false, ignition: 'off' });
+    expect(s.log.filter((l) => l.kind === 'IGNITION').map((l) => l.text)).toEqual([
+      'Contacto puesto (llave en I)',
+      'Motor arrancado',
+      'Contacto quitado (llave en 0)',
+    ]);
   });
 });

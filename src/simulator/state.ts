@@ -8,6 +8,8 @@ import { createFreeScenario, REFERENCE_ANCHOR, type ScenarioMeta } from '@/scena
 /** v3: avisos de la Fase 2 (los guardados anteriores se descartan). */
 export const SIM_STATE_VERSION = 3;
 
+export type Ignition = 'off' | 'on' | 'running';
+
 export type LogKind =
   | 'CARD_IN'
   | 'CARD_OUT'
@@ -18,6 +20,7 @@ export type LogKind =
   | 'WARNING'
   | 'VEHICLE_START'
   | 'VEHICLE_STOP'
+  | 'IGNITION'
   | 'ACTIVITY_SELECTED';
 
 export interface LogEntry {
@@ -42,7 +45,8 @@ export interface SimState {
   scenario: ScenarioMeta;
   clock: ClockState;
   /** speedKmh: velocidad elegida al circular (por defecto 80); odometerKm: cuentakilómetros. */
-  vehicle: { moving: boolean; speedKmh?: number; odometerKm?: number };
+  /** ignition: posición de la llave (off = 0, on = I contacto, running = motor en marcha). */
+  vehicle: { moving: boolean; speedKmh?: number; odometerKm?: number; ignition?: Ignition };
   device: DeviceState;
   cards: Record<string, FictionalCard>;
   timeline: Timeline;
@@ -58,7 +62,7 @@ export function createInitialSim(anchor: EpochMs = REFERENCE_ANCHOR): SimState {
     version: SIM_STATE_VERSION,
     scenario,
     clock: createClock(scenario.startsAt, scenario.endsAt),
-    vehicle: { moving: false },
+    vehicle: { moving: false, ignition: 'off' },
     device: initialDevice(),
     cards: Object.fromEntries(DEFAULT_CARDS.map((c) => [c.id, { ...c }])),
     timeline: emptyTimeline(),

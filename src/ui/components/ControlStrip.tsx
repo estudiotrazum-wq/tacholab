@@ -90,7 +90,7 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
         />
         <Slider
           id="truck-speed"
-          label="Velocidad del camión"
+          label="Acelerador"
           value={kmh}
           min={0}
           max={MAX_SPEED_KMH}

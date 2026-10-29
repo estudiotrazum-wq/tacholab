@@ -11,7 +11,7 @@ import {
   type DeviceWarning,
   type Screen,
 } from '@/tachograph/types';
-import { cycleManualActivity, MIN_MANUAL_GAP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
+import { cycleManualActivity, HOUR_STEP, MIN_MANUAL_GAP, MINUTE_STEP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
 import { nextStop, warningTriggers } from './warnings';
 import type { LogKind, SimConfig, SimState } from './state';
 
@@ -26,6 +26,8 @@ export type SimAction =
   | { type: 'SET_MOVING'; moving: boolean }
   /** Velocidad del camión en km/h (0 = parado; máximo 90, limitador de los camiones en la UE). */
   | { type: 'SET_VEHICLE_SPEED'; kmh: number }
+  /** Llave de contacto: 0 (apagado), I (contacto) o arranque (motor en marcha). */
+  | { type: 'SET_IGNITION'; position: 'off' | 'on' | 'start' }
   | { type: 'DISMISS_NOTICE' }
   | { type: 'SET_CONFIG'; patch: Partial<SimConfig> };
 
@@ -194,6 +196,7 @@ function commitManualEntry(sim: SimState, screen: Extract<Screen, { kind: 'MANUA
         `Entrada manual: ${seg.activity === 'UNKNOWN' ? 'Desconocida' : ACTIVITY_LABEL[seg.activity]} ${formatDateTime(seg.start, tz)} → ${formatDateTime(seg.end, tz)}`,
       );
     }
+    s = log(s, 'COUNTRY_END', `País de fin de la jornada anterior: ${screen.prevCountry}`);
     return setScreen(s, { kind: 'COUNTRY', purpose: 'start', index: 0 });
   } catch (e) {
     return notice(setScreen(sim, STANDARD), e instanceof Error ? e.message : 'Entrada manual no válida');
@@ -273,6 +276,8 @@ function pressButton(sim: SimState, button: Button): SimState {
       return s;
     }
     case 'WELCOME':
+      return ok || back ? setScreen(s, { kind: 'LAST_WITHDRAWAL' }) : s;
+    case 'LAST_WITHDRAWAL':
       return ok || back ? afterWelcome(s) : s;
     case 'MANUAL_ASK': {
       if (up || down) return setScreen(s, { kind: 'MANUAL_ASK', yes: !screen.yes });
@@ -291,7 +296,7 @@ function pressButton(sim: SimState, button: Button): SimState {
       const { draft, segments } = screen;
       if (screen.field === 'activity') {
         if (up || down) return setScreen(s, { ...screen, draft: { ...draft, activity: cycleManualActivity(draft.activity, up ? -1 : 1) } });
-        if (ok) return setScreen(s, { ...screen, field: 'end' });
+        if (ok) return setScreen(s, { ...screen, field: 'hour' });
         if (back) {
           const prev = segments[segments.length - 1];
           if (!prev) return setScreen(s, { kind: 'MANUAL_ASK', yes: true });
@@ -299,11 +304,14 @@ function pressButton(sim: SimState, button: Button): SimState {
         }
         return s;
       }
-      if (up || down) return setScreen(s, { ...screen, draft: { ...draft, end: stepManualEnd(draft, up ? 1 : -1, to) } });
-      if (back) return setScreen(s, { ...screen, field: 'activity' });
+      // Hora y minutos de fin del tramo, por separado, como en los equipos reales.
+      const step = screen.field === 'hour' ? HOUR_STEP : MINUTE_STEP;
+      if (up || down) return setScreen(s, { ...screen, draft: { ...draft, end: stepManualEnd(draft, up ? 1 : -1, to, step) } });
+      if (back) return setScreen(s, { ...screen, field: screen.field === 'minute' ? 'hour' : 'activity' });
+      if (ok && screen.field === 'hour') return setScreen(s, { ...screen, field: 'minute' });
       if (ok) {
         const all = [...segments, draft];
-        if (draft.end >= to) return setScreen(s, { kind: 'MANUAL_CONFIRM', segments: all, yes: true });
+        if (draft.end >= to) return setScreen(s, { kind: 'COUNTRY', purpose: 'prev-end', index: 0, segments: all });
         return setScreen(s, { kind: 'MANUAL_EDIT', segments: all, draft: newDraft(draft.end, to), field: 'activity' });
       }
       return s;
@@ -313,7 +321,7 @@ function pressButton(sim: SimState, button: Button): SimState {
       if (ok && screen.yes) return commitManualEntry(s, screen);
       if (ok || back) {
         const last = screen.segments[screen.segments.length - 1]!;
-        return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'end' });
+        return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'minute' });
       }
       return s;
     }
@@ -321,14 +329,21 @@ function pressButton(sim: SimState, button: Button): SimState {
       if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), COUNTRIES.length) });
       if (ok) {
         const c = COUNTRIES[screen.index]!;
+        if (screen.purpose === 'prev-end') {
+          return setScreen(s, { kind: 'MANUAL_CONFIRM', segments: screen.segments, yes: true, prevCountry: c.name });
+        }
         if (screen.purpose === 'start') {
           s = log(s, 'COUNTRY_START', `País de inicio: ${c.name}`);
-          return notice(setScreen(s, STANDARD), 'Tarjeta lista');
+          return notice(setScreen(s, STANDARD), 'Listo para conducir');
         }
         s = log(s, 'COUNTRY_END', `País de fin: ${c.name}`);
         return completeWithdrawal(s);
       }
       if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
+      if (back && screen.purpose === 'prev-end') {
+        const last = screen.segments[screen.segments.length - 1]!;
+        return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'minute' });
+      }
       return s;
     }
   }
@@ -336,9 +351,20 @@ function pressButton(sim: SimState, button: Button): SimState {
 
 // ---------------------------------------------------------------- vehículo
 
+/** Llave de contacto. Apagar el motor detiene el vehículo. */
+function setIgnition(sim: SimState, position: 'off' | 'on' | 'start'): SimState {
+  const current = sim.vehicle.ignition ?? 'off';
+  const target = position === 'start' ? 'running' : position;
+  if (current === target) return sim;
+  let s = target !== 'running' && sim.vehicle.moving ? setMoving(sim, false) : sim;
+  s = { ...s, vehicle: { ...s.vehicle, ignition: target } };
+  const text = { off: 'Contacto quitado (llave en 0)', on: 'Contacto puesto (llave en I)', running: 'Motor arrancado' }[target];
+  return log(s, 'IGNITION', text);
+}
+
 function setMoving(sim: SimState, moving: boolean): SimState {
   if (sim.vehicle.moving === moving) return sim;
-  let s: SimState = { ...sim, vehicle: { ...sim.vehicle, moving } };
+  let s: SimState = { ...sim, vehicle: { ...sim.vehicle, moving, ...(moving ? { ignition: 'running' as const } : {}) } };
   if (moving) {
     s = log(s, 'VEHICLE_START', 'Vehículo en marcha');
     const kind = s.device.screen.kind;
@@ -390,9 +416,12 @@ export function simReducer(sim: SimState, action: SimAction): SimState {
       return checkWarnings(insertCard(sim, action.cardId));
     case 'SET_MOVING':
       return checkWarnings(setMoving(sim, action.moving));
+    case 'SET_IGNITION':
+      return checkWarnings(setIgnition(sim, action.position));
     case 'SET_VEHICLE_SPEED': {
       const kmh = Math.round(Math.min(MAX_SPEED_KMH, Math.max(0, action.kmh)));
       if (kmh === 0) return checkWarnings(setMoving(sim, false));
+      if (sim.vehicle.ignition !== 'running') return notice(sim, 'Arranque el motor con la llave');
       const withSpeed = { ...sim, vehicle: { ...sim.vehicle, speedKmh: kmh } };
       return checkWarnings(setMoving(withSpeed, true));
     }

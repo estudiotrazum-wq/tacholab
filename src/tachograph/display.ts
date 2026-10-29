@@ -24,6 +24,8 @@ export interface DisplayModel {
   cardIn: boolean;
   moving: boolean;
   mode: 'normal' | 'warning' | 'notice';
+  /** Retroiluminación encendida (contacto puesto). */
+  backlight: boolean;
 }
 
 export const ACTIVITY_TOKEN: Record<Activity, string> = { DRIVING: '{D}', WORK: '{W}', AVAILABILITY: '{A}', REST: '{R}' };
@@ -131,7 +133,7 @@ export function renderDisplay(sim: SimState): DisplayModel {
   const cur = complianceFor(sim)?.current ?? null;
   const card = d.insertedCardId ? sim.cards[d.insertedCardId] : undefined;
   const speed = sim.vehicle.moving ? (sim.vehicle.speedKmh ?? 80) : 0;
-  const base = { recorded: sum.recorded, selected: d.selected, cardIn: card !== undefined, moving: sim.vehicle.moving };
+  const base = { recorded: sum.recorded, selected: d.selected, cardIn: card !== undefined, moving: sim.vehicle.moving, backlight: (sim.vehicle.ignition ?? 'off') !== 'off' };
   const view = (a: string, b: string, mode: DisplayModel['mode'] = 'normal'): DisplayModel => ({ ...base, mode, lines: [fit(a), fit(b)] });
 
   if (d.warning) {
@@ -181,22 +183,32 @@ export function renderDisplay(sim: SimState): DisplayModel {
     }
     case 'DEVICE_INFO':
       return view('TL-1 EDU   v0.9', 'NO HOMOLOGADO');
-    case 'WELCOME': {
+    case 'WELCOME':
+      return view(spread('Bienvenido/a', `${formatTime(now, sim.scenario.localTimeZone)}{L}`), `{C} ${card?.holderName ?? ''}`);
+    case 'LAST_WITHDRAWAL': {
+      // Fin de la jornada anterior: fecha y hora de la última retirada de la tarjeta.
       const last = card?.lastWithdrawalAt;
-      return view(`{C} ${card?.holderName ?? ''}`, last != null ? `{C}↑ ${short(last, tz)}` : '{C}↑ primer uso');
+      return view('Última retirada', last != null ? `{C}↑ ${short(last, tz)} UTC` : '{C}↑ primer uso');
     }
     case 'MANUAL_ASK':
       return view('¿Entrada manual?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'MANUAL_EDIT': {
+      // Línea 1: inicio del tramo. Línea 2: actividad y fin; el campo en edición va entre corchetes.
       const a = MANUAL_TOKEN[s.draft.activity];
-      const end = short(s.draft.end, tz);
-      return view(`{M} ${short(s.draft.start, tz)}`, s.field === 'activity' ? `[${a}] ${end}` : ` ${a} [${end}]`);
+      const p = zonedParts(s.draft.end, tz);
+      const date = `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')}`;
+      const hh = String(p.hour).padStart(2, '0');
+      const mm = String(p.minute).padStart(2, '0');
+      const line2 =
+        s.field === 'activity' ? `[${a}] ${date} ${hh}:${mm}` : s.field === 'hour' ? ` ${a}  ${date} [${hh}]:${mm}` : ` ${a}  ${date} ${hh}:[${mm}]`;
+      return view(`{M}  ${short(s.draft.start, tz)}`, line2);
     }
     case 'MANUAL_CONFIRM':
-      return view('¿Confirmar entrada?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
+      return view('{M}¿Confirmar?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'COUNTRY': {
       const c = COUNTRIES[s.index]!;
-      return view(`{L}${s.purpose === 'start' ? 'País de inicio' : 'País de fin'}`, `▸ ${c.code.padEnd(3)}${c.name}`);
+      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'prev-end' ? '{M}País fin jornada' : '{L}País de fin';
+      return view(title, `▸ ${c.code.padEnd(3)}${c.name}`);
     }
   }
 }

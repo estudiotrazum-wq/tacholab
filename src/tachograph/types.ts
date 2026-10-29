@@ -36,15 +36,20 @@ export const COUNTRIES = [
 export type Screen =
   | { kind: 'STANDARD'; page: 0 | 1 | 2 }
   | { kind: 'WELCOME' }
+  /** Fecha y hora de la última retirada (fin de la jornada anterior). */
+  | { kind: 'LAST_WITHDRAWAL' }
   | { kind: 'MANUAL_ASK'; yes: boolean }
   | {
       kind: 'MANUAL_EDIT';
       segments: ManualDraftSegment[];
       draft: ManualDraftSegment;
-      field: 'activity' | 'end';
+      /** Campo en edición: actividad, hora de fin o minutos de fin. */
+      field: 'activity' | 'hour' | 'minute';
     }
-  | { kind: 'MANUAL_CONFIRM'; segments: ManualDraftSegment[]; yes: boolean }
+  | { kind: 'MANUAL_CONFIRM'; segments: ManualDraftSegment[]; yes: boolean; prevCountry: string }
+  /** start: país de inicio · end: país de fin al retirar · prev-end: país de fin de la jornada anterior (entrada manual). */
   | { kind: 'COUNTRY'; purpose: 'start' | 'end'; index: number }
+  | { kind: 'COUNTRY'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
   | { kind: 'MENU'; index: number }
   | { kind: 'TIMES' }
   | { kind: 'DAY_ACTIVITIES'; offset: number }
@@ -54,7 +59,7 @@ export type Screen =
 export type ScreenKind = Screen['kind'];
 
 /** Pantallas del procedimiento de inserción de tarjeta. */
-export const INSERTION_FLOW: readonly ScreenKind[] = ['WELCOME', 'MANUAL_ASK', 'MANUAL_EDIT', 'MANUAL_CONFIRM'];
+export const INSERTION_FLOW: readonly ScreenKind[] = ['WELCOME', 'LAST_WITHDRAWAL', 'MANUAL_ASK', 'MANUAL_EDIT', 'MANUAL_CONFIRM'];
 
 export interface Notice {
   seq: number;

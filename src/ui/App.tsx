@@ -76,7 +76,7 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.9 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.10 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 
@@ -106,7 +106,7 @@ export function App() {
             <ol className="mt-4 grid gap-3 sm:grid-cols-3">
               {[
                 ['1', 'Mete la tarjeta', 'Arrástrala desde la izquierda hasta la ranura del tacógrafo.'],
-                ['2', 'Arranca el camión', 'Pulsa ARRANCAR: el tacógrafo registra la conducción solo.'],
+                ['2', 'Arranca el camión', 'Gira la llave a II y sube el acelerador: el tacógrafo registra la conducción solo.'],
                 ['3', 'Deja correr el tiempo', 'Con ▶ y la velocidad ×60 verás pasar las horas.'],
               ].map(([n, t, d]) => (
                 <li key={n} className="rounded-2xl bg-white/5 p-3">

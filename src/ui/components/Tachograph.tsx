@@ -57,7 +57,8 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
             <div>
               <div
                 className={`relative overflow-hidden rounded-md border-[3px] border-[#0b0c0e] px-3 py-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.55)] ${model.mode === 'warning' ? 'lcd-warning' : ''}`}
-                style={{ background: 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)' }}
+                style={{ background: model.backlight ? 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)' : 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', transition: 'background 400ms' }}
+                data-backlight={model.backlight ? 'on' : 'off'}
                 role="status"
                 aria-live="polite"
                 aria-label={`Pantalla: ${lcdPlain(model.lines[0]).trim()} / ${lcdPlain(model.lines[1]).trim()}`}

@@ -6,11 +6,11 @@ const MAX = 120;
 /** Ángulo de la aguja: arco de 240° (de −120° a +120°). */
 const angle = (v: number) => -120 + (Math.min(v, MAX) / MAX) * 240;
 
-/** Velocímetro genérico con cuentakilómetros y botón de arranque/parada. */
+/** Velocímetro genérico con cuentakilómetros y estado del motor. */
 export function Speedometer({ highlight, compact = false }: { highlight: AssistTarget; compact?: boolean }) {
   const sim = useSimStore((s) => s.sim);
-  const dispatch = useSimStore((s) => s.dispatch);
   const moving = sim.vehicle.moving;
+  const ignition = sim.vehicle.ignition ?? 'off';
   const speed = moving ? (sim.vehicle.speedKmh ?? DEFAULT_SPEED_KMH) : 0;
   const km = sim.vehicle.odometerKm ?? ODOMETER_START_KM;
 
@@ -42,22 +42,16 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
       </svg>
 
       <div className={compact ? 'flex-1' : 'mt-3'}>
-        <button
-          type="button"
-          data-testid="vehicle-toggle"
-          aria-pressed={moving}
-          onClick={() => dispatch({ type: 'SET_MOVING', moving: !moving })}
-          className={`group flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-base font-bold tracking-wider transition ${highlight === 'VEHICLE' ? 'assist-target' : ''} ${
-            moving
-              ? 'bg-rose-500 text-white shadow-[0_10px_30px_-10px_rgba(244,63,94,0.8)] hover:bg-rose-400'
-              : 'bg-emerald-400 text-slate-950 shadow-[0_10px_30px_-10px_rgba(52,211,153,0.8)] hover:bg-emerald-300'
-          }`}
-        >
-          <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-current text-xs" aria-hidden="true">⏻</span>
-          {moving ? 'PARAR' : 'ARRANCAR'}
-        </button>
+        <div className={`flex items-center justify-center gap-2 rounded-xl bg-white/5 py-2 text-xs ${highlight === 'VEHICLE' ? 'assist-target' : ''}`} data-testid="vehicle-state">
+          <span className={`h-2.5 w-2.5 rounded-full ${moving ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : ignition === 'running' ? 'bg-amber-400' : 'bg-slate-600'}`} aria-hidden="true" />
+          {moving ? 'En marcha' : ignition === 'running' ? 'Motor en ralentí' : ignition === 'on' ? 'Contacto puesto' : 'Motor apagado'}
+        </div>
         <p className="mt-2 text-center text-[11px] text-slate-400">
-          {moving ? 'En marcha: el tacógrafo registra conducción.' : 'Parado: elige la actividad con el botón del tacógrafo.'}
+          {moving
+            ? 'El tacógrafo registra conducción. Baja el acelerador a 0 para detenerte.'
+            : ignition === 'running'
+              ? 'Sube el acelerador para empezar a circular.'
+              : 'Gira la llave a II para arrancar el motor.'}
         </p>
       </div>
     </section>

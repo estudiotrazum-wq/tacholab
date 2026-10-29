@@ -10,6 +10,7 @@ import { AssistBanner } from '../components/AssistBanner';
 import { WarningDetail } from '../components/WarningDetail';
 import { CardTray } from '../components/CardTray';
 import { Speedometer } from '../components/Speedometer';
+import { IgnitionKey } from '../components/IgnitionKey';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 /**
@@ -40,7 +41,13 @@ export function DeviceScreen() {
       <div className="min-w-0 space-y-4">
         <ExercisePanel />
         {guide?.source === 'assist' && <AssistBanner hint={guide} />}
-        <Tachograph highlight={highlight} />
+        {/* Llave de contacto a la altura del tacógrafo, como en el salpicadero */}
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <IgnitionKey highlight={highlight} />
+          <div className="min-w-0 flex-1">
+            <Tachograph highlight={highlight} />
+          </div>
+        </div>
         <ControlStrip highlight={highlight} />
         {!large && <Speedometer highlight={highlight} compact />}
         {warningsEnabled && <WarningDetail />}
@@ -55,7 +62,7 @@ export function DeviceScreen() {
             <li><kbd>Esc</kbd> ✕ retroceder</li>
             <li><kbd>A</kbd> botón de actividad</li>
             <li><kbd>E</kbd> expulsar · <kbd>I</kbd> insertar tarjeta</li>
-            <li><kbd>M</kbd> arrancar/parar · <kbd>Espacio</kbd> pausa / ×60</li>
+            <li><kbd>K</kbd> girar la llave · <kbd>M</kbd> marcha/parada · <kbd>Espacio</kbd> pausa / ×60</li>
           </ul>
         )}
       </div>

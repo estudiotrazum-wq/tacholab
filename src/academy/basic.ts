@@ -39,7 +39,7 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
     title: 'Insertar una tarjeta ficticia',
     feature: 'academy-basic',
     status: 'available',
-    objective: 'Insertar la tarjeta, declarar el periodo sin tarjeta como descanso y elegir el país de inicio.',
+    objective: 'Seguir el procedimiento de inserción: bienvenida, última retirada, entrada manual, país de fin de la jornada anterior y país de inicio.',
     situation: 'Ayer retiraste la tarjeta a las 20:00 UTC y descansaste en casa. Son las 06:00 UTC del lunes.',
     deviceState: 'Sin tarjeta. La tarjeta guarda la hora de la última retirada.',
     build: () => {
@@ -47,12 +47,14 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
       return { ...sim, cards: { ...sim.cards, [DRIVER]: { ...sim.cards[DRIVER]!, lastWithdrawalAt: sim.scenario.startsAt - 10 * HOUR } } };
     },
     steps: [
-      { text: 'Pulsa la ranura para insertar la tarjeta ficticia.', target: 'CARD_SLOT', done: (c) => c.sim.device.insertedCardId !== null },
-      { text: 'Lee la bienvenida (titular y última retirada) y pulsa ✓.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_ASK') },
-      { text: 'Elige SÍ para declarar el periodo sin tarjeta y pulsa ✓.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_EDIT') },
-      { text: 'Deja «Descanso» como actividad y pulsa ✓; comprueba que el periodo llega hasta la inserción y pulsa ✓.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
+      { text: 'Arrastra la tarjeta ficticia hasta la ranura 1 (o pulsa la ranura).', target: 'CARD_SLOT', done: (c) => c.sim.device.insertedCardId !== null },
+      { text: 'Lee la bienvenida y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:LAST_WITHDRAWAL') },
+      { text: 'Comprueba la última retirada (fin de la jornada anterior) y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_ASK') },
+      { text: 'Elige SÍ para hacer la entrada manual del tiempo sin tarjeta y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_EDIT') },
+      { text: 'Deja la cama (descanso) como actividad y pulsa OK; la hora y los minutos de fin ya llegan hasta ahora: OK y OK.', target: 'OK', done: (c) => has(c, 'screen:COUNTRY') },
+      { text: 'Indica el país donde terminó la jornada anterior (España) y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
       { text: 'Confirma la entrada manual con SÍ.', target: 'OK', done: (c) => logged(c, 'MANUAL_ENTRY') },
-      { text: 'Selecciona el país de inicio (España) y confírmalo.', target: 'OK', done: (c) => logged(c, 'COUNTRY_START') },
+      { text: 'Selecciona el país de inicio (España) y confírmalo: el equipo muestra «Listo para conducir».', target: 'OK', done: (c) => logged(c, 'COUNTRY_START') },
     ],
     success: [
       {

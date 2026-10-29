@@ -61,13 +61,15 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
   });
 
   it('2 · tarjeta con entrada manual: 100 puntos', () => {
-    const { result, sim } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
+    // Bienvenida, última retirada, SÍ, actividad, hora, minutos, país fin anterior, confirmar, país de inicio
+    const { result, sim, session } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
+    expect(session.stepIndex).toBe(8);
     expect(sim.device.screen.kind).toBe('STANDARD');
     expect(result).toMatchObject({ passed: true, score: 100 });
   });
 
   it('2 · tarjeta sin entrada manual: suspende y penaliza', () => {
-    const { result } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'DOWN', 'OK', 'OK')]);
+    const { result } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'DOWN', 'OK', 'OK')]);
     expect(result.passed).toBe(false);
     expect(result.errors.map((e) => e.penalty)).toEqual([40]);
   });

@@ -11,12 +11,15 @@ export function cycleManualActivity(a: ManualActivity, dir: 1 | -1): ManualActiv
   return MANUAL_ACTIVITIES[(i + dir + n) % n]!;
 }
 
-/** Ajusta el final de un segmento en pasos de 15 min dentro de (inicio, inserción]. */
-export function stepManualEnd(draft: ManualDraftSegment, dir: 1 | -1, limit: EpochMs): EpochMs {
-  const min = Math.min(draft.start + MANUAL_STEP, limit);
-  const next = draft.end + dir * MANUAL_STEP;
+/** Ajusta el final de un segmento (horas o minutos) dentro de (inicio, inserción]. */
+export function stepManualEnd(draft: ManualDraftSegment, dir: 1 | -1, limit: EpochMs, step: number = MANUAL_STEP): EpochMs {
+  const min = Math.min(draft.start + MINUTE, limit);
+  const next = draft.end + dir * step;
   return Math.min(Math.max(next, min), limit);
 }
+
+export const HOUR_STEP = 60 * MINUTE;
+export const MINUTE_STEP = MINUTE;
 
 export function newDraft(start: EpochMs, limit: EpochMs): ManualDraftSegment {
   return { activity: 'REST', start, end: limit };

@@ -2,6 +2,19 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.10 — Procedimiento de inserción real y llave de contacto (rama `ui-rediseno`)
+- [x] Secuencia de inserción como en los tacógrafos digitales europeos: **bienvenida** (titular y hora local) →
+      **última retirada** de la tarjeta (fecha y hora UTC) → **¿entrada manual?** → entradas manuales campo a campo
+      (actividad → hora → minutos, varios tramos) → **país de fin de la jornada anterior** → **confirmar** →
+      **país de inicio** → «Listo para conducir». ✕ retrocede un paso en cada pantalla
+- [x] **Llave de contacto** con posiciones 0 · I · II junto al tacógrafo, a su misma altura (encima en móvil). Con la
+      llave en 0 la pantalla pierde la retroiluminación; en II arranca el motor (vuelve sola a I). Tecla `K`
+- [x] El acelerador sustituye al botón ARRANCAR/PARAR: sin motor arrancado no mueve el camión («Arranque el motor con
+      la llave»); quitar el contacto detiene el vehículo. Los giros de llave quedan en el registro
+- [x] Ejercicio 2 de la academia rehecho con los 8 pasos del procedimiento; ayudas contextuales para cada pantalla
+- [x] 105 pruebas unitarias + E2E con la llave (0 → I → II) y el procedimiento completo
+- Modelo de interacción común a los equipos del mercado; textos, pictogramas y diseño propios (sin imitar ninguna marca)
+
 ## v0.9 — Tacógrafo más realista y barra de control con deslizadores (rama `ui-rediseno`)
 - [x] Aparato en formato DIN con los elementos comunes a los tacógrafos digitales europeos: **LCD de 2 × 20** con
       retroiluminación y pictogramas normalizados, teclas ✕ ▲ ▼ OK, **dos ranuras** con tecla 1/2 (tecla 1: actividad;

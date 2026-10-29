@@ -29,6 +29,9 @@ export function useDeviceKeys(enabled = true): void {
         dispatch({ type: 'PRESS', button });
       } else if (key === 'm') {
         dispatch({ type: 'SET_MOVING', moving: !state.vehicle.moving });
+      } else if (key === 'k') {
+        const ig = state.vehicle.ignition ?? 'off';
+        dispatch({ type: 'SET_IGNITION', position: ig === 'off' ? 'on' : ig === 'on' ? 'start' : 'off' });
       } else if (key === 'i') {
         dispatch({ type: 'INSERT_CARD', cardId: 'card-a' });
       } else if (key === ' ') {

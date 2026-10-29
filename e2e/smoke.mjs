@@ -85,16 +85,29 @@ try {
 
   // La tarjeta se arrastra desde la bandeja hasta la ranura
   await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
-  assert((await line(0)).includes('Alex Prácticas'), 'inserción muestra el titular de la tarjeta');
+  assert((await line(0)).includes('Bienvenido'), 'inserción: pantalla de bienvenida');
+  assert((await line(1)).includes('Alex Prácticas'), 'inserción muestra el titular de la tarjeta');
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert((await line(0)).includes('Última retirada'), 'muestra la última retirada de la tarjeta');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await line(0)).includes('País de inicio'), 'pide país de inicio');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+
+  // Llave de contacto junto al tacógrafo: 0 → I (pantalla iluminada) → II (arranque)
+  await page.getByTestId('ignition-off').click();
+  assert((await page.getByTestId('tacho-display').getAttribute('data-backlight')) === 'off', 'con la llave en 0 la pantalla se apaga');
+  await page.getByTestId('truck-speed').fill('50');
+  assert((await page.getByTestId('truck-speed').inputValue()) === '0', 'sin motor arrancado el acelerador no mueve el camión');
+  await page.getByTestId('ignition-on').click();
+  assert((await page.getByTestId('tacho-display').getAttribute('data-backlight')) === 'on', 'con la llave en I la pantalla se ilumina');
+  await page.getByTestId('ignition-start').click();
+  assert((await page.getByTestId('engine-status').innerText()).includes('Motor en marcha'), 'la llave en II arranca el motor');
 
   await page.getByRole('button', { name: 'Botón de actividad' }).click();
   assert((await page.getByTestId('recorded-activity').innerText()) === 'Disponibilidad', 'botón de actividad cambia de otros trabajos (tras detener) a disponibilidad');
 
   await tool('+1 h');
-  await page.getByTestId('vehicle-toggle').click();
+  await page.getByTestId('truck-speed').fill('80');
   assert((await page.getByTestId('recorded-activity').innerText()) === 'Conducción', 'el movimiento registra conducción');
 
   // Reloj ×60 durante ~2 s reales ≈ 2 min virtuales
@@ -130,7 +143,7 @@ try {
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   // Seguir conduciendo tras el límite genera la infracción.
   await tool('+15 min');
-  await page.getByTestId('vehicle-toggle').click();
+  await page.getByTestId('truck-speed').fill('0');
   assert((await page.getByTestId('infringement-count').innerText()).includes('1 infracción'), 'el panel normativo cuenta la infracción');
 
   const clockBeforeReload = await page.getByTestId('virtual-clock').innerText();
