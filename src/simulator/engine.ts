@@ -1,5 +1,5 @@
 import { SELECTABLE_ACTIVITIES, type EpochMs, ACTIVITY_LABEL } from '@/shared/types';
-import { advanceClockTo, setSpeed, tickClock, type Speed } from '@/time-engine/clock';
+import { advanceClockTo, FAST_SPEED, setSpeed, tickClock, type Speed } from '@/time-engine/clock';
 import { insertManualSegments, switchActivity, type ActivityTarget } from '@/time-engine/timeline';
 import { addZonedDays, formatDateTime, startOfZonedDay } from '@/time-engine/zoned';
 import {
@@ -106,19 +106,28 @@ function addDistance(before: SimState, after: SimState): SimState {
 }
 
 /** Avanza el reloj hasta `target` deteniéndose en cada umbral intermedio. */
-function advanceTo(sim: SimState, target: EpochMs): SimState {
-  return addDistance(sim, advanceClock(sim, target));
+function advanceTo(sim: SimState, target: EpochMs, haltOnWarning = false): SimState {
+  return addDistance(sim, advanceClock(sim, target, haltOnWarning));
 }
 
-function advanceClock(sim: SimState, target: EpochMs): SimState {
+/**
+ * Avanza el reloj deteniéndose en cada umbral para emitir los avisos en su instante exacto.
+ * Con haltOnWarning (reloj rápido), se para y se pausa en el primer aviso nuevo.
+ */
+function advanceClock(sim: SimState, target: EpochMs, haltOnWarning = false): SimState {
   let s = checkWarnings(sim);
+  const halt = (x: SimState) => ({ ...x, clock: { ...x.clock, speed: 0 as const, carryMs: 0 } });
   for (let guard = 0; guard < 64; guard++) {
     const stop = nextStop(s);
     if (stop === null || stop.at >= target) break;
+    const before = s.device.warning;
     s = checkWarnings({ ...s, clock: advanceClockTo(s.clock, stop.at) });
+    if (haltOnWarning && s.device.warning && s.device.warning !== before) return halt(s);
     if (s.clock.now >= s.clock.endsAt) break;
   }
-  return checkWarnings({ ...s, clock: advanceClockTo(s.clock, target) });
+  const before = s.device.warning;
+  s = checkWarnings({ ...s, clock: advanceClockTo(s.clock, target) });
+  return haltOnWarning && s.device.warning && s.device.warning !== before ? halt(s) : s;
 }
 
 /** Siguiente evento relevante: umbral normativo, hito de descanso, medianoche UTC o fin de escenario. */
@@ -488,7 +497,7 @@ export function simReducer(sim: SimState, action: SimAction): SimState {
       if (sim.clock.speed === 0) return sim;
       const ticked = tickClock(sim.clock, action.realDeltaMs);
       if (ticked.now === sim.clock.now) return { ...sim, clock: ticked };
-      return advanceTo({ ...sim, clock: { ...ticked, now: sim.clock.now } }, ticked.now);
+      return advanceTo({ ...sim, clock: { ...ticked, now: sim.clock.now } }, ticked.now, sim.clock.speed >= FAST_SPEED);
     }
     case 'SET_SPEED':
       return { ...sim, clock: setSpeed(sim.clock, action.speed) };

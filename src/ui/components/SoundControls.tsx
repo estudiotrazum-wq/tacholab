@@ -55,6 +55,7 @@ export function SoundButton({ variant = 'rail' }: { variant?: 'rail' | 'header' 
           <Toggle label="Efectos" desc="Teclas, tarjeta, impresora, avisos y motor del camión" checked={ui.sfxOn} onChange={(v) => { ui.update({ sfxOn: v }); sound.unlock(); }} testId="sfx-toggle" />
           <Toggle label="Música country" desc="«Ruta 561», melodía original de ambiente" checked={ui.musicOn} onChange={(v) => { sound.unlock(); ui.update({ musicOn: v }); }} testId="music-toggle" />
           <Range label="Volumen general" value={ui.volume} onChange={(v) => ui.update({ volume: v })} id="volume" />
+          <Range label="Volumen del motor" value={ui.engineVolume} onChange={(v) => ui.update({ engineVolume: v })} id="engine-volume" />
           <Range label="Volumen de la música" value={ui.musicVolume} onChange={(v) => ui.update({ musicVolume: v })} id="music-volume" />
           <p className="mt-2 text-[11px] text-slate-500">Sonidos sintetizados en el navegador; el sonido empieza tras tu primer clic.</p>
         </div>

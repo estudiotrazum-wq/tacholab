@@ -1,7 +1,10 @@
 import type { EpochMs } from '@/shared/types';
 
 /** Velocidades de simulación disponibles (0 = pausa). */
-export const SPEEDS = [0, 1, 5, 30, 60] as const;
+/** ×300 = 5 min por segundo · ×900 = 15 min por segundo · ×3600 = 1 h por segundo. */
+export const SPEEDS = [0, 1, 5, 30, 60, 300, 900, 3600] as const;
+/** A partir de esta velocidad, el reloj se pausa al saltar un aviso para que dé tiempo a reaccionar. */
+export const FAST_SPEED = 300;
 export type Speed = (typeof SPEEDS)[number];
 
 /**

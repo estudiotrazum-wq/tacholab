@@ -121,7 +121,7 @@ export function GuideScreen() {
           <Dl
             items={[
               ['▶ / ❚❚', 'Reproduce o pausa el reloj virtual.'],
-              ['Velocidad del reloj', 'De ×1 a ×60 (una hora en un minuto).'],
+              ['Velocidad del reloj', 'De ×1 (tiempo real) a ×3600 (una hora por segundo). Desde ×300, el reloj se pausa solo al saltar un aviso.'],
               ['Línea de tiempo', 'Arrastra el cursor a la derecha para avanzar en pasos de 15 min.'],
               ['Siguiente evento ⏭', 'Salta al próximo aviso o límite.'],
               ['⋯', 'Avanzar a una hora concreta y puntos de restauración.'],

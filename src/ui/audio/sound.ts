@@ -1,5 +1,8 @@
 import { midiToHz, SONG_BEATS, SONG_BPM, songNotes, type SongNote } from './song';
 
+/** Nivel del motor al ralentí (antes del volumen del motor). */
+const ENGINE_BASE_GAIN = 0.07;
+
 /**
  * Sonido sintetizado con Web Audio: no usa grabaciones. Efectos del tacógrafo (teclas, tarjeta,
  * impresora, avisos), motor diésel del camión (arranque, ralentí, aceleración, freno de aire) y la
@@ -12,10 +15,11 @@ class SoundEngine {
   private sfxBus: GainNode | null = null;
   private musicBus: GainNode | null = null;
   private noiseBuf: AudioBuffer | null = null;
-  private engine: { osc: OscillatorNode[]; filter: BiquadFilterNode; out: GainNode; lfo: OscillatorNode; lfoGain: GainNode } | null = null;
+  private engineBus: GainNode | null = null;
+  private engine: { osc: OscillatorNode[]; filter: BiquadFilterNode; out: GainNode; lfo: OscillatorNode; lfoGain: GainNode; rumble: AudioBufferSourceNode } | null = null;
   private lastKmh = 0;
   private music: { timer: number; startAt: number; nextIndex: number; loop: number; notes: SongNote[] } | null = null;
-  private settings = { sfx: true, music: false, volume: 0.7, musicVolume: 0.45 };
+  private settings = { sfx: true, music: false, volume: 0.7, musicVolume: 0.45, engineVolume: 0.5 };
   private onUnlock: (() => void) | null = null;
 
   get ready(): boolean {
@@ -35,6 +39,8 @@ class SoundEngine {
         this.sfxBus.connect(this.master);
         this.musicBus = this.ctx.createGain();
         this.musicBus.connect(this.master);
+        this.engineBus = this.ctx.createGain();
+        this.engineBus.connect(this.sfxBus);
         const len = this.ctx.sampleRate;
         this.noiseBuf = this.ctx.createBuffer(1, len, len);
         const data = this.noiseBuf.getChannelData(0);
@@ -65,6 +71,7 @@ class SoundEngine {
     this.master.gain.setTargetAtTime(this.settings.volume, t, 0.05);
     this.sfxBus.gain.setTargetAtTime(this.settings.sfx ? 1 : 0, t, 0.05);
     this.musicBus.gain.setTargetAtTime(this.settings.musicVolume * 0.6, t, 0.1);
+    this.engineBus?.gain.setTargetAtTime(this.settings.engineVolume, t, 0.1);
     if (this.settings.music) this.startMusic();
     else this.stopMusic();
   }
@@ -155,74 +162,103 @@ class SoundEngine {
 
   // ------------------------------------------------------------ motor
 
-  /** Arranque: motor de arranque unos instantes y después el ralentí. */
+  /**
+   * Arranque suave: un motor de arranque discreto y grave unos instantes y después el ralentí,
+   * que entra en fundido.
+   */
   engineStart(): void {
-    if (!this.ready || !this.ctx || this.engine) return;
+    if (!this.ready || !this.ctx || this.engine || !this.engineBus) return;
     const t = this.now;
-    // Motor de arranque: zumbido con golpes de compresión
     const crank = this.ctx.createOscillator();
+    const cf = this.ctx.createBiquadFilter();
     const cg = this.ctx.createGain();
     const lfo = this.ctx.createOscillator();
     const lg = this.ctx.createGain();
-    crank.type = 'sawtooth';
-    crank.frequency.value = 150;
-    lfo.frequency.value = 9;
-    lg.gain.value = 0.05;
-    cg.gain.value = 0.06;
+    crank.type = 'triangle';
+    crank.frequency.value = 95;
+    cf.type = 'lowpass';
+    cf.frequency.value = 500;
+    lfo.frequency.value = 6.5;
+    lg.gain.value = 0.018;
+    cg.gain.setValueAtTime(0, t);
+    cg.gain.linearRampToValueAtTime(0.03, t + 0.08);
+    cg.gain.setValueAtTime(0.03, t + 0.85);
+    cg.gain.linearRampToValueAtTime(0, t + 1.05);
     lfo.connect(lg).connect(cg.gain);
-    crank.connect(cg).connect(this.sfxBus!);
+    crank.connect(cf).connect(cg).connect(this.engineBus);
     crank.start(t);
     lfo.start(t);
     crank.stop(t + 1.1);
     lfo.stop(t + 1.1);
-    this.noise(t + 1.05, 0.35, 0.18, { type: 'lowpass', freq: 400 });
-    this.engineLoop(t + 1.05);
+    this.engineLoop(t + 0.9);
   }
 
+  /**
+   * Ralentí y marcha: fundamental senoidal a la frecuencia de encendido, armónico suave y subgrave,
+   * más un rumor de ruido muy filtrado. Todo pasa por un paso bajo sin resonancia, de modo que suena
+   * como el motor oído desde la cabina, sin zumbidos agudos.
+   */
   private engineLoop(at: number): void {
-    if (!this.ctx) return;
+    if (!this.ctx || !this.engineBus || !this.noiseBuf) return;
     const out = this.ctx.createGain();
     out.gain.setValueAtTime(0, at);
-    out.gain.linearRampToValueAtTime(0.16, at + 0.3);
+    out.gain.linearRampToValueAtTime(ENGINE_BASE_GAIN, at + 0.8);
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 320;
-    filter.Q.value = 2;
-    // Pulsos de combustión: la ganancia oscila a la frecuencia de encendido
+    filter.Q.value = 0.4;
+    filter.frequency.value = 220;
+    const mk = (type: OscillatorType, gain: number) => {
+      const o = this.ctx!.createOscillator();
+      const g = this.ctx!.createGain();
+      o.type = type;
+      g.gain.value = gain;
+      o.connect(g).connect(filter);
+      return o;
+    };
+    const osc = [mk('sine', 0.9), mk('triangle', 0.22), mk('sine', 0.55)];
+    // Rumor: ruido muy grave
+    const rumble = this.ctx.createBufferSource();
+    rumble.buffer = this.noiseBuf;
+    rumble.loop = true;
+    const rf = this.ctx.createBiquadFilter();
+    rf.type = 'lowpass';
+    rf.frequency.value = 140;
+    const rg = this.ctx.createGain();
+    rg.gain.value = 0.25;
+    rumble.connect(rf).connect(rg).connect(filter);
+    // Leve pulsación de combustión (muy poca profundidad)
     const lfo = this.ctx.createOscillator();
     const lfoGain = this.ctx.createGain();
-    lfo.type = 'square';
-    lfoGain.gain.value = 0.06;
+    lfo.type = 'sine';
+    lfoGain.gain.value = ENGINE_BASE_GAIN * 0.12;
     lfo.connect(lfoGain).connect(out.gain);
-    const osc = [this.ctx.createOscillator(), this.ctx.createOscillator()];
-    osc[0]!.type = 'sawtooth';
-    osc[1]!.type = 'square';
-    osc.forEach((o) => o.connect(filter));
-    filter.connect(out).connect(this.sfxBus!);
+    filter.connect(out).connect(this.engineBus);
     osc.forEach((o) => o.start(at));
+    rumble.start(at);
     lfo.start(at);
-    this.engine = { osc, filter, out, lfo, lfoGain };
+    this.engine = { osc, filter, out, lfo, lfoGain, rumble };
     this.setEngineRpm(600, at, 0.01);
   }
 
-  /** Régimen del motor según la velocidad, con «cambios de marcha» cada 15 km/h. */
+  /** Régimen del motor según la velocidad, con «cambios de marcha» suaves. */
   private rpmFor(kmh: number): number {
     if (kmh <= 0) return 600;
     const gear = Math.min(5, Math.floor(kmh / 18));
-    const within = (kmh - gear * 18) / 18;
-    return 1000 + Math.min(1, within) * 700 - gear * 20;
+    const within = Math.min(1, (kmh - gear * 18) / 18);
+    return 950 + within * 500 - gear * 15;
   }
 
-  private setEngineRpm(rpm: number, at = this.now, tc = 0.35): void {
+  private setEngineRpm(rpm: number, at = this.now, tc = 0.6): void {
     if (!this.engine) return;
     const fire = rpm / 20; // 6 cilindros, 4 tiempos
     this.engine.osc[0]!.frequency.setTargetAtTime(fire, at, tc);
-    this.engine.osc[1]!.frequency.setTargetAtTime(fire * 0.502, at, tc);
-    this.engine.lfo.frequency.setTargetAtTime(fire / 2, at, tc);
-    this.engine.filter.frequency.setTargetAtTime(220 + rpm * 0.35, at, tc);
+    this.engine.osc[1]!.frequency.setTargetAtTime(fire * 2, at, tc);
+    this.engine.osc[2]!.frequency.setTargetAtTime(fire / 2, at, tc);
+    this.engine.lfo.frequency.setTargetAtTime(fire / 4, at, tc);
+    this.engine.filter.frequency.setTargetAtTime(160 + rpm * 0.16, at, tc);
   }
 
-  /** Velocidad del camión: sube el régimen; al acelerar se oye el turbo y al frenar el aire. */
+  /** Velocidad del camión: sube el régimen; al acelerar, un ligero empuje y soplido del turbo; al parar, el aire. */
   engineSpeed(kmh: number): void {
     if (!this.ready) return;
     const prev = this.lastKmh;
@@ -231,16 +267,33 @@ class SoundEngine {
     this.setEngineRpm(this.rpmFor(kmh));
     const t = this.now;
     if (kmh > prev + 4) {
-      this.engine.out.gain.setTargetAtTime(0.22, t, 0.1);
-      this.engine.out.gain.setTargetAtTime(0.16, t + 0.9, 0.4);
-      this.noise(t + 0.1, 1.1, 0.04, { type: 'bandpass', freq: 2200, q: 6 }); // turbo
+      const g = this.engine.out.gain;
+      g.cancelScheduledValues(t);
+      g.setTargetAtTime(ENGINE_BASE_GAIN * 1.35, t, 0.25);
+      g.setTargetAtTime(ENGINE_BASE_GAIN, t + 1.2, 0.6);
+      this.noise(t + 0.2, 1.4, 0.008, { type: 'bandpass', freq: 1600, q: 2 }, this.engineBus);
     }
     if (prev > 0 && kmh === 0) this.airBrake();
   }
 
   airBrake(): void {
-    if (!this.ready) return;
-    this.noise(this.now + 0.2, 0.7, 0.12, { type: 'highpass', freq: 2500 });
+    if (!this.ready || !this.ctx || !this.noiseBuf || !this.engineBus) return;
+    // Soplido del freno de aire: entra y sale en fundido, sin chasquido
+    const t = this.now + 0.3;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 4500;
+    f.Q.value = 0.8;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.035, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    src.connect(f).connect(g).connect(this.engineBus);
+    src.start(t);
+    src.stop(t + 0.65);
   }
 
   engineStop(): void {
@@ -248,17 +301,15 @@ class SoundEngine {
     const e = this.engine;
     this.engine = null;
     const t = this.now;
-    this.setEngineRpmOn(e, 200, t);
+    e.osc[0]!.frequency.setTargetAtTime(8, t, 0.5);
+    e.osc[1]!.frequency.setTargetAtTime(16, t, 0.5);
+    e.osc[2]!.frequency.setTargetAtTime(4, t, 0.5);
     e.out.gain.cancelScheduledValues(t);
-    e.out.gain.setTargetAtTime(0, t, 0.25);
-    e.osc.forEach((o) => o.stop(t + 1.5));
-    e.lfo.stop(t + 1.5);
+    e.out.gain.setTargetAtTime(0, t, 0.3);
+    e.osc.forEach((o) => o.stop(t + 1.8));
+    e.rumble.stop(t + 1.8);
+    e.lfo.stop(t + 1.8);
     this.lastKmh = 0;
-  }
-
-  private setEngineRpmOn(e: NonNullable<typeof this.engine>, rpm: number, at: number): void {
-    e.osc[0]!.frequency.setTargetAtTime(rpm / 20, at, 0.3);
-    e.osc[1]!.frequency.setTargetAtTime(rpm / 40, at, 0.3);
   }
 
   get engineRunning(): boolean {

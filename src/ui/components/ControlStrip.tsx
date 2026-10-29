@@ -11,8 +11,11 @@ import { ACTIVITY_COLOR } from './icons';
 import { TimeTools } from './ControlDock';
 import { ResetMenu } from './ResetMenu';
 
-const CLOCK_STEPS: Speed[] = [0, 1, 5, 30, 60];
-const CLOCK_LABELS = ['Pausa', '×1', '×5', '×30', '×60'];
+const CLOCK_STEPS: Speed[] = [0, 1, 5, 30, 60, 300, 900, 3600];
+const CLOCK_LABELS = ['Pausa', '×1', '×5', '×30', '×60', '×300', '×900', '×3600'];
+const CLOCK_TICKS = ['❚❚', '1', '5', '30', '60', '300', '900', '3600'];
+/** Descripción de cada velocidad: cuánto tiempo simulado pasa por segundo real. */
+const CLOCK_HINT = ['Pausa', 'Tiempo real', '5 s por segundo', '30 s por segundo', '1 min por segundo', '5 min por segundo', '15 min por segundo', '1 h por segundo'];
 const DAY_LETTERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 /**
@@ -86,11 +89,11 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
           min={0}
           max={CLOCK_STEPS.length - 1}
           step={1}
-          display={CLOCK_LABELS[clockIndex]!}
-          ticks={CLOCK_LABELS}
+          display={clockIndex === 0 ? 'Pausa' : `${CLOCK_LABELS[clockIndex]} · ${CLOCK_HINT[clockIndex]}`}
+          ticks={CLOCK_TICKS}
           disabled={finished}
           onChange={(i) => dispatch({ type: 'SET_SPEED', speed: CLOCK_STEPS[i]! })}
-          valueText={(i) => CLOCK_LABELS[i]!}
+          valueText={(i) => `${CLOCK_LABELS[i]}: ${CLOCK_HINT[i]}`}
         />
         <Slider
           id="truck-speed"

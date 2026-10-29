@@ -99,8 +99,8 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: 'time',
     title: 'Haz pasar el tiempo',
-    text: 'Pulsa ▶ (el reloj corre ×60) o arrastra el cursor de la línea de tiempo hacia la derecha. Avanza al menos 30 minutos.',
-    hint: 'El tiempo solo va hacia delante, como en la realidad.',
+    text: 'Pulsa ▶ o arrastra el cursor de la línea de tiempo hacia la derecha. Con el deslizador «Velocidad del reloj» puedes ir hasta ×3600 (una hora por segundo). Avanza al menos 30 minutos.',
+    hint: 'El tiempo solo va hacia delante, como en la realidad. A partir de ×300 el reloj se pausa solo cuando salta un aviso.',
     target: 'time',
     assist: 'CLOCK',
     done: (s, st) => s.clock.now - st.clock.now >= 30 * MINUTE,

@@ -51,7 +51,7 @@ export function assistHint(sim: SimState): AssistHint {
       ? { text: 'Estás circulando sin tarjeta. Suelta el acelerador e inserta tu tarjeta ficticia.', target: 'VEHICLE' }
       : { text: 'Arrastra tu tarjeta de conductor ficticia hasta la ranura 1 del tacógrafo.', target: 'CARD_SLOT' };
   }
-  if (sim.clock.speed === 0) return { text: 'El reloj virtual está en pausa. Elige una velocidad (×1 … ×60) para que pase el tiempo.', target: 'CLOCK' };
+  if (sim.clock.speed === 0) return { text: 'El reloj virtual está en pausa. Elige una velocidad (×1 … ×3600) para que pase el tiempo.', target: 'CLOCK' };
   const sum = deriveSummary(sim);
   const cont = sum.continuous?.drivingSinceBreakMs ?? 0;
   if (sim.vehicle.moving) {

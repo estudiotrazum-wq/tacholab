@@ -444,3 +444,21 @@ describe('tacógrafo: cruce de frontera y condiciones específicas', () => {
   });
 
 });
+
+describe('reloj rápido', () => {
+  it('a ×3600 el reloj se pausa justo en el aviso de 4 h 15 para poder reaccionar', () => {
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'SET_SPEED', speed: 3600 });
+    const start = s.clock.now;
+    for (let i = 0; i < 100 && s.clock.speed !== 0; i++) s = run(s, { type: 'TICK', realDeltaMs: 250 });
+    expect(s.clock.speed).toBe(0);
+    expect(s.device.warning?.code).toBe('CONT_DRIVING_PREWARN');
+    expect(s.clock.now - start).toBe(255 * MINUTE);
+  });
+
+  it('a ×60 los avisos no pausan el reloj', () => {
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'ADVANCE_BY', ms: 254 * MINUTE }, { type: 'SET_SPEED', speed: 60 });
+    s = run(s, { type: 'TICK', realDeltaMs: 2000 });
+    expect(s.device.warning?.code).toBe('CONT_DRIVING_PREWARN');
+    expect(s.clock.speed).toBe(60);
+  });
+});

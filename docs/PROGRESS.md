@@ -2,6 +2,14 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.16 — Reloj más rápido y motor más suave (rama `ui-rediseno`)
+- [x] Velocidades del reloj ×300 (5 min/s), ×900 (15 min/s) y ×3600 (1 h/s): las 4 h 30 se alcanzan en segundos.
+      Desde ×300, el reloj **se pausa solo** en el instante exacto de cada aviso nuevo para poder reaccionar
+- [x] Sonido del motor rehecho: fundamental senoidal, armónico y subgrave suaves, rumor filtrado, paso bajo sin
+      resonancia, pulsación mínima, cambios de régimen más lentos, turbo y freno de aire discretos y con fundido
+- [x] Volumen propio del motor en «Sonido» (50 % por defecto)
+- [x] 134 pruebas unitarias + E2E
+
 ## v0.15 — Reinicio de jornada, frontera, ferry/tren, pantalla normativa y sonido (rama `ui-rediseno`)
 - [x] **Reiniciar** (barra de control): «Repetir la jornada» vuelve a justo antes de la última inserción de tarjeta
       (estado guardado automáticamente) y «Empezar de cero» borra las dos semanas; en un ejercicio, «Repetir el

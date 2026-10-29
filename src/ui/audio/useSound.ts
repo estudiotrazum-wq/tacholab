@@ -17,7 +17,7 @@ export function useSound(): void {
 
     const applySettings = () => {
       const u = useUiStore.getState();
-      sound.configure({ sfx: u.sfxOn, music: u.musicOn, volume: u.volume, musicVolume: u.musicVolume });
+      sound.configure({ sfx: u.sfxOn, music: u.musicOn, volume: u.volume, musicVolume: u.musicVolume, engineVolume: u.engineVolume });
     };
     applySettings();
     const unsubUi = useUiStore.subscribe(applySettings);

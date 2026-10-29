@@ -10,7 +10,7 @@ import type { Speed } from '@/time-engine/clock';
 import { ActivityIcon, ACTIVITY_COLOR } from './icons';
 import { confirmThen } from '../confirm';
 
-const SPEED_OPTIONS: Speed[] = [1, 5, 30, 60];
+const SPEED_OPTIONS: Speed[] = [1, 60, 900, 3600];
 
 /**
  * Barra de control única, al estilo de un reproductor: reloj, reproducción,
@@ -143,8 +143,8 @@ export function TimeTools({ onClose }: { onClose: () => void }) {
   return (
     <div ref={ref} className="absolute bottom-full right-0 mb-2 w-[min(94vw,22rem)] rounded-2xl border border-white/10 bg-[#0b1220] p-4 text-sm shadow-[0_24px_60px_-20px_rgba(0,0,0,0.9)]" role="dialog" aria-label="Controles de tiempo">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Velocidad</div>
-      <div className="mb-3 grid grid-cols-5 gap-1">
-        {([0, 1, 5, 30, 60] as Speed[]).map((sp) => (
+      <div className="mb-3 grid grid-cols-4 gap-1">
+        {([0, 1, 5, 30, 60, 300, 900, 3600] as Speed[]).map((sp) => (
           <button key={sp} type="button" disabled={finished} aria-pressed={sim.clock.speed === sp} onClick={() => dispatch({ type: 'SET_SPEED', speed: sp })} className={`rounded-lg px-2 py-1.5 text-xs ${sim.clock.speed === sp ? 'bg-cyan-400 text-slate-950' : 'bg-white/5 text-slate-200'}`}>
             {sp === 0 ? '❚❚' : `×${sp}`}
           </button>

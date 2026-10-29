@@ -122,6 +122,10 @@ try {
   const after = await page.getByTestId('virtual-clock').innerText();
   assert(before !== after, `el reloj acelerado avanza (${before} → ${after})`);
 
+  // Reloj rápido: ×3600 se pausa solo en el aviso de 4 h 15 de conducción continua
+  await page.getByTestId('clock-speed').fill('7');
+  assert((await page.getByTestId('clock-speed').getAttribute('aria-valuetext')).includes('1 h por segundo'), 'el reloj llega a ×3600 (1 h por segundo)');
+  await page.getByTestId('clock-speed').fill('0');
   // Barra de control: deslizador de velocidad del camión y línea de tiempo
   await page.getByTestId('truck-speed').fill('60');
   assert((await page.getByTestId('truck-speed').inputValue()) === '60', 'el deslizador ajusta la velocidad del camión');
