@@ -109,8 +109,8 @@ export const COUNTRIES = [
 
 /** Máquina de estados de pantallas del dispositivo. */
 export type Screen =
-  /** 0: estándar · 1: tiempos del conductor · 2: tiempo restante · 3: acumulados · 4: hora UTC y local. */
-  | { kind: 'STANDARD'; page: 0 | 1 | 2 | 3 | 4 }
+  /** 0: estándar · 1: tiempos del conductor · 2: conducción restante · 3: amplitud de jornada · 4: acumulados · 5: hora UTC y local. */
+  | { kind: 'STANDARD'; page: 0 | 1 | 2 | 3 | 4 | 5 }
   | { kind: 'WELCOME' }
   /** Fecha y hora de la última retirada (fin de la jornada anterior). */
   | { kind: 'LAST_WITHDRAWAL' }

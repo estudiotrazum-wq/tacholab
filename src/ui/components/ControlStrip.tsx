@@ -10,6 +10,7 @@ import { SCENARIO_DAYS } from '@/scenarios/scenario';
 import { ACTIVITY_COLOR } from './icons';
 import { TimeTools } from './ControlDock';
 import { ResetMenu } from './ResetMenu';
+import { RemainingStrip } from './RemainingStrip';
 
 const CLOCK_STEPS: Speed[] = [0, 1, 5, 30, 60, 300, 900, 3600];
 const CLOCK_LABELS = ['Pausa', '×1', '×5', '×30', '×60', '×300', '×900', '×3600'];
@@ -110,6 +111,8 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
           tour="accelerator"
         />
       </div>
+
+      <RemainingStrip />
     </section>
   );
 }

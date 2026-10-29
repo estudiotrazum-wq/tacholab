@@ -528,3 +528,16 @@ describe('tacógrafo: menú de dos niveles', () => {
     expect(s.device.insertedCardId).toBe('card-a');
   });
 });
+
+describe('tacógrafo: amplitud de la jornada', () => {
+  it('▼ ×3: tiempo que queda de jornada con descanso normal (13 h) y reducido (15 h)', () => {
+    // La jornada empieza al insertar a las 06:00 UTC; 4 h después quedan 9 h (13 h) y 11 h (15 h)
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'ADVANCE_BY', ms: 4 * HOUR });
+    s = run(s, { type: 'SET_VEHICLE_SPEED', kmh: 0 });
+    while (s.device.warning) s = run(s, ...press('OK'));
+    s = run(s, { type: 'DISMISS_NOTICE' }, ...press('DOWN', 'DOWN', 'DOWN'));
+    const d = renderDisplay(s);
+    expect(lcdPlain(d.lines[0])).toBe('Jornada 13h     9h00');
+    expect(lcdPlain(d.lines[1])).toBe('Reducida 15h   11h00');
+  });
+});

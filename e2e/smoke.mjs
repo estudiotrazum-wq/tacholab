@@ -366,6 +366,9 @@ try {
   assert((await line(0)).startsWith('1') && (await line(0)).includes('h'), 'el tacógrafo muestra los tiempos del conductor');
   await page.getByRole('button', { name: 'Abajo' }).click();
   assert((await line(0)).includes('hasta pausa') && (await line(1)).includes('fin jornada'), 'el tacógrafo muestra el tiempo de conducción restante');
+  await page.getByRole('button', { name: 'Abajo' }).click();
+  assert((await line(0)).includes('Jornada 13h') && (await line(1)).includes('Reducida 15h'), 'el tacógrafo muestra la amplitud de jornada (13 h / 15 h)');
+  assert((await page.getByTestId('remaining-strip').innerText()).includes('Jornada 13 h'), 'la barra de abajo muestra lo que queda de conducción y de jornada');
   await expectStep('Detén el camión');
   await page.getByTestId('truck-speed').fill('0');
   await expectStep('Elige la actividad: descanso');

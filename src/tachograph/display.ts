@@ -206,6 +206,14 @@ export function renderDisplay(sim: SimState): DisplayModel {
         return view(spread('{D}hasta pausa', hm(remCont)), spread('{D}fin jornada', hm(remDay)));
       }
       if (s.page === 3) {
+        // Amplitud de la jornada (art. 8.2 R. 561/2006): el descanso diario debe caber en las 24 h desde el inicio
+        // de la jornada → como máximo 13 h de jornada con descanso normal (11 h) o 15 h con reducido (9 h).
+        const by = cur?.dailyRestStartBy;
+        if (!cur || !by) return view('{R} jornada', ' Sin jornada abierta');
+        const left = (t: number) => hm(Math.max(0, t - now));
+        return view(spread('Jornada 13h', left(by.normal)), spread('Reducida 15h', by.reduced !== null ? left(by.reduced) : 'agotada'));
+      }
+      if (s.page === 4) {
         if (!cur) return view('{D} acumulados', ' Sin tarjeta');
         return view(`{D}jorn ${hm(cur.dailyDrivingMs)}/${hm(cur.dailyCapMs)}`, `sem ${hm(cur.weekDrivingMs)} 2s ${hm(cur.biweekDrivingMs)}`);
       }

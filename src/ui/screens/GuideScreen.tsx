@@ -46,7 +46,7 @@ export function GuideScreen() {
         <Card n="1" title="Las piezas del tacógrafo">
           <Dl
             items={[
-              ['Pantalla', 'Estándar: hora local, modo y velocidad; abajo, tarjeta y actividad del conductor 1, cuentakilómetros y conductor 2. Con ▼: tiempos del conductor (conducción continua o duración de la actividad, y descanso), tiempo restante, acumulados y hora UTC/local.'],
+              ['Pantalla', 'Estándar: hora local, modo y velocidad; abajo, tarjeta y actividad del conductor 1, cuentakilómetros y conductor 2. Con ▼: tiempos del conductor (conducción continua o duración de la actividad, y descanso), conducción restante, amplitud de jornada (13 h / 15 h), acumulados y hora UTC/local.'],
               ['Menú (OK)', 'Solo parado. Imprimir conduc.1 · Entrada conduc.1 (país comienzo, país final, cruce frontera) · Entrada vehículo (OUT, ferry/tren) · Visualizar cond.1 · Información.'],
               ['✕ ▲ ▼ OK', 'Volver, moverse por las opciones y confirmar / abrir el menú.'],
               ['Tecla 1 / 2', 'Pulsación corta: cambia la actividad del conductor 1 o 2. Mantener pulsada: sacar la tarjeta.'],
@@ -160,6 +160,7 @@ export function GuideScreen() {
               ['Conducción diaria', 'Máx. 9 h; hasta 10 h dos veces por semana.', 'Art. 6.1'],
               ['Conducción semanal', 'Máx. 56 h en una semana y 90 h en dos semanas seguidas.', 'Art. 6.2 y 6.3'],
               ['Descanso diario', '11 h (o 3 + 9 h). Reducido a 9 h como máximo tres veces entre descansos semanales.', 'Art. 8.2 y 8.4'],
+              ['Amplitud de jornada', 'El descanso diario debe caber en las 24 h desde que empiezas: jornada de 13 h como máximo con descanso de 11 h, o 15 h con uno reducido de 9 h.', 'Art. 8.2'],
               ['Descanso semanal', '45 h normal; reducido de 24 h con compensación. Tras 6 periodos de 24 h como mucho.', 'Art. 8.6'],
             ].map(([t, d, ref]) => (
               <div key={t} className="rounded-xl bg-white/5 px-3 py-2">

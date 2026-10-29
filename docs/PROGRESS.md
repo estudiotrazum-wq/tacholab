@@ -2,6 +2,14 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.19 — Amplitud de la jornada (13 h / 15 h) a la vista (rama `ui-rediseno`)
+- [x] Nueva pantalla del tacógrafo (▼ ×3): **Jornada 13h** (tiempo que queda para empezar el descanso diario normal
+      de 11 h dentro de las 24 h) y **Reducida 15h** (con descanso reducido de 9 h, mientras queden reducidos). Art. 8.2
+- [x] Barra de control: bloque **«Te queda»** siempre visible: hasta la pausa, conducción de hoy, jornada 13 h,
+      jornada 15 h y conducción de la semana, con colores de aviso (ámbar < 30 min, rojo agotado)
+- [x] Guía: norma de amplitud de jornada; tutorial: mención de la nueva pantalla
+- [x] 145 pruebas unitarias + E2E
+
 ## v0.18 — Interfaz modernizada: fondo de atlas, llave nueva y temas de pantalla (rama `ui-rediseno`)
 - [x] **Fondo «atlas de carreteras»** nocturno (diseño propio): península ibérica, sur de Francia y noroeste de
       Italia con relieve, costa iluminada, fronteras, autovías con su denominación, ciudades y rotulación de mares.

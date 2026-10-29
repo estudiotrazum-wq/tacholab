@@ -109,7 +109,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     id: 'read',
     title: '¿Cuánto te queda de conducción?',
     text: 'La pantalla estándar muestra hora, velocidad, tu actividad y el cuentakilómetros. Pulsa ▼ para ver tus tiempos (conducción continua y descanso acumulado) y ▼ otra vez para ver cuánto te queda: hasta la pausa obligatoria (4 h 30 seguidas) y hasta el final de la jornada.',
-    hint: 'Con ▲ ▼ recorres: estándar, tiempos, restante, acumulados y hora UTC/local. El panel «Te limita» de la derecha es una ayuda del simulador, no parte del tacógrafo.',
+    hint: 'Con ▲ ▼ recorres: estándar, tiempos, restante, jornada (13 h con descanso de 11 h / 15 h con reducido de 9 h), acumulados y hora UTC/local. Lo que te queda también aparece siempre en la barra de abajo («Te queda»). El panel «Te limita» de la derecha es una ayuda del simulador, no parte del tacógrafo.',
     target: 'console',
     assist: 'UP_DOWN',
     done: (s) => s.device.screen.kind === 'STANDARD' && s.device.screen.page === 2,

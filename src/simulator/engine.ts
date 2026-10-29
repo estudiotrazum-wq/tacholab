@@ -299,7 +299,7 @@ function pressButton(sim: SimState, button: Button): SimState {
 
   switch (screen.kind) {
     case 'STANDARD': {
-      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 5) as 0 | 1 | 2 | 3 | 4 });
+      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 6) as 0 | 1 | 2 | 3 | 4 | 5 });
       if (ok) return s.vehicle.moving ? notice(s, 'Menú solo con el vehículo parado') : setScreen(s, { kind: 'MENU', index: 0 });
       if (back) return setScreen(s, STANDARD);
       return s;
