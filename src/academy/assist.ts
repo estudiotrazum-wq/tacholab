@@ -34,6 +34,8 @@ export function assistHint(sim: SimState): AssistHint {
         ? { text: 'Indica en qué país terminó tu jornada anterior (▲▼) y pulsa OK.', target: 'UP_DOWN' }
         : d.screen.purpose === 'start'
           ? { text: 'Indica el país donde empiezas hoy (▲▼) y pulsa OK.', target: 'UP_DOWN' }
+          : d.screen.purpose === 'border'
+            ? { text: 'Has cruzado una frontera: indica el país en el que entras (▲▼) y pulsa OK. Se hace en la primera parada tras la frontera.', target: 'UP_DOWN' }
           : { text: 'Indica el país donde terminas la jornada (▲▼) y pulsa OK para sacar la tarjeta.', target: 'UP_DOWN' };
     case 'WITHDRAW_PRINT':
       return { text: 'Elige con ▲▼ si quieres el ticket de las últimas 24 h y pulsa OK: la tarjeta saldrá de la ranura.', target: 'OK' };

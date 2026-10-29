@@ -5,6 +5,7 @@ import type { Button } from '@/tachograph/types';
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
 import { LcdLine } from './Lcd';
+import { sound } from '../audio/sound';
 
 export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
 
@@ -23,7 +24,10 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
   const model = useMemo(() => renderDisplay(sim), [sim]);
-  const press = (button: Button) => dispatch({ type: 'PRESS', button });
+  const press = (button: Button) => {
+    sound.beep();
+    dispatch({ type: 'PRESS', button });
+  };
   const hl = (t: AssistTarget) => (highlight === t ? 'assist-target' : '');
   const [hint, setHint] = useState<string | null>(null);
   const printout = sim.device.printout ?? null;
@@ -65,9 +69,12 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
                 aria-label={`Pantalla: ${lcdPlain(model.lines[0]).trim()} / ${lcdPlain(model.lines[1]).trim()}`}
                 data-testid="tacho-display"
               >
-                <div className="lcd-text text-[clamp(1.25rem,4.2vw,2.15rem)] leading-[1.05] text-[#1d2610]" style={{ fontFamily: '"VT323", ui-monospace, monospace' }}>
+                {/* El texto se escala con el ancho del visor para que siempre quepan las 20 columnas */}
+                <div style={{ containerType: 'inline-size' }}>
+                <div className="lcd-text leading-[1.05] text-[#1d2610]" style={{ fontFamily: '"VT323", ui-monospace, monospace', fontSize: 'min(2.15rem, calc(100cqw / 10.4))' }}>
                   <LcdLine text={model.lines[0]} testId="display-line-0" />
                   <LcdLine text={model.lines[1]} testId="display-line-1" />
+                </div>
                 </div>
                 <span className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.05)_0_1px,transparent_1px_3px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04)_0_1px,transparent_1px_3px)]" aria-hidden="true" />
               </div>
@@ -155,6 +162,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
   const eject = () => {
     if (slot === 2) return unavailable();
     if (!card) return onHint('La ranura 1 está vacía: no hay tarjeta que sacar.');
+    sound.beep();
     dispatch({ type: 'PRESS', button: 'EJECT' });
   };
   const startPress = () => {
@@ -190,7 +198,10 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
         onContextMenu={(e) => e.preventDefault()}
         onClick={() => {
           if (slot === 2) return unavailable();
-          if (!longDone.current) dispatch({ type: 'PRESS', button: 'ACTIVITY' });
+          if (!longDone.current) {
+            sound.beep();
+            dispatch({ type: 'PRESS', button: 'ACTIVITY' });
+          }
         }}
         className={`relative flex h-12 w-14 shrink-0 select-none flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] text-slate-100 shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] ${slot === 1 ? (highlight === 'ACTIVITY' ? 'assist-target' : '') : 'opacity-60'}`}
       >

@@ -2,6 +2,29 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.15 — Reinicio de jornada, frontera, ferry/tren, pantalla normativa y sonido (rama `ui-rediseno`)
+- [x] **Reiniciar** (barra de control): «Repetir la jornada» vuelve a justo antes de la última inserción de tarjeta
+      (estado guardado automáticamente) y «Empezar de cero» borra las dos semanas; en un ejercicio, «Repetir el
+      ejercicio». Si el tutorial está en curso, vuelve a empezar
+- [x] **Pantalla por defecto** según el requisito 160 del anexo IC (R. 2016/799): hora local, modo de funcionamiento
+      (pictograma propio), velocidad; conductor 1 con conducción continua y descanso acumulado (o, si no conduce,
+      duración de la actividad actual) y conductor 2. Texto escalado al ancho del visor
+- [x] **Cruce de frontera** (menú «País: cruce frontera», art. 34.7 R. 165/2014), con comunidad autónoma en España
+- [x] **Condiciones específicas** (req. 62): «Ferry/tren» (inicio/fin, solo con el vehículo parado; se cierra al
+      extraer la tarjeta o, como aproximación, al volver a circular) y «Fuera de ámbito» (se cierra al insertar o
+      extraer la tarjeta; sin avisos de conducción continua ni de conducción sin tarjeta). Pictograma en pantalla
+      (req. 164) y registro
+- [x] **Art. 9 R. 561/2006** en el motor normativo: con un trayecto en ferry/tren registrado, hasta dos
+      interrupciones del descanso (≤ 1 h en total) no lo rompen si suma ≥ 11 h; hallazgo informativo `R561-ART9-FERRY`
+- [x] **Sonido** sintetizado con Web Audio (sin grabaciones): pitido de teclas, tarjeta, impresora, avisos, llave,
+      motor diésel (arranque, ralentí, régimen según velocidad, turbo al acelerar, freno de aire) y música country
+      original «Ruta 561» (desactivada por defecto). Botón «Sonido» con volúmenes
+- [x] Extractos normativos verificados en `docs/normativa/` (art. 34 R. 165/2014, art. 9 R. 561/2006, req. 62 y
+      160-164 del anexo IC)
+- [x] 132 pruebas unitarias + E2E (frontera, ferry, reinicios, música)
+- Nota: el vídeo de referencia de YouTube no se puede reproducir desde el entorno de desarrollo; la pantalla se ha
+  ajustado al contenido que exige el reglamento, común a todos los fabricantes
+
 ## v0.14 — Tiempo restante en el tacógrafo y comunidad autónoma (rama `ui-rediseno`)
 - [x] Nueva pantalla estándar (▼ desde la principal): **conducción restante hasta la pausa** y **hasta el fin de la
       jornada**; después acumulados y hora UTC/local

@@ -46,7 +46,7 @@ export function GuideScreen() {
         <Card n="1" title="Las piezas del tacógrafo">
           <Dl
             items={[
-              ['Pantalla', 'Dos líneas. Arriba: hora, actividad y velocidad. Abajo: conducción desde la última pausa y descanso. Con ▲ ▼: tiempo restante de conducción, acumulados y hora UTC/local.'],
+              ['Pantalla', 'Por defecto: hora local, modo de funcionamiento y velocidad; abajo, conductor 1 (conducción continua o duración de la actividad, y descanso acumulado) y conductor 2. Con ▲ ▼: tiempo restante, acumulados y hora UTC/local.'],
               ['✕ ▲ ▼ OK', 'Volver, moverse por las opciones y confirmar / abrir el menú.'],
               ['Tecla 1 / 2', 'Pulsación corta: cambia la actividad del conductor 1 o 2. Mantener pulsada: sacar la tarjeta.'],
               ['⏏', 'Botón de expulsión junto a cada ranura.'],
@@ -130,7 +130,29 @@ export function GuideScreen() {
           <p className="mt-2 text-xs text-slate-400">El tiempo solo avanza. Todas las horas del tacógrafo están en UTC.</p>
         </Card>
 
-        <Card n="7" title="Normas básicas de tiempos" wide>
+        <Card n="7" title="Frontera, ferry/tren y fuera de ámbito">
+          <Dl
+            items={[
+              ['Frontera', 'Al entrar en otro país, en la primera parada: OK → menú «País: cruce frontera» → país → OK (art. 34.7 R. 165/2014).'],
+              ['Ferry/tren', 'Ya a bordo y antes de apagar el motor: menú «Inicio ferry/tren». Se cierra al salir conduciendo, al sacar la tarjeta o desde el menú.'],
+              ['Art. 9', 'A bordo, el descanso puede interrumpirse hasta 2 veces, sin pasar de 1 h en total, si tienes cama o litera.'],
+              ['Fuera ámbito', 'Transporte no sujeto al R. 561/2006. Se cierra al meter o sacar la tarjeta.'],
+            ]}
+          />
+          <p className="mt-2 text-xs text-slate-400">Mientras haya una condición abierta, su pictograma aparece en la pantalla principal.</p>
+        </Card>
+
+        <Card n="8" title="Errores, reinicio y sonido">
+          <Dl
+            items={[
+              ['↺ Repetir', '«Reiniciar → Repetir la jornada» vuelve a justo antes de meter la tarjeta: ideal para repetir el procedimiento.'],
+              ['⟲ De cero', '«Reiniciar → Empezar de cero» borra las dos semanas.'],
+              ['Sonido', 'Pitidos de las teclas, tarjeta, impresora, avisos y motor del camión. La música country se activa en «Sonido».'],
+            ]}
+          />
+        </Card>
+
+        <Card n="9" title="Normas básicas de tiempos" wide>
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             {[
               ['Conducción continua', 'Máx. 4 h 30 → pausa de 45 min (o 15 + 30 min, en ese orden).', 'Art. 7'],
@@ -151,7 +173,7 @@ export function GuideScreen() {
           <p className="mt-2 text-xs text-slate-500">Resumen orientativo. Consulta el texto oficial y sus excepciones; el informe del simulador detalla cada regla con su referencia.</p>
         </Card>
 
-        <Card n="8" title="Atajos de teclado">
+        <Card n="10" title="Atajos de teclado">
           <Dl
             items={[
               ['↑ ↓', 'Moverse / cambiar valor'],

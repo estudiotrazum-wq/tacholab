@@ -28,9 +28,14 @@ interface Settings {
   tutorialDone: boolean;
   /** Nombre que el alumno pone en su tarjeta ficticia ('' = nombre de ejemplo). Solo se guarda en este navegador. */
   driverName: string;
+  /** Sonido: efectos (teclas, tarjeta, motor…), música de ambiente y volúmenes (0-1). */
+  sfxOn: boolean;
+  musicOn: boolean;
+  volume: number;
+  musicVolume: number;
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '' };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '', sfxOn: true, musicOn: false, volume: 0.7, musicVolume: 0.45 };
 
 function loadSettings(): Settings {
   try {
@@ -60,9 +65,9 @@ export const useUiStore = create<UiStore>((set, get) => ({
   },
   update: (patch) => {
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume }));
     } catch {
       /* sin almacenamiento */
     }

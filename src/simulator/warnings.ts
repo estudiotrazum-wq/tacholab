@@ -42,12 +42,14 @@ export function warningTriggers(sim: SimState, report: ComplianceReport | null =
   const fmt = (t: EpochMs) => `${formatDateTime(t, tz)} UTC`;
 
   const cont = c.continuous;
-  driving(`CONT_PRE:${cont.periodIndex}`, cont.drivingSinceBreakMs, CONTINUOUS_DRIVING_PREWARN, {
+  // Con «Fuera de ámbito» abierto no se emiten las advertencias de conducción continua (anexo IC, req. 62).
+  const outOfScope = sim.device.condition === 'OUT';
+  if (!outOfScope) driving(`CONT_PRE:${cont.periodIndex}`, cont.drivingSinceBreakMs, CONTINUOUS_DRIVING_PREWARN, {
     code: 'CONT_DRIVING_PREWARN', severity: 'info', ruleId: 'R561-ART7-CONT',
     title: 'Pausa próxima',
     text: 'Llevas 4 h 15 min de conducción continua. Planifica una pausa en los próximos 15 min.',
   });
-  driving(`CONT_EXC:${cont.periodIndex}`, cont.drivingSinceBreakMs, CONTINUOUS_DRIVING_LIMIT, {
+  if (!outOfScope) driving(`CONT_EXC:${cont.periodIndex}`, cont.drivingSinceBreakMs, CONTINUOUS_DRIVING_LIMIT, {
     code: 'CONT_DRIVING_EXCEEDED', severity: 'warning', ruleId: 'R561-ART7-CONT',
     title: 'Límite de conducción continua alcanzado',
     text: 'Llevas 4 h 30 min sin una pausa válida: si sigues conduciendo cometes una infracción. Detén el vehículo y haz una pausa de 45 min (o 15 + 30).',

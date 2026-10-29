@@ -14,6 +14,7 @@ import { COUNTRIES, MENU_ITEMS, SPAIN_REGIONS, type ManualActivity } from './typ
  * fichas que la interfaz sustituye por dibujos:
  *   {D} conducción · {W} otros trabajos · {A} disponibilidad · {R} pausa/descanso
  *   {C} tarjeta · {L} hora local · {U} hora UTC · {?} actividad desconocida · {M} entrada manual
+ *   {O} modo operativo · {F} transbordador/tren · {X} fuera de ámbito
  * Las fichas ocupan una celda; los textos se ajustan a 20 celdas.
  */
 export const LCD_COLS = 20;
@@ -32,7 +33,7 @@ export interface DisplayModel {
 export const ACTIVITY_TOKEN: Record<Activity, string> = { DRIVING: '{D}', WORK: '{W}', AVAILABILITY: '{A}', REST: '{R}' };
 const MANUAL_TOKEN: Record<ManualActivity, string> = { REST: '{R}', WORK: '{W}', AVAILABILITY: '{A}', UNKNOWN: '{?}' };
 
-const TOKEN = /\{[DWARCLU?M]\}/g;
+const TOKEN = /\{[DWARCLU?MOFX]\}/g;
 
 /** Longitud visible (cada ficha cuenta como una celda). */
 export function lcdLength(s: string): number {
@@ -43,7 +44,7 @@ export function lcdLength(s: string): number {
 export function fit(s: string): string {
   let out = '';
   let n = 0;
-  for (const part of s.split(/(\{[DWARCLU?M]\})/)) {
+  for (const part of s.split(/(\{[DWARCLU?MOFX]\})/)) {
     if (!part) continue;
     const isToken = TOKEN.test(part);
     TOKEN.lastIndex = 0;
@@ -67,7 +68,7 @@ function spread(left: string, right: string): string {
 
 /** Versión de solo texto (para la miniatura de la cabina y lectores de pantalla). */
 export function lcdPlain(s: string): string {
-  const map: Record<string, string> = { '{D}': '◉', '{W}': '⚒', '{A}': '◪', '{R}': '▬', '{C}': '▣', '{L}': '⊙', '{U}': 'U', '{?}': '?', '{M}': 'M' };
+  const map: Record<string, string> = { '{D}': '◉', '{W}': '⚒', '{A}': '◪', '{R}': '▬', '{C}': '▣', '{L}': '⊙', '{U}': 'U', '{?}': '?', '{M}': 'M', '{O}': '⛟', '{F}': '⛴', '{X}': 'Ø' };
   return s.replace(TOKEN, (t) => map[t] ?? '');
 }
 
@@ -128,6 +129,20 @@ export function printoutLines(sim: SimState): string[] | null {
   return [`TL-1 EDU · ${formatDate(sim.clock.now, sim.scenario.timeZone)} ${formatTime(sim.clock.now, sim.scenario.timeZone)} UTC`, 'IMPRESIÓN DIARIA (24 h)', '────────────────────', ...ticketLines(sim, sum)];
 }
 
+/** Duración de la actividad actual del conductor (desde que empezó, uniendo tramos contiguos iguales). */
+function currentActivityMs(sim: SimState, driverId: string, now: number): number {
+  const evs = driverEvents(sim.timeline, driverId);
+  const last = evs[evs.length - 1];
+  if (!last || last.end !== null) return 0;
+  let start = last.start;
+  for (let i = evs.length - 2; i >= 0; i--) {
+    const e = evs[i]!;
+    if (e.activity !== last.activity || e.end !== start) break;
+    start = e.start;
+  }
+  return Math.max(0, now - start);
+}
+
 function short(ms: number, tz: string): string {
   const p = zonedParts(ms, tz);
   return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')} ${formatTime(ms, tz)}`;
@@ -155,12 +170,17 @@ export function renderDisplay(sim: SimState): DisplayModel {
   switch (s.kind) {
     case 'STANDARD': {
       if (s.page === 0) {
-        // Línea 1: hora local, actividad, tarjeta y velocidad. Línea 2: conducción continua y pausa acumulada.
-        const left = `${formatTime(now, tz)}{L} ${card ? `${act}{C}` : ''}`;
-        const top = spread(left, `${speed}km/h`);
-        if (!card) return view(top, ' Inserte tarjeta');
+        // Pantalla por defecto (anexo IC del R. 2016/799, req. 160 y 164):
+        // línea 1: hora local, modo de funcionamiento, condición específica abierta y velocidad;
+        // línea 2: conductor 1 (actividad y, si conduce, conducción continua; si no, duración de la actividad;
+        // después el descanso acumulado) y actividad del segundo conductor (ranura 2).
+        const cond = d.condition === 'FERRY' ? '{F}' : d.condition === 'OUT' ? '{X}' : '';
+        const top = spread(`${formatTime(now, tz)}{L} {O}${cond}`, `${speed}km/h`);
+        if (!card) return view(top, spread(' Inserte tarjeta', '2 -'));
         const c = sum.continuous;
-        return view(top, `{D}${hm(c?.drivingSinceBreakMs ?? 0)}  {R}${hm(c?.currentBreakMs ?? 0)}`);
+        const driving = sum.recorded === 'DRIVING';
+        const t = driving ? (c?.drivingSinceBreakMs ?? 0) : currentActivityMs(sim, d.insertedCardId!, now);
+        return view(top, spread(`1${act}${hm(t)} {R}${hm(c?.currentBreakMs ?? 0)}`, '2 -'));
       }
       if (s.page === 1) {
         // Tiempo de conducción restante: hasta la pausa obligatoria (art. 7) y hasta el límite diario (art. 6.1).
@@ -177,7 +197,11 @@ export function renderDisplay(sim: SimState): DisplayModel {
     }
     case 'MENU': {
       const item = MENU_ITEMS[s.index]!;
-      return view(spread('MENÚ', `${s.index + 1}/${MENU_ITEMS.length}`), `▸${item.label}`);
+      const label =
+        item.id === 'FERRY' ? (d.condition === 'FERRY' ? '{F}Fin ferry/tren' : '{F}Inicio ferry/tren')
+        : item.id === 'OUT' ? (d.condition === 'OUT' ? '{X}Fin fuera ámbito' : '{X}Inicio fuera ámbito')
+        : item.label;
+      return view(spread('MENÚ', `${s.index + 1}/${MENU_ITEMS.length}`), `▸${label}`);
     }
     case 'TIMES': {
       const c = sum.continuous;
@@ -224,12 +248,12 @@ export function renderDisplay(sim: SimState): DisplayModel {
       return view('{M}¿Confirmar?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'COUNTRY': {
       const c = COUNTRIES[s.index]!;
-      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'prev-end' ? '{M}País fin jornada' : '{L}País de fin';
+      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'prev-end' ? '{M}País fin jornada' : s.purpose === 'border' ? '{L}País: frontera' : '{L}País de fin';
       return view(title, `▸ ${c.code.padEnd(3)}${c.name}`);
     }
     case 'REGION': {
       const r = SPAIN_REGIONS[s.index]!;
-      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'prev-end' ? '{M}E Región fin' : '{L}E Región de fin';
+      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'prev-end' ? '{M}E Región fin' : s.purpose === 'border' ? '{L}E Región entrada' : '{L}E Región de fin';
       return view(title, `▸${r.code.padEnd(4)}${r.name}`);
     }
   }

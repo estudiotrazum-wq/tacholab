@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { sound } from '../audio/sound';
 import { useSimStore } from '@/simulator/store';
 import type { Button } from '@/tachograph/types';
 
@@ -26,6 +27,7 @@ export function useDeviceKeys(enabled = true): void {
       const state = useSimStore.getState().sim;
       if (button) {
         e.preventDefault();
+        sound.beep();
         dispatch({ type: 'PRESS', button });
       } else if (key === 'm') {
         dispatch({ type: 'SET_MOVING', moving: !state.vehicle.moving });

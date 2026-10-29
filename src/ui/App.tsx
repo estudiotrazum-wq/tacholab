@@ -21,6 +21,8 @@ import { TutorialCoach } from './components/TutorialCoach';
 import { useTutorialStore } from '@/tutorial/store';
 import { startTutorial } from './tutorial';
 import { syncDriverName } from './driverName';
+import { useSound } from './audio/useSound';
+import { SoundButton } from './components/SoundControls';
 import { DriverNameField } from './components/DriverNameField';
 
 
@@ -37,6 +39,7 @@ export function App() {
     });
   }, []);
   useEffect(() => syncDriverName(), []);
+  useSound();
   const { view, go, disclaimerAccepted, update, lastViews, learningMode } = useUiStore();
   const section = sectionOf(view);
 
@@ -54,6 +57,7 @@ export function App() {
         </nav>
         <div className="mt-auto flex flex-col gap-1">
           <RailButton label="Guía" icon="book" active={view === 'guide'} onClick={() => go('guide')} />
+          <SoundButton />
           <RailButton label={learningMode === 'assisted' ? 'Ayudas: sí' : 'Ayudas: no'} icon="bulb" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
           <RailButton label="Premium" icon="star" active={view === 'premium'} onClick={() => go('premium')} />
           <RailButton label="Ajustes" icon="settings" active={view === 'settings'} onClick={() => go('settings')} />
@@ -64,10 +68,18 @@ export function App() {
         {/* Barra superior (móvil) */}
         <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-white/5 bg-[#050913]/80 px-4 backdrop-blur-xl md:hidden print:hidden">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-xs font-bold text-slate-950">TL</span>
-          <span className="font-semibold text-white">TachoLab <span className="text-gradient">EU</span></span>
-          <button type="button" onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} aria-pressed={learningMode === 'assisted'} className={`ml-auto rounded-full px-3 py-1 text-xs ${learningMode === 'assisted' ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400'}`}>
-            Ayudas {learningMode === 'assisted' ? 'sí' : 'no'}
+          <span className="whitespace-nowrap font-semibold text-white">TachoLab <span className="text-gradient">EU</span></span>
+          <button
+            type="button"
+            onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })}
+            aria-pressed={learningMode === 'assisted'}
+            aria-label={learningMode === 'assisted' ? 'Ayudas activadas' : 'Ayudas desactivadas'}
+            title="Ayudas contextuales"
+            className={`ml-auto grid h-9 w-9 place-items-center rounded-full ${learningMode === 'assisted' ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400'}`}
+          >
+            <NavIcon name="bulb" />
           </button>
+          <SoundButton variant="header" />
           <button type="button" onClick={() => go('guide')} aria-label="Guía y tutorial" className={`grid h-9 w-9 place-items-center rounded-full ${view === 'guide' ? 'bg-white/10 text-white' : 'text-slate-300'}`}>
             <NavIcon name="book" />
           </button>
@@ -91,7 +103,7 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.14 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.15 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 

@@ -38,12 +38,36 @@ const GLYPHS: Record<string, JSX.Element> = {
       <circle cx="6" cy="7" r="1.2" fill="currentColor" />
     </g>
   ),
+  // Modo de funcionamiento «operativo» (conductor): camión con volante, diseño propio
+  '{O}': (
+    <g fill="none" stroke="currentColor" strokeWidth="1.3">
+      <rect x="0.8" y="3" width="6.4" height="6.5" />
+      <path d="M7.2 5h2.6l1.4 2.4v2.1H7.2" />
+      <circle cx="3" cy="11" r="1.2" fill="currentColor" />
+      <circle cx="9" cy="11" r="1.2" fill="currentColor" />
+    </g>
+  ),
+  // Trayecto en transbordador/tren
+  '{F}': (
+    <g fill="none" stroke="currentColor" strokeWidth="1.3">
+      <path d="M1 8.5h10l-1.6 2.5H2.6Z" fill="currentColor" />
+      <path d="M3 8.5V5.5h6v3M5.5 5.5V3" />
+      <path d="M0.5 12.6q1.4-1 2.8 0t2.8 0 2.8 0 2.8 0" />
+    </g>
+  ),
+  // Fuera de ámbito
+  '{X}': (
+    <g fill="none" stroke="currentColor" strokeWidth="1.4">
+      <circle cx="6" cy="7" r="4.6" />
+      <path d="M2.8 10.2 9.2 3.8" />
+    </g>
+  ),
 };
 const LETTERS: Record<string, string> = { '{U}': 'U', '{?}': '?', '{M}': 'M' };
 
 /** Una línea del LCD: texto en fuente de matriz de puntos y pictogramas en línea. */
 export function LcdLine({ text, testId }: { text: string; testId?: string }) {
-  const parts = text.split(/(\{[DWARCLU?M]\})/);
+  const parts = text.split(/(\{[DWARCLU?MOFX]\})/);
   return (
     <div className="lcd-line whitespace-pre" data-testid={testId}>
       {parts.map((p, i) => {

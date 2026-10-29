@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clearAll, loadActive, loadCheckpoint, memoryStorage, saveActive, saveCheckpoint, KEYS } from './storage';
+import { clearAll, clearShiftStart, loadActive, loadCheckpoint, loadShiftStart, memoryStorage, saveActive, saveCheckpoint, saveShiftStart, KEYS } from './storage';
 import { simReducer } from '@/simulator/engine';
 import { createInitialSim } from '@/simulator/state';
 import { HOUR } from '@/time-engine/units';
@@ -38,5 +38,20 @@ describe('persistencia local', () => {
     saveActive(st, createInitialSim());
     clearAll(st);
     expect(loadActive(st)).toBeNull();
+  });
+});
+
+describe('repetir la jornada', () => {
+  it('guarda el estado previo a la inserción, se recupera y se borra con el resto de datos', () => {
+    const st = memoryStorage();
+    const before = simReducer(createInitialSim(), { type: 'ADVANCE_BY', ms: HOUR });
+    expect(saveShiftStart(st, before)).toBe(true);
+    expect(loadShiftStart(st)?.clock.now).toBe(before.clock.now);
+    expect(loadShiftStart(st)?.device.insertedCardId).toBeNull();
+    clearShiftStart(st);
+    expect(loadShiftStart(st)).toBeNull();
+    saveShiftStart(st, before);
+    clearAll(st);
+    expect(loadShiftStart(st)).toBeNull();
   });
 });

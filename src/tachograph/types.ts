@@ -18,7 +18,15 @@ export const MENU_ITEMS = [
   { id: 'TICKET', label: 'Resumen de jornada', needsCard: true },
   { id: 'WITHDRAW', label: 'Retirar tarjeta', needsCard: true },
   { id: 'DEVICE_INFO', label: 'Información equipo', needsCard: false },
+  /** País en el que se entra tras cruzar una frontera (art. 34.7 R. 165/2014). */
+  { id: 'BORDER', label: 'País: cruce frontera', needsCard: true },
+  /** Condiciones específicas (anexo IC, req. 62). */
+  { id: 'FERRY', label: 'Ferry/tren', needsCard: true },
+  { id: 'OUT', label: 'Fuera de ámbito', needsCard: false },
 ] as const;
+
+/** Condición específica abierta en el tacógrafo (anexo IC del R. 2016/799, requisito 62). */
+export type SpecificCondition = 'FERRY' | 'OUT';
 export type MenuItemId = (typeof MENU_ITEMS)[number]['id'];
 
 /**
@@ -74,10 +82,10 @@ export type Screen =
     }
   | { kind: 'MANUAL_CONFIRM'; segments: ManualDraftSegment[]; yes: boolean; prevCountry: string }
   /** start: país de inicio · end: país de fin al retirar · prev-end: país de fin de la jornada anterior (entrada manual). */
-  | { kind: 'COUNTRY'; purpose: 'start' | 'end'; index: number }
+  | { kind: 'COUNTRY'; purpose: 'start' | 'end' | 'border'; index: number }
   | { kind: 'COUNTRY'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
   /** Comunidad autónoma, solo cuando el país elegido es España. */
-  | { kind: 'REGION'; purpose: 'start' | 'end'; index: number }
+  | { kind: 'REGION'; purpose: 'start' | 'end' | 'border'; index: number }
   | { kind: 'REGION'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
   /** Al retirar la tarjeta: ¿imprimir el resumen de 24 h antes de expulsarla? */
   | { kind: 'WITHDRAW_PRINT'; yes: boolean }
@@ -134,6 +142,8 @@ export interface DeviceState {
   warnFlags: Record<string, true>;
   /** Último ticket impreso (la interfaz lo muestra saliendo de la impresora). */
   printout?: Printout | null;
+  /** Condición específica abierta: trayecto en transbordador/tren o fuera de ámbito. */
+  condition?: SpecificCondition | null;
 }
 
 export interface Printout {

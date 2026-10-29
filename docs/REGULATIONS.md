@@ -95,6 +95,20 @@ Requisitos de diseño para la Fase 2:
   (art. 7); hasta el fin de la jornada = límite diario aplicable (9 h, o 10 h si quedan ampliaciones en la semana,
   art. 6.1) − conducción de la jornada. Aproximación pedagógica: no tiene en cuenta los límites semanales.
 
+## Condiciones específicas, frontera y pantalla (v0.15)
+- **R561-ART9-FERRY** (informativa) — art. 9.1 R. 561/2006 (extracto verificado en
+  `docs/normativa/R561-2006_consolidado-20241231_art9.txt`). Implementación: `bridgeFerryRests` en
+  `src/regulations/compliance.ts`. Aproximación: se exige que algún tramo del descanso coincida con un periodo de
+  ferry/tren registrado y que el descanso sume ≥ 11 h; no se comprueba el acceso a cama/litera ni la duración mínima
+  de 8 h del viaje para el descanso semanal normal.
+- **Cruce de frontera** — art. 34.7 R. 165/2014 (extracto en `docs/normativa/R165-2014_consolidado-20241231_art34.txt`):
+  país en el que se entra, en la primera parada tras la frontera (o en el puerto/estación de llegada si se cruza en
+  ferry/tren). El mismo artículo permite a los Estados miembros exigir especificaciones geográficas más detalladas
+  (comunidades autónomas en España).
+- **Condiciones «Ferry/tren» y «Fuera de ámbito»** y **pantalla por defecto** — anexo IC R. 2016/799, req. 62 y
+  160-164 (extracto en `docs/normativa/R2016-799_anexoIC_req62_req160-164.txt`). El cierre automático del ferry al
+  volver a circular es una aproximación del requisito «se cerrará cuando deje de ser válido».
+
 ## Pendiente
 - Art. 8.8 (lugar del descanso semanal): requiere un dato de ubicación que el simulador no registra.
 - Asignación óptima de descansos que abarcan dos semanas (art. 8.9): ahora se cuenta cada uno una vez, sin optimizar.

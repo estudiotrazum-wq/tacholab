@@ -52,5 +52,6 @@ export function deriveSummary(sim: SimState, driverOverride?: string): SimSummar
 export function complianceFor(sim: SimState, driverId: string | null = sim.device.insertedCardId): ComplianceReport | null {
   if (!driverId) return null;
   const { startsAt, weekOneStart, endsAt, timeZone } = sim.scenario;
-  return analyzeCompliance(driverEvents(sim.timeline, driverId), sim.clock.now, { startsAt, weekOneStart, endsAt, timeZone });
+  const ferry = (sim.conditions ?? []).filter((c) => c.kind === 'FERRY' && c.driverId === driverId);
+  return analyzeCompliance(driverEvents(sim.timeline, driverId), sim.clock.now, { startsAt, weekOneStart, endsAt, timeZone, ferry });
 }

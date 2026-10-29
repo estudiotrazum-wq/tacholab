@@ -190,3 +190,32 @@ describe('escenario formativo de referencia: 56 h + 34 h = 90 h', () => {
     expect(ids(r)).toContain('R561-ART6-BIWEEKLY90');
   });
 });
+
+describe('art. 9: descanso en transbordador/tren', () => {
+  const H = 3_600_000;
+  const t0 = Date.UTC(2026, 10, 2, 6);
+  const ev = (activity: 'DRIVING' | 'REST' | 'WORK', start: number, end: number): ActivityEvent => ({ id: String(start), driverId: 'd', scenarioId: 's', activity, start: t0 + start * H, end: t0 + end * H, source: 'device' });
+  // 8 h de conducción; descanso 2 h; embarque 0,5 h conduciendo; descanso a bordo 9 h; desembarque 0,25 h; descanso 1 h
+  const events = [ev('DRIVING', 0, 8), ev('REST', 8, 10), ev('DRIVING', 10, 10.5), ev('REST', 10.5, 19.5), ev('DRIVING', 19.5, 19.75), ev('REST', 19.75, 20.75), ev('DRIVING', 20.75, 22)];
+  const ctx = { startsAt: t0, weekOneStart: t0, endsAt: t0 + 14 * 24 * H, timeZone: 'UTC' };
+
+  it('sin trayecto registrado, el descanso queda fragmentado e insuficiente', () => {
+    const r = analyzeCompliance(events, t0 + 22 * H, ctx);
+    expect(r.findings.some((f) => f.ruleId === 'R561-ART9-FERRY')).toBe(false);
+    expect(r.periods[0]?.closing?.kind).not.toBe('NORMAL');
+  });
+
+  it('con el trayecto en transbordador registrado, dos interrupciones de 45 min en total se toleran', () => {
+    const r = analyzeCompliance(events, t0 + 22 * H, { ...ctx, ferry: [{ start: t0 + 10.5 * H, end: t0 + 19.5 * H }] });
+    const f = r.findings.find((x) => x.ruleId === 'R561-ART9-FERRY');
+    expect(f?.severity).toBe('info');
+    expect(f?.detail).toContain('2 veces');
+    expect(r.periods[0]?.closing?.kind).toBe('NORMAL');
+  });
+
+  it('más de una hora de interrupciones no se admite', () => {
+    const long = [ev('DRIVING', 0, 8), ev('REST', 8, 10), ev('DRIVING', 10, 11.25), ev('REST', 11.25, 20), ev('DRIVING', 20, 20.5), ev('REST', 20.5, 21.5)];
+    const r = analyzeCompliance(long, t0 + 22 * H, { ...ctx, ferry: [{ start: t0 + 11.25 * H, end: t0 + 20 * H }] });
+    expect(r.findings.some((x) => x.ruleId === 'R561-ART9-FERRY')).toBe(false);
+  });
+});

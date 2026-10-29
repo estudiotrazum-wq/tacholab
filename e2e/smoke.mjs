@@ -155,6 +155,29 @@ try {
   await goTo('Simulador', 'Panel');
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
 
+  // Menú: cruce de frontera y trayecto en ferry/tren
+  const menu = async (downs) => {
+    await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+    for (let i = 0; i < downs; i++) await page.getByRole('button', { name: 'Abajo' }).click();
+    await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  };
+  const lcd = () => page.getByTestId('tacho-display').getAttribute('aria-label');
+  await menu(5);
+  assert((await line(0)).includes('País: frontera'), 'menú: país por cruce de frontera');
+  await page.getByRole('button', { name: 'Abajo' }).click();
+  await page.getByRole('button', { name: 'Abajo' }).click();
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert((await line(0)).includes('País registrado'), 'cruce de frontera registrado (Francia)');
+  const dismiss = () => page.getByRole('button', { name: 'Retroceder' }).click(); // quita el mensaje sin abrir el menú
+  await dismiss();
+  await menu(6);
+  await dismiss();
+  assert((await lcd()).includes('⛴'), 'ferry/tren: el pictograma aparece en la pantalla por defecto');
+  await page.screenshot({ path: 'e2e/screenshots/15-ferry.png' });
+  await menu(6);
+  await dismiss();
+  assert(!(await lcd()).includes('⛴'), 'ferry/tren: se cierra desde el menú');
+
   // Retirada de la tarjeta como en un tacógrafo real
   // a) Mantener pulsada la tecla 1 inicia la retirada; ✕ la cancela
   const key1 = await page.getByRole('button', { name: 'Botón de actividad' }).boundingBox();
@@ -179,6 +202,7 @@ try {
   await page.screenshot({ path: 'e2e/screenshots/09-card-eject.png' });
   await page.getByRole('button', { name: '✂ Cortar ticket' }).click();
   assert((await page.getByTestId('card-slot').getAttribute('aria-label')).includes('arrastra aquí'), 'la ranura queda vacía');
+
 
   await goTo('Mis semanas', 'Informe');
   assert((await page.getByTestId('findings').innerText()).includes('4 h 30 min'), 'el informe muestra la infracción de conducción continua con su norma');
@@ -246,6 +270,32 @@ try {
 
   // Tutorial de inicio completo, con clics reales sobre el simulador
   await page.setViewportSize({ width: 1440, height: 950 });
+  await goTo('Simulador', 'Panel');
+
+  // Reiniciar: empezar de cero y repetir la jornada (vuelve a justo antes de meter la tarjeta)
+  await page.getByTestId('reset-menu').click();
+  await page.getByTestId('restart-all').click();
+  await page.getByTestId('confirm-ok').click();
+  assert((await page.getByTestId('virtual-clock').innerText()).startsWith('06:00'), 'empezar de cero vuelve al lunes 06:00 UTC');
+  await tool('+1 h');
+  await page.getByTestId('card-slot').click();
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  await tool('+1 h');
+  assert((await page.getByTestId('virtual-clock').innerText()).startsWith('08:00'), 'una hora de jornada con tarjeta');
+  await page.getByTestId('reset-menu').click();
+  await page.getByTestId('restart-shift').click();
+  await page.getByTestId('confirm-ok').click();
+  assert((await page.getByTestId('virtual-clock').innerText()).startsWith('07:00'), 'repetir la jornada vuelve al momento previo a la inserción');
+  assert((await line(1)).includes('Inserte tarjeta'), 'repetir la jornada: la tarjeta vuelve a estar fuera');
+
+  // Sonido: efectos y música country sintetizados sin errores
+  await page.getByTestId('sound-button').click();
+  await page.getByText('Música country').click();
+  await page.waitForTimeout(800);
+  assert(await page.getByTestId('music-toggle').isChecked(), 'se activa la música country');
+  await page.getByText('Música country').click();
+  await page.keyboard.press('Escape');
+
   await page.getByRole('button', { name: 'Guía', exact: true }).click();
   await page.screenshot({ path: 'e2e/screenshots/13-guide.png', fullPage: true });
   await page.getByTestId('start-tutorial').click();

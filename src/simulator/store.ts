@@ -4,6 +4,9 @@ import { createInitialSim, type SimState } from './state';
 import {
   browserStorage,
   clearAll,
+  clearShiftStart,
+  loadShiftStart,
+  saveShiftStart,
   loadActive,
   loadCheckpoint,
   saveActive,
@@ -23,6 +26,10 @@ interface SimStore {
   restoreCheckpoint: () => boolean;
   checkpointSavedAt: () => number | null;
   reset: () => void;
+  /** Vuelve a justo antes de la última inserción de tarjeta. false si aún no se ha insertado ninguna. */
+  restartShift: () => boolean;
+  /** Instante (reloj virtual) al que volvería «Repetir la jornada», o null. */
+  shiftStartAt: () => number | null;
   wipeAllData: () => void;
   loadScenario: (def: ScenarioDef) => void;
   loadSim: (sim: SimState) => void;
@@ -42,6 +49,8 @@ export const useSimStore = create<SimStore>((set, get) => ({
     const prev = get().sim;
     const next = simReducer(prev, action);
     if (next === prev) return;
+    // Punto de «Repetir la jornada»: el estado justo antes de meter la tarjeta.
+    if (action.type === 'INSERT_CARD' && !prev.device.insertedCardId && next.device.insertedCardId) saveShiftStart(getStorage(), prev);
     set({ sim: next, dirty: true });
     // Los ticks se guardan periódicamente; el resto de acciones inmediatamente.
     if (action.type !== 'TICK') get().persist();
@@ -60,8 +69,20 @@ export const useSimStore = create<SimStore>((set, get) => ({
   },
   checkpointSavedAt: () => loadCheckpoint(getStorage())?.savedAt ?? null,
   reset: () => {
+    clearShiftStart(getStorage());
     set({ sim: createInitialSim() });
     get().persist();
+  },
+  restartShift: () => {
+    const start = loadShiftStart(getStorage());
+    if (!start || start.scenario.id !== get().sim.scenario.id) return false;
+    set({ sim: start });
+    get().persist();
+    return true;
+  },
+  shiftStartAt: () => {
+    const start = loadShiftStart(getStorage());
+    return start && start.scenario.id === get().sim.scenario.id ? start.clock.now : null;
   },
   wipeAllData: () => {
     clearAll(getStorage());
@@ -69,6 +90,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   },
   loadScenario: (def) => get().loadSim(def.build()),
   loadSim: (sim) => {
+    clearShiftStart(getStorage());
     set({ sim });
     get().persist();
   },

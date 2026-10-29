@@ -9,6 +9,7 @@ import { formatDate, formatDateTime, formatTime, formatWeekday } from '@/time-en
 import { SCENARIO_DAYS } from '@/scenarios/scenario';
 import { ACTIVITY_COLOR } from './icons';
 import { TimeTools } from './ControlDock';
+import { ResetMenu } from './ResetMenu';
 
 const CLOCK_STEPS: Speed[] = [0, 1, 5, 30, 60];
 const CLOCK_LABELS = ['Pausa', '×1', '×5', '×30', '×60'];
@@ -64,7 +65,10 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
         >
           Siguiente evento ⏭
         </button>
-        <div className="relative ml-auto">
+        <div className="ml-auto">
+          <ResetMenu />
+        </div>
+        <div className="relative">
           <button type="button" onClick={() => setTools((t) => !t)} aria-expanded={tools} aria-label="Más controles de tiempo" data-testid="time-tools" className={`grid h-10 w-10 place-items-center rounded-xl text-slate-200 ${tools ? 'bg-white/15' : 'bg-white/5 hover:bg-white/10'}`}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
           </button>

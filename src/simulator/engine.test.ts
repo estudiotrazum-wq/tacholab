@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { simReducer, type SimAction } from './engine';
 import { createInitialSim, type SimState } from './state';
-import { deriveSummary } from './derived';
+import { complianceFor, deriveSummary } from './derived';
 import { HOUR, MINUTE } from '@/time-engine/units';
 import { driverEvents, sumActivities } from '@/time-engine/timeline';
 import { addZonedDays, startOfZonedDay } from '@/time-engine/zoned';
@@ -187,8 +187,9 @@ describe('simulador: tarjeta y actividades', () => {
   it('la pantalla estándar refleja actividad y contadores', () => {
     const s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: 90 * MINUTE }, { type: 'DISMISS_NOTICE' });
     const d = renderDisplay(s);
-    expect(lcdPlain(d.lines[0])).toBe('07:30⊙ ◉▣     80km/h');
-    expect(lcdPlain(d.lines[1]).trimEnd()).toBe('◉1h30  ▬0h00');
+    // Req. 160: hora local, modo de funcionamiento, conductor 1 (conducción continua + descanso acumulado) y conductor 2
+    expect(lcdPlain(d.lines[0])).toBe('07:30⊙ ⛟      80km/h');
+    expect(lcdPlain(d.lines[1])).toBe('1◉1h30 ▬0h00     2 -');
     expect(d.lines.every((l) => lcdLength(l) === 20)).toBe(true);
   });
 
@@ -358,4 +359,88 @@ describe('tacógrafo: tiempo de conducción restante', () => {
     expect(lcdPlain(d.lines[1])).toContain('fin jornada');
     expect(lcdPlain(d.lines[1])).toMatch(/fin jornada +8h45$/); // límite de 10 h: quedan ampliaciones esta semana
   });
+});
+
+describe('tacógrafo: pantalla por defecto sin conducir', () => {
+  it('muestra la duración de la actividad actual y no la conducción continua', () => {
+    let s = run(withCard(), { type: 'SET_MOVING', moving: true }, { type: 'ADVANCE_BY', ms: HOUR }, { type: 'SET_MOVING', moving: false });
+    s = run(s, { type: 'ADVANCE_BY', ms: 20 * MINUTE }, { type: 'DISMISS_NOTICE' });
+    expect(lcdPlain(renderDisplay(s).lines[1])).toMatch(/^1⚒0h20 ▬0h00/);
+  });
+});
+
+const menuTo = (sim: ReturnType<typeof withCard>, id: string) => {
+  const idx = ['TIMES', 'DAY_ACTIVITIES', 'TICKET', 'WITHDRAW', 'DEVICE_INFO', 'BORDER', 'FERRY', 'OUT'].indexOf(id);
+  return run(sim, { type: 'DISMISS_NOTICE' }, ...press('OK', ...(Array(idx).fill('DOWN') as Button[]), 'OK'));
+};
+
+describe('tacógrafo: cruce de frontera y condiciones específicas', () => {
+  it('cruce de frontera: país en el que se entra (art. 34.7 R. 165/2014)', () => {
+    let s = menuTo(withCard(), 'BORDER');
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'border' });
+    expect(lcdPlain(renderDisplay(s).lines[0])).toContain('País: frontera');
+    s = run(s, ...press('DOWN', 'DOWN', 'OK')); // Francia
+    expect(s.log.at(-1)).toMatchObject({ kind: 'COUNTRY_BORDER', text: 'Cruce de frontera: entrada en Francia' });
+    expect(s.device.notice?.text).toBe('País registrado');
+  });
+
+  it('ferry/tren: comienzo, pictograma en pantalla y cierre al volver a circular', () => {
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' });
+    s = menuTo(s, 'FERRY');
+    expect(s.device.condition).toBe('FERRY');
+    s = run(s, { type: 'DISMISS_NOTICE' });
+    expect(lcdPlain(renderDisplay(s).lines[0])).toContain('⛟⛴');
+    s = run(s, { type: 'ADVANCE_BY', ms: 6 * HOUR }, { type: 'SET_VEHICLE_SPEED', kmh: 30 });
+    expect(s.device.condition).toBeNull();
+    expect(s.conditions).toEqual([expect.objectContaining({ kind: 'FERRY', driverId: 'card-a', end: s.clock.now })]);
+    expect(s.log.some((l) => l.text === 'Final de trayecto en transbordador/tren (el vehículo vuelve a circular)')).toBe(true);
+  });
+
+  it('ferry/tren: no se puede abrir con el vehículo en marcha y se cierra al extraer la tarjeta', () => {
+    const moving = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 50 });
+    expect(menuTo(moving, 'FERRY').device.condition ?? null).toBeNull();
+    let s = menuTo(withCard(), 'FERRY');
+    s = run(s, { type: 'DISMISS_NOTICE' }, ...press('EJECT', 'OK', 'OK', 'OK'));
+    expect(s.device.condition).toBeNull();
+    expect(s.log.some((l) => l.text.includes('(tarjeta extraída)'))).toBe(true);
+  });
+
+  it('fuera de ámbito: sin aviso de conducción sin tarjeta y se cierra al insertar la tarjeta', () => {
+    let s = menuTo(createInitialSim(), 'OUT');
+    expect(s.device.condition).toBe('OUT');
+    s = run(s, { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 60 }, { type: 'ADVANCE_BY', ms: HOUR });
+    expect(s.device.warning).toBeNull();
+    s = run(s, { type: 'SET_VEHICLE_SPEED', kmh: 0 }, { type: 'INSERT_CARD', cardId: 'card-a' });
+    expect(s.device.condition).toBeNull();
+  });
+
+  it('el informe aplica el art. 9 con los periodos de ferry registrados', () => {
+    /** Confirma los avisos pendientes (bloquean las demás teclas). */
+    const calm = (x: SimState) => {
+      let y = run(x, { type: 'DISMISS_NOTICE' });
+      while (y.device.warning) y = run(y, ...press('OK'));
+      return y;
+    };
+    const rest = (x: SimState, ms: number) => {
+      let y = calm(x);
+      while (y.device.selected !== 'REST') y = run(y, ...press('ACTIVITY'));
+      return run(y, { type: 'ADVANCE_BY', ms });
+    };
+    const drive = (x: SimState, ms: number) => run(x, { type: 'SET_VEHICLE_SPEED', kmh: 60 }, { type: 'ADVANCE_BY', ms }, { type: 'SET_VEHICLE_SPEED', kmh: 0 });
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' });
+    s = drive(s, 4 * HOUR);
+    s = rest(s, 45 * MINUTE);
+    s = drive(s, 4 * HOUR);
+    s = rest(s, 2 * HOUR);
+    // Embarque: 30 min conduciendo; a bordo: ferry y descanso 9 h; desembarque 15 min; descanso 1 h
+    s = drive(s, 30 * MINUTE);
+    s = menuTo(calm(s), 'FERRY');
+    expect(s.device.condition).toBe('FERRY');
+    s = rest(s, 9 * HOUR);
+    s = drive(calm(s), 15 * MINUTE);
+    s = rest(s, HOUR);
+    const report = complianceFor(s)!;
+    expect(report.findings.find((f) => f.ruleId === 'R561-ART9-FERRY')?.detail).toContain('2 veces');
+  });
+
 });

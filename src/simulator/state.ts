@@ -1,7 +1,7 @@
 import type { EpochMs, SelectableActivity } from '@/shared/types';
 import { createClock, type ClockState } from '@/time-engine/clock';
 import { emptyTimeline, type Timeline } from '@/time-engine/timeline';
-import { initialDevice, type DeviceState } from '@/tachograph/types';
+import { initialDevice, type DeviceState, type SpecificCondition } from '@/tachograph/types';
 import { DEFAULT_CARDS, type FictionalCard } from '@/scenarios/cards';
 import { createFreeScenario, REFERENCE_ANCHOR, type ScenarioMeta } from '@/scenarios/scenario';
 
@@ -22,6 +22,8 @@ export type LogKind =
   | 'VEHICLE_STOP'
   | 'IGNITION'
   | 'PRINTOUT'
+  | 'COUNTRY_BORDER'
+  | 'CONDITION'
   | 'ACTIVITY_SELECTED';
 
 export interface LogEntry {
@@ -55,6 +57,15 @@ export interface SimState {
   logSeq: number;
   noticeSeq: number;
   config: SimConfig;
+  /** Periodos de condiciones específicas (ferry/tren, fuera de ámbito) por conductor. */
+  conditions?: ConditionPeriod[];
+}
+
+export interface ConditionPeriod {
+  kind: SpecificCondition;
+  driverId: string | null;
+  start: EpochMs;
+  end: EpochMs | null;
 }
 
 export function createInitialSim(anchor: EpochMs = REFERENCE_ANCHOR): SimState {

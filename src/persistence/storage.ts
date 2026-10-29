@@ -17,6 +17,8 @@ export const KEYS = {
   slots: 'tacholab.v1.slots',
   cabin: 'tacholab.v1.cabin',
   academy: 'tacholab.v1.academy',
+  /** Estado justo antes de insertar la tarjeta por última vez (para «Repetir la jornada»). */
+  shift: 'tacholab.v1.shift',
 } as const;
 
 export interface Checkpoint {
@@ -108,5 +110,22 @@ export function browserStorage(): KeyValueStorage {
     return window.localStorage;
   } catch {
     return memoryStorage();
+  }
+}
+
+/** Guarda el estado previo a la inserción de la tarjeta: el punto al que vuelve «Repetir la jornada». */
+export function saveShiftStart(storage: KeyValueStorage, sim: SimState): boolean {
+  return write(storage, KEYS.shift, forStorage(sim));
+}
+
+export function loadShiftStart(storage: KeyValueStorage): SimState | null {
+  return read(storage, KEYS.shift, isSimState);
+}
+
+export function clearShiftStart(storage: KeyValueStorage): void {
+  try {
+    storage.removeItem(KEYS.shift);
+  } catch {
+    /* almacenamiento no disponible */
   }
 }

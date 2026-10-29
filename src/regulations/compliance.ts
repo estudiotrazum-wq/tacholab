@@ -42,6 +42,13 @@ export interface ComplianceContext {
   weekOneStart: EpochMs;
   endsAt: EpochMs;
   timeZone: string;
+  /** Trayectos en transbordador/tren registrados por el conductor (condición específica del tacógrafo). */
+  ferry?: readonly FerryPeriod[];
+}
+
+export interface FerryPeriod {
+  start: EpochMs;
+  end: EpochMs | null;
 }
 
 export type Severity = 'infringement' | 'warning' | 'needs-context' | 'info';
@@ -70,6 +77,8 @@ export interface RestBlock {
   start: EpochMs;
   end: EpochMs;
   ongoing: boolean;
+  /** Interrupciones toleradas por el art. 9 (transbordador/tren): número y duración total. */
+  ferryGaps?: { count: number; ms: number };
 }
 
 export type DailyRestKind = 'NORMAL' | 'SPLIT' | 'REDUCED' | 'INSUFFICIENT';
@@ -135,8 +144,44 @@ export interface ComplianceReport {
 
 // ------------------------------------------------------------------ utilidades
 
+/**
+ * Art. 9.1 R. 561/2006: el descanso diario normal (o el semanal reducido) de un conductor que acompaña al
+ * vehículo en transbordador o tren puede interrumpirse como máximo dos veces, sin superar una hora en total.
+ * Une los bloques de descanso que cumplan esas condiciones si alguno coincide con un trayecto en
+ * transbordador/tren registrado y el descanso suma al menos 11 h (aproximación: no se comprueba la litera).
+ */
+export function bridgeFerryRests(blocks: readonly RestBlock[], ferry: readonly FerryPeriod[], now: EpochMs): RestBlock[] {
+  if (ferry.length === 0) return [...blocks];
+  const onFerry = (b: RestBlock) => ferry.some((f) => b.start < (f.end ?? now) && f.start < b.end);
+  const out: RestBlock[] = [];
+  let i = 0;
+  while (i < blocks.length) {
+    let best: RestBlock = blocks[i]!;
+    // Prueba a unir este bloque con los dos siguientes (dos interrupciones) o con el siguiente (una).
+    for (const n of [2, 1]) {
+      const chain = blocks.slice(i, i + n + 1);
+      if (chain.length !== n + 1 || !chain.some(onFerry)) continue;
+      const gaps = chain.slice(1).map((b, k) => b.start - chain[k]!.end);
+      const gapMs = gaps.reduce((a, g) => a + g, 0);
+      const restMs = chain.reduce((a, b) => a + (b.end - b.start), 0);
+      if (gapMs <= HOUR && restMs >= LIMITS.DAILY_REST_NORMAL) {
+        const last = chain[chain.length - 1]!;
+        best = { start: chain[0]!.start, end: last.end, ongoing: last.ongoing, ferryGaps: { count: n, ms: gapMs } };
+        break;
+      }
+    }
+    out.push(best);
+    i += best.ferryGaps ? best.ferryGaps.count + 1 : 1;
+  }
+  return out;
+}
+
 /** Bloques de descanso ininterrumpidos: REST contiguos fusionados; un hueco rompe la continuidad. */
-export function restBlocks(events: readonly ActivityEvent[], now: EpochMs): RestBlock[] {
+export function restBlocks(events: readonly ActivityEvent[], now: EpochMs, ferry: readonly FerryPeriod[] = []): RestBlock[] {
+  return bridgeFerryRests(plainRestBlocks(events, now), ferry, now);
+}
+
+function plainRestBlocks(events: readonly ActivityEvent[], now: EpochMs): RestBlock[] {
   const blocks: RestBlock[] = [];
   for (const e of events) {
     if (e.activity !== 'REST') continue;
@@ -224,7 +269,8 @@ export function analyzeCompliance(
 
   const closePeriod = (b: RestBlock, weekly: boolean) => {
     const p = newPeriod(periodStart!);
-    const inside = Math.max(0, Math.min(b.end, p.windowEnd) - b.start);
+    // Las interrupciones del art. 9 no cuentan como descanso.
+    const inside = Math.max(0, Math.min(b.end, p.windowEnd) - b.start - (b.ferryGaps?.ms ?? 0));
     const provisional = b.ongoing && b.end < p.windowEnd;
     const split = splitFirst && splitFirst.end <= p.windowEnd && inside >= LIMITS.DAILY_REST_REDUCED ? splitFirst : null;
     const kind: DailyRestKind = split
@@ -261,7 +307,16 @@ export function analyzeCompliance(
     }
   };
 
-  for (const b of restBlocks(events, now)) {
+  for (const b of restBlocks(events, now, ctx.ferry ?? [])) {
+    if (b.ferryGaps) {
+      add({
+        ruleId: 'R561-ART9-FERRY',
+        severity: 'info',
+        at: b.start,
+        title: 'Descanso en transbordador/tren con interrupciones (art. 9)',
+        detail: `El descanso que empieza el ${fmt(b.start)} se interrumpió ${b.ferryGaps.count} ${b.ferryGaps.count === 1 ? 'vez' : 'veces'} (${h(b.ferryGaps.ms)} en total) durante un trayecto en transbordador/tren. Se admite como descanso continuo si el conductor tenía acceso a cama o litera. Art. 9.1.`,
+      });
+    }
     if (b.end <= ctx.startsAt || periodStart === null || b.start < periodStart) continue;
     const len = b.end - b.start;
     if (len >= LIMITS.WEEKLY_REST_REDUCED) {
@@ -430,7 +485,7 @@ export function analyzeCompliance(
   }
 
   // ---- 7. Compensación de descansos semanales reducidos (art. 8.6 ter y 8.7)
-  const blocks = restBlocks(events, now);
+  const blocks = restBlocks(events, now, ctx.ferry ?? []);
   const used = new Set<number>();
   for (const r of weeklyRests) {
     if (r.normal || r.provisional) continue;

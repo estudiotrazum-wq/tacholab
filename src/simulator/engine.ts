@@ -6,6 +6,7 @@ import {
   COUNTRIES,
   INSERTION_FLOW,
   SPAIN_REGIONS,
+  type SpecificCondition,
   MENU_ITEMS,
   effectiveActivity,
   type Button,
@@ -140,9 +141,11 @@ function insertCard(sim: SimState, cardId: string): SimState {
   if (!card) return notice(sim, 'Tarjeta no válida');
   if (sim.device.insertedCardId) return notice(sim, 'Ya hay una tarjeta insertada');
   if (sim.vehicle.moving) return notice(sim, 'Detenga el vehículo para insertar la tarjeta');
+  // «Fuera de ámbito» se cierra al insertar una tarjeta (req. 62).
+  const base = sim.device.condition === 'OUT' ? closeCondition(sim, 'tarjeta insertada') : sim;
   let s: SimState = {
-    ...sim,
-    device: { ...sim.device, insertedCardId: cardId, insertedAt: sim.clock.now, screen: { kind: 'WELCOME' } },
+    ...base,
+    device: { ...base.device, insertedCardId: cardId, insertedAt: sim.clock.now, screen: { kind: 'WELCOME' } },
   };
   s = log(s, 'CARD_IN', `Tarjeta ${card.displayId} insertada`);
   return syncTimeline(s);
@@ -159,7 +162,8 @@ function completeWithdrawal(sim: SimState): SimState {
   const id = sim.device.insertedCardId;
   if (!id) return sim;
   const card = sim.cards[id]!;
-  let s = log(sim, 'CARD_OUT', `Tarjeta ${card.displayId} retirada`);
+  // Al extraer la tarjeta se cierran las condiciones específicas abiertas (req. 62).
+  let s = log(closeCondition(sim, 'tarjeta extraída'), 'CARD_OUT', `Tarjeta ${card.displayId} retirada`);
   s = {
     ...s,
     cards: { ...s.cards, [id]: { ...card, lastWithdrawalAt: s.clock.now } },
@@ -178,6 +182,42 @@ function printDaily(sim: SimState): SimState {
   if (!lines) return notice(sim, 'Inserte una tarjeta para imprimir');
   const s: SimState = { ...sim, device: { ...sim.device, printout: { seq: (sim.device.printout?.seq ?? 0) + 1, lines } } };
   return log(s, 'PRINTOUT', 'Impresión diaria (24 h)');
+}
+
+// ---------------------------------------------------------------- condiciones específicas
+
+const CONDITION_TEXT: Record<SpecificCondition, { open: string; close: string }> = {
+  FERRY: { open: 'Comienzo de trayecto en transbordador/tren', close: 'Final de trayecto en transbordador/tren' },
+  OUT: { open: 'Comienzo de «Fuera de ámbito»', close: 'Final de «Fuera de ámbito»' },
+};
+
+function openCondition(sim: SimState, kind: SpecificCondition): SimState {
+  const period = { kind, driverId: sim.device.insertedCardId, start: sim.clock.now, end: null };
+  const s: SimState = { ...sim, device: { ...sim.device, condition: kind }, conditions: [...(sim.conditions ?? []), period] };
+  return log(s, 'CONDITION', CONDITION_TEXT[kind].open);
+}
+
+/** Cierra la condición abierta (si la hay) y lo anota en el registro con el motivo. */
+function closeCondition(sim: SimState, reason?: string): SimState {
+  const kind = sim.device.condition;
+  if (!kind) return sim;
+  const conditions = (sim.conditions ?? []).map((c) => (c.kind === kind && c.end === null ? { ...c, end: sim.clock.now } : c));
+  const s: SimState = { ...sim, device: { ...sim.device, condition: null }, conditions };
+  return log(s, 'CONDITION', reason ? `${CONDITION_TEXT[kind].close} (${reason})` : CONDITION_TEXT[kind].close);
+}
+
+/**
+ * Entrada de condiciones específicas desde el menú (anexo IC, req. 62): comienzo o final.
+ * Ferry/tren no puede abrirse con «Fuera de ámbito» abierto, y se activa con el vehículo parado
+ * (antes de apagar el motor a bordo).
+ */
+function toggleCondition(sim: SimState, kind: SpecificCondition): SimState {
+  const open = sim.device.condition;
+  if (open === kind) return notice(setScreen(closeCondition(sim), STANDARD), kind === 'FERRY' ? 'Ferry/tren: final' : 'Fuera de ámbito: final');
+  if (sim.vehicle.moving) return notice(sim, 'Detenga el vehículo');
+  if (kind === 'FERRY' && open === 'OUT') return notice(sim, 'Cierre antes «Fuera de ámbito»');
+  const s = open ? closeCondition(sim) : sim;
+  return notice(setScreen(openCondition(s, kind), STANDARD), kind === 'FERRY' ? 'Ferry/tren: comienzo' : 'Fuera de ámbito: comienzo');
 }
 
 function afterWelcome(sim: SimState): SimState {
@@ -271,6 +311,12 @@ function pressButton(sim: SimState, button: Button): SimState {
             return beginWithdrawal(s);
           case 'DEVICE_INFO':
             return setScreen(s, { kind: 'DEVICE_INFO' });
+          case 'BORDER':
+            if (s.vehicle.moving) return notice(s, 'Detenga el vehículo para introducir el país');
+            return setScreen(s, { kind: 'COUNTRY', purpose: 'border', index: 0 });
+          case 'FERRY':
+          case 'OUT':
+            return toggleCondition(s, item.id);
         }
       }
       return s;
@@ -353,6 +399,7 @@ function pressButton(sim: SimState, button: Button): SimState {
         return confirmPlace(s, screen, c.name);
       }
       if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
+      if (back && screen.purpose === 'border') return setScreen(s, { kind: 'MENU', index: MENU_ITEMS.findIndex((m) => m.id === 'BORDER') });
       if (back && screen.purpose === 'prev-end') {
         const last = screen.segments[screen.segments.length - 1]!;
         return setScreen(s, { kind: 'MANUAL_EDIT', segments: screen.segments.slice(0, -1), draft: last, field: 'minute' });
@@ -379,6 +426,10 @@ function confirmPlace(sim: SimState, screen: PlaceScreen, place: string): SimSta
     const s = log(sim, 'COUNTRY_START', `País de inicio: ${place}`);
     return notice(setScreen(s, STANDARD), 'Listo para conducir');
   }
+  if (screen.purpose === 'border') {
+    const s = log(sim, 'COUNTRY_BORDER', `Cruce de frontera: entrada en ${place}`);
+    return notice(setScreen(s, STANDARD), 'País registrado');
+  }
   const s = log(sim, 'COUNTRY_END', `País de fin: ${place}`);
   return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: false });
 }
@@ -400,6 +451,8 @@ function setMoving(sim: SimState, moving: boolean): SimState {
   if (sim.vehicle.moving === moving) return sim;
   let s: SimState = { ...sim, vehicle: { ...sim.vehicle, moving, ...(moving ? { ignition: 'running' as const } : {}) } };
   if (moving) {
+    // Aproximación: al volver a circular termina el trayecto en transbordador/tren.
+    if (s.device.condition === 'FERRY') s = closeCondition(s, 'el vehículo vuelve a circular');
     s = log(s, 'VEHICLE_START', 'Vehículo en marcha');
     const scr = s.device.screen;
     const kind = scr.kind;
@@ -409,7 +462,7 @@ function setMoving(sim: SimState, moving: boolean): SimState {
       s = setScreen(s, STANDARD);
     }
     s = syncTimeline(s);
-    if (!s.device.insertedCardId) {
+    if (!s.device.insertedCardId && s.device.condition !== 'OUT') {
       s = raiseWarning(s, {
         code: 'DRIVING_WITHOUT_CARD',
         severity: 'warning',
