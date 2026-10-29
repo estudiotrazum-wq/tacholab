@@ -8,6 +8,7 @@ import { HOUR, MINUTE } from '@/time-engine/units';
 import { formatDate, formatDateTime, formatTime, formatWeekday, fromDateTimeLocalValue, toDateTimeLocalValue } from '@/time-engine/zoned';
 import type { Speed } from '@/time-engine/clock';
 import { ActivityIcon, ACTIVITY_COLOR } from './icons';
+import { confirmThen } from '../confirm';
 
 const SPEED_OPTIONS: Speed[] = [1, 5, 30, 60];
 
@@ -174,7 +175,7 @@ function TimeTools({ onClose }: { onClose: () => void }) {
       <div className="grid grid-cols-3 gap-1">
         <button type="button" className={btn} onClick={() => setMsg(store.saveCheckpoint() ? 'Punto guardado' : 'No se pudo guardar')}>Guardar punto</button>
         <button type="button" className={btn} onClick={() => setMsg(store.restoreCheckpoint() ? 'Punto restaurado' : 'No hay punto guardado')}>Restaurar</button>
-        <button type="button" className={btn} onClick={() => { if (window.confirm('¿Reiniciar el escenario? Se perderá la actividad no guardada como punto.')) store.reset(); }}>Reiniciar</button>
+        <button type="button" className={btn} onClick={() => confirmThen('¿Reiniciar el escenario? Se perderá la actividad que no hayas guardado como punto.', () => store.reset(), { confirmLabel: 'Reiniciar', danger: true })}>Reiniciar</button>
       </div>
       <p className="mt-2 h-4 text-xs text-cyan-300" role="status">{msg}</p>
       <p className="text-[11px] text-slate-500">El tiempo solo avanza; para volver atrás, restaura un punto. Escenario de 14 días, horas en UTC.</p>

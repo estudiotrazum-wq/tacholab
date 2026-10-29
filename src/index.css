@@ -17,6 +17,8 @@
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
+/* Diseño solo oscuro, deliberado: controles nativos y barras de desplazamiento en oscuro. */
+:root { color-scheme: dark; }
 html, body, #root { min-height: 100%; }
 body {
   background-color: #050913;

@@ -16,6 +16,7 @@ import { ReportScreen } from './screens/ReportScreen';
 import { AcademyScreen } from './screens/AcademyScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { ConfirmDialog } from './confirm';
 
 
 export function App() {
@@ -103,6 +104,7 @@ export function App() {
       </nav>
 
       <ExerciseResultDialog />
+      <ConfirmDialog />
 
       {!disclaimerAccepted && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="disc-title">

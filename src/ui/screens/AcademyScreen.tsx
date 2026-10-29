@@ -6,6 +6,7 @@ import { BADGES, earnedBadges } from '@/achievements/badges';
 import { DEFAULT_ENTITLEMENTS, hasFeature } from '@/billing/plans';
 import { Panel } from '../components/Panel';
 import { useEntitlements, useUiStore } from '../uiStore';
+import { confirmThen } from '../confirm';
 
 /** Academia: ejercicios con objetivo, situación, condiciones de éxito, errores detectables y progreso. */
 export function AcademyScreen() {
@@ -17,9 +18,10 @@ export function AcademyScreen() {
   const freeDone = EXERCISES.filter((e) => e.feature === 'academy-basic' && progress[e.id]?.passed).length;
 
   const begin = (def: ExerciseDef) => {
-    if (!window.confirm(`¿Empezar «${def.title}»? El ejercicio sustituye al escenario activo (guárdalo antes en Escenarios si quieres conservarlo).`)) return;
-    start(def);
-    go(def.quiz ? 'calendar' : 'device');
+    confirmThen(`¿Empezar «${def.title}»? El ejercicio sustituye al escenario activo (guárdalo antes en Escenarios si quieres conservarlo).`, () => {
+      start(def);
+      go(def.quiz ? 'calendar' : 'device');
+    }, { confirmLabel: 'Empezar' });
   };
 
   return (

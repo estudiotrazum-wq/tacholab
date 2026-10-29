@@ -1,6 +1,7 @@
 import { exerciseDef } from '@/academy/catalog';
 import { useAcademyStore } from '@/academy/store';
 import { useUiStore } from '../uiStore';
+import { confirmThen } from '../confirm';
 
 /** Panel del ejercicio en curso: pasos, instrucciones opcionales, cuestionario y evaluación. */
 export function ExercisePanel({ compact = false }: { compact?: boolean }) {
@@ -62,14 +63,14 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
           type="button"
           data-testid="exercise-finish"
           onClick={() => {
-            if (!done && !def.quiz && !window.confirm('Aún no has completado todos los pasos. ¿Evaluar igualmente?')) return;
-            finish();
+            if (done || def.quiz) finish();
+            else confirmThen('Aún no has completado todos los pasos. ¿Evaluar igualmente?', finish, { confirmLabel: 'Evaluar' });
           }}
           className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${done || def.quiz ? 'bg-violet-500 text-white hover:bg-violet-400' : 'border border-violet-600/60 text-violet-200'}`}
         >
           {done ? 'Evaluar ejercicio ✓' : 'Evaluar ahora'}
         </button>
-        <button type="button" onClick={() => { if (window.confirm('¿Abandonar el ejercicio? No se guardará el resultado.')) { close(); go('academy'); } }} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300">
+        <button type="button" onClick={() => confirmThen('¿Abandonar el ejercicio? No se guardará el resultado.', () => { close(); go('academy'); }, { confirmLabel: 'Abandonar', danger: true })} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300">
           Abandonar
         </button>
       </div>

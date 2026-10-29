@@ -9,6 +9,7 @@ import { useSimStore } from '@/simulator/store';
 import { formatDuration } from '@/time-engine/units';
 import { formatDateTime, formatWeekday } from '@/time-engine/zoned';
 import { Panel } from '../components/Panel';
+import { isEmbedded } from '../confirm';
 
 const SEVERITY: Record<Finding['severity'], { label: string; cls: string }> = {
   infringement: { label: 'Infracción simulada', cls: 'border-rose-500/50 bg-rose-950/30 text-rose-200' },
@@ -69,7 +70,7 @@ export function ReportScreen() {
         <span className="text-xs text-slate-500">
           {sim.scenario.title} · evaluado hasta {fmt(sim.clock.now)} UTC{finished ? ' · escenario terminado' : ' · escenario en curso'}
         </span>
-        <span className="ml-auto flex gap-2 print:hidden">
+        <span className={`ml-auto flex gap-2 print:hidden ${isEmbedded ? 'hidden' : ''}`}>
           <button type="button" onClick={() => window.print()} className="rounded-md border border-white/15 px-3 py-1.5 text-xs hover:border-cyan-700">Imprimir / PDF</button>
           <button type="button" onClick={downloadJson} data-testid="export-json" className="rounded-md border border-white/15 px-3 py-1.5 text-xs hover:border-cyan-700">Descargar JSON</button>
         </span>

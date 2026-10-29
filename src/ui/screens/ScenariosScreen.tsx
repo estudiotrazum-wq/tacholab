@@ -5,6 +5,7 @@ import { useSimStore } from '@/simulator/store';
 import { formatDateTime } from '@/time-engine/zoned';
 import { Panel } from '../components/Panel';
 import { useEntitlements, useUiStore } from '../uiStore';
+import { confirmThen } from '../confirm';
 
 /** Biblioteca de escenarios didácticos y escenarios guardados por el usuario. */
 export function ScenariosScreen() {
@@ -46,9 +47,10 @@ export function ScenariosScreen() {
                   disabled={!allowed}
                   data-testid={`load-${def.id}`}
                   onClick={() => {
-                    if (!window.confirm(`¿Cargar «${def.title}»? Se sustituirá el escenario activo.`)) return;
-                    store.loadScenario(def);
-                    go('calendar');
+                    confirmThen(`¿Cargar «${def.title}»? Se sustituirá el escenario activo.`, () => {
+                      store.loadScenario(def);
+                      go('calendar');
+                    }, { confirmLabel: 'Cargar' });
                   }}
                   className="mt-3 rounded-lg border border-cyan-600 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:border-white/15 disabled:bg-transparent disabled:text-slate-500"
                 >
@@ -82,7 +84,7 @@ export function ScenariosScreen() {
               <div className="font-medium text-slate-100">{s.name}</div>
               <div className="text-xs text-slate-500">{s.scenarioTitle} · reloj en {formatDateTime(s.simNow, 'UTC')} UTC</div>
               <div className="mt-2 flex gap-2">
-                <button type="button" className="rounded border border-white/15 px-2 py-1 text-xs hover:border-cyan-700" onClick={() => { if (window.confirm('¿Cargar este guardado? Se sustituirá el escenario activo.')) { store.loadSlot(s.id); go('calendar'); } }}>Cargar</button>
+                <button type="button" className="rounded border border-white/15 px-2 py-1 text-xs hover:border-cyan-700" onClick={() => confirmThen('¿Cargar este guardado? Se sustituirá el escenario activo.', () => { store.loadSlot(s.id); go('calendar'); }, { confirmLabel: 'Cargar' })}>Cargar</button>
                 <button type="button" className="rounded border border-rose-700/60 px-2 py-1 text-xs text-rose-200 hover:bg-rose-600/10" onClick={() => { store.deleteSlot(s.id); refresh(); }}>Borrar</button>
               </div>
             </li>

@@ -131,10 +131,10 @@ try {
   assert((await page.getByTestId('day-detail').count()) === 1, 'el calendario muestra el detalle del día');
 
   // Biblioteca de escenarios: cargar la referencia 56 + 34 h
-  page.on('dialog', (d) => d.accept());
   await goTo('Academia', 'Escenarios');
   assert(await page.getByTestId('load-week2-34').isDisabled(), 'los escenarios premium están bloqueados en el plan gratuito');
   await page.getByTestId('load-ref-5634').click();
+  await page.getByTestId('confirm-ok').click();
   await page.getByTestId('history-days').waitFor();
   await page.screenshot({ path: 'e2e/screenshots/04-calendar.png', fullPage: true });
   await goTo('Mis semanas', 'Informe');
@@ -156,6 +156,7 @@ try {
   await goTo('Academia', 'Ejercicios');
   await page.getByTestId('exercise-list').getByText('Conocer los botones').click();
   await page.getByTestId('start-buttons').click();
+  await page.getByTestId('confirm-ok').click();
   await page.getByTestId('exercise-panel').waitFor();
   const press = (label, n = 1) => Array.from({ length: n }).reduce((p) => p.then(() => page.getByRole('button', { name: label, exact: true }).click()), Promise.resolve());
   await press('Abajo', 2);

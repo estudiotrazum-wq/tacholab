@@ -4,6 +4,7 @@ import type { SimConfig } from '@/simulator/state';
 import { useUiStore } from '../uiStore';
 import { Panel } from '../components/Panel';
 import { useCabinStore, type Quality } from '../cabin/cabinStore';
+import { confirmThen } from '../confirm';
 
 export function SettingsScreen() {
   const ui = useUiStore();
@@ -77,11 +78,11 @@ export function SettingsScreen() {
         <button
           type="button"
           onClick={() => {
-            if (window.confirm('¿Borrar todos los datos guardados de TachoLab en este navegador?')) {
+            confirmThen('¿Borrar todos los datos guardados de TachoLab en este navegador?', () => {
               wipe();
               useAcademyStore.setState({ progress: {}, session: null });
               ui.update({ disclaimerAccepted: false });
-            }
+            }, { confirmLabel: 'Borrar', danger: true });
           }}
           className="mt-3 rounded-lg border border-rose-600/60 bg-rose-600/10 px-3 py-2 text-sm text-rose-200 hover:bg-rose-600/20"
         >
