@@ -157,7 +157,7 @@ export function GuideScreen() {
               ['↑ ↓', 'Moverse / cambiar valor'],
               ['Enter · Esc', 'OK · retroceder'],
               ['A · E', 'Tecla de actividad · sacar tarjeta'],
-              ['I', 'Meter la tarjeta de Alex'],
+              ['I', 'Meter tu tarjeta (la primera)'],
               ['K · M', 'Girar la llave · marcha / parada'],
               ['Espacio', 'Reproducir / pausa'],
             ]}

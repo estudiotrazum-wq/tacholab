@@ -213,7 +213,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
             ? 'Ranura 2 (segundo conductor)'
             : card
               ? `Ranura 1: tarjeta de ${card.holderName} insertada`
-              : 'Ranura 1: arrastra aquí una tarjeta o pulsa para insertar la de Alex Prácticas'
+              : `Ranura 1: arrastra aquí una tarjeta o pulsa para insertar la de ${sim.cards['card-a']?.holderName ?? 'conductor'}`
         }
         onClick={() => {
           if (slot === 2) return unavailable();

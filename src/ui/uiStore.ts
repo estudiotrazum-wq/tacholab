@@ -26,9 +26,11 @@ interface Settings {
   devPremiumPreview: boolean;
   /** El tutorial de inicio se ha completado o descartado (ya no se ofrece en el panel). */
   tutorialDone: boolean;
+  /** Nombre que el alumno pone en su tarjeta ficticia ('' = nombre de ejemplo). Solo se guarda en este navegador. */
+  driverName: string;
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '' };
 
 function loadSettings(): Settings {
   try {
@@ -58,9 +60,9 @@ export const useUiStore = create<UiStore>((set, get) => ({
   },
   update: (patch) => {
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName }));
     } catch {
       /* sin almacenamiento */
     }

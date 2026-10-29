@@ -20,6 +20,8 @@ import { GuideScreen } from './screens/GuideScreen';
 import { TutorialCoach } from './components/TutorialCoach';
 import { useTutorialStore } from '@/tutorial/store';
 import { startTutorial } from './tutorial';
+import { syncDriverName } from './driverName';
+import { DriverNameField } from './components/DriverNameField';
 
 
 export function App() {
@@ -34,6 +36,7 @@ export function App() {
       }
     });
   }, []);
+  useEffect(() => syncDriverName(), []);
   const { view, go, disclaimerAccepted, update, lastViews, learningMode } = useUiStore();
   const section = sectionOf(view);
 
@@ -88,7 +91,7 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.12 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.13 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 
@@ -132,7 +135,11 @@ export function App() {
             <p className="mt-5 text-xs leading-relaxed text-slate-400">
               Es un <strong className="text-slate-200">simulador educativo independiente</strong>: no está homologado, no reproduce ningún tacógrafo comercial y no sustituye la formación oficial ni los equipos reales. Los cálculos normativos son orientativos. Solo se usan tarjetas ficticias y los datos se guardan en tu navegador.
             </p>
-            <div className="mt-6 grid gap-2 sm:grid-cols-[1fr_auto]">
+            <div className="mt-5 rounded-2xl bg-white/5 p-4">
+              <p className="mb-2 text-sm font-medium text-white">¿Cómo te llamas? <span className="font-normal text-slate-400">(opcional)</span></p>
+              <DriverNameField compact />
+            </div>
+            <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto]">
               <button
                 type="button"
                 autoFocus

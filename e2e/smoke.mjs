@@ -250,8 +250,18 @@ try {
   const tut = page.getByTestId('tutorial');
   const title = () => tut.getByRole('heading').innerText();
   const ok = () => page.getByRole('button', { name: 'Confirmar / menú' }).click();
-  const expectStep = async (t) => assert((await title()) === t, `tutorial: «${t}»`);
-  await expectStep('Tu primer turno con el tacógrafo');
+  const box = async (loc) => loc.boundingBox();
+  const clash = (a, b) => a && b && a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const expectStep = async (t) => {
+    assert((await title()) === t, `tutorial: «${t}»`);
+    await page.waitForTimeout(450); // la tarjeta se recoloca tras el desplazamiento
+    const card = await box(tut);
+    assert(!clash(card, await box(page.getByTestId('tacho-display'))) && !clash(card, await box(page.locator('[data-tour="keys"]'))),
+      `tutorial: «${t}» no tapa la pantalla ni las teclas del tacógrafo`);
+  };
+  assert((await title()) === 'Tu primer turno con el tacógrafo', 'tutorial: introducción');
+  await tut.getByTestId('driver-name').fill('María José');
+  await tut.getByTestId('driver-name-save').click();
   await page.getByTestId('tutorial-next').click();
   await expectStep('El tacógrafo');
   assert(await page.getByTestId('tutorial-spotlight').isVisible(), 'tutorial: resalta la pieza del paso');
@@ -260,6 +270,7 @@ try {
   await expectStep('Mete la tarjeta de conductor');
   await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
   await expectStep('Bienvenida');
+  assert((await line(1)).includes('María José'), 'el tacógrafo da la bienvenida con el nombre del alumno');
   await ok();
   await expectStep('Última retirada');
   await ok();
@@ -289,6 +300,11 @@ try {
   await expectStep('¡Turno completado!');
   await page.getByTestId('tutorial-finish').click();
   assert((await page.getByTestId('tutorial').count()) === 0 && (await page.getByTestId('tutorial-invite').count()) === 0, 'tutorial terminado: ya no se ofrece');
+  assert((await page.getByTestId('card-card-a').innerText()).includes('María José'), 'la tarjeta de la bandeja lleva el nombre del alumno');
+  await page.getByRole('button', { name: 'Ajustes' }).first().click();
+  await page.getByTestId('driver-name-clear').click();
+  await goTo('Simulador', 'Panel');
+  assert((await page.getByTestId('card-card-a').innerText()).includes('Alex Prácticas'), 'se puede borrar el nombre y volver al de ejemplo');
 
   assert(errors.length === 0, `sin errores de ejecución en consola${errors.length ? ': ' + errors.join(' | ') : ''}`);
   console.log('\nE2E OK');

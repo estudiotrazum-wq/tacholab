@@ -41,7 +41,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: 'insert',
     title: 'Mete la tarjeta de conductor',
-    text: 'Arrastra la tarjeta ficticia de Alex hasta la ranura 1, o pulsa directamente la ranura.',
+    text: 'Arrastra tu tarjeta ficticia (la primera de la bandeja) hasta la ranura 1, o pulsa directamente la ranura.',
     hint: 'Ranura 1: el hueco oscuro de abajo a la izquierda del tacógrafo.',
     target: 'card-slot',
     assist: 'CARD_SLOT',

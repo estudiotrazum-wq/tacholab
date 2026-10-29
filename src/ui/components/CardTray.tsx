@@ -1,6 +1,10 @@
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
+import { useState } from 'react';
+import { PERSONAL_CARD_ID } from '@/scenarios/cards';
 import { CARD_DRAG_TYPE } from './Tachograph';
+import { DriverNameField } from './DriverNameField';
+import { useUiStore } from '../uiStore';
 
 const CARD_STYLES = ['from-sky-500 via-cyan-500 to-teal-400', 'from-violet-500 via-fuchsia-500 to-pink-400'];
 
@@ -13,6 +17,8 @@ export function CardTray({ highlight, horizontal = false }: { highlight: AssistT
   const dispatch = useSimStore((s) => s.dispatch);
   const inserted = sim.device.insertedCardId;
   const cards = Object.values(sim.cards);
+  const named = useUiStore((s) => s.driverName !== '');
+  const [editing, setEditing] = useState(false);
 
   return (
     <section aria-label="Tarjetas de conductor ficticias" className="glass rounded-2xl p-4">
@@ -66,6 +72,17 @@ export function CardTray({ highlight, horizontal = false }: { highlight: AssistT
                   </span>
                 </span>
               </button>
+              )}
+              {c.id === PERSONAL_CARD_ID && !editing && (
+                <button type="button" onClick={() => setEditing(true)} className="mt-1.5 text-[11px] text-cyan-300 hover:text-cyan-200" data-testid="edit-name">
+                  ✎ {named ? 'Cambiar mi nombre' : 'Poner mi nombre en esta tarjeta'}
+                </button>
+              )}
+              {c.id === PERSONAL_CARD_ID && editing && (
+                <div className="mt-2">
+                  <DriverNameField compact autoFocus onSaved={() => setEditing(false)} />
+                  <button type="button" onClick={() => setEditing(false)} className="mt-1 text-[11px] text-slate-400 hover:text-white">Cancelar</button>
+                </div>
               )}
             </li>
           );

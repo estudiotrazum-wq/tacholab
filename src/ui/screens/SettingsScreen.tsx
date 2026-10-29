@@ -5,6 +5,8 @@ import { useUiStore } from '../uiStore';
 import { Panel } from '../components/Panel';
 import { useCabinStore, type Quality } from '../cabin/cabinStore';
 import { confirmThen } from '../confirm';
+import { DriverNameField } from '../components/DriverNameField';
+import { clearDriverName } from '../driverName';
 
 export function SettingsScreen() {
   const ui = useUiStore();
@@ -15,6 +17,16 @@ export function SettingsScreen() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
+      <Panel title="Tu tarjeta">
+        <p className="mb-3 text-sm text-slate-300">Pon tu nombre en la tarjeta de conductor ficticia: aparecerá en la bandeja, en la bienvenida del tacógrafo y en los tickets.</p>
+        <DriverNameField />
+        {ui.driverName && (
+          <button type="button" onClick={clearDriverName} className="mt-2 text-xs text-slate-400 underline hover:text-white" data-testid="driver-name-clear">
+            Borrar mi nombre y usar el de ejemplo
+          </button>
+        )}
+      </Panel>
+
       <Panel title="Aprendizaje">
         <fieldset className="space-y-2 text-sm">
           <legend className="sr-only">Modo de aprendizaje</legend>
@@ -73,7 +85,7 @@ export function SettingsScreen() {
 
       <Panel title="Datos y privacidad">
         <p className="text-sm text-slate-300">
-          Todo se guarda solo en este navegador. No se solicitan datos reales de tarjetas, tacógrafos, matrículas ni documentación profesional; las tarjetas son ficticias.
+          Todo se guarda solo en este navegador. No se solicitan datos reales de tarjetas, tacógrafos, matrículas ni documentación profesional; las tarjetas son ficticias. El único dato personal es el nombre que tú quieras poner en tu tarjeta.
         </p>
         <button
           type="button"
@@ -81,7 +93,7 @@ export function SettingsScreen() {
             confirmThen('¿Borrar todos los datos guardados de TachoLab en este navegador?', () => {
               wipe();
               useAcademyStore.setState({ progress: {}, session: null });
-              ui.update({ disclaimerAccepted: false });
+              ui.update({ disclaimerAccepted: false, driverName: '', tutorialDone: false });
             }, { confirmLabel: 'Borrar', danger: true });
           }}
           className="mt-3 rounded-lg border border-rose-600/60 bg-rose-600/10 px-3 py-2 text-sm text-rose-200 hover:bg-rose-600/20"

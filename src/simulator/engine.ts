@@ -13,6 +13,7 @@ import {
 } from '@/tachograph/types';
 import { cycleManualActivity, HOUR_STEP, MIN_MANUAL_GAP, MINUTE_STEP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
 import { printoutLines } from '@/tachograph/display';
+import { normalizeHolderName } from '@/scenarios/cards';
 import { nextStop, warningTriggers } from './warnings';
 import type { LogKind, SimConfig, SimState } from './state';
 
@@ -29,6 +30,8 @@ export type SimAction =
   | { type: 'SET_VEHICLE_SPEED'; kmh: number }
   /** Llave de contacto: 0 (apagado), I (contacto) o arranque (motor en marcha). */
   | { type: 'SET_IGNITION'; position: 'off' | 'on' | 'start' }
+  /** Nombre del titular de una tarjeta ficticia (el alumno puede poner el suyo). */
+  | { type: 'RENAME_CARD'; cardId: string; name: string }
   /** Impresión diaria (24 h) de la tarjeta insertada. */
   | { type: 'PRINT_DAILY' }
   | { type: 'DISMISS_NOTICE' }
@@ -433,6 +436,12 @@ export function simReducer(sim: SimState, action: SimAction): SimState {
       return checkWarnings(setMoving(sim, action.moving));
     case 'PRINT_DAILY':
       return printDaily(sim);
+    case 'RENAME_CARD': {
+      const card = sim.cards[action.cardId];
+      const name = normalizeHolderName(action.name);
+      if (!card || !name || name === card.holderName) return sim;
+      return { ...sim, cards: { ...sim.cards, [card.id]: { ...card, holderName: name } } };
+    }
     case 'SET_IGNITION':
       return checkWarnings(setIgnition(sim, action.position));
     case 'SET_VEHICLE_SPEED': {

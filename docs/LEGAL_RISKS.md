@@ -14,7 +14,7 @@
    motor normativo y fecha de la versión normativa aplicada.
 5. **Formación profesional reglada (CAP)** — No presentar el producto como formación acreditada salvo acuerdo con un
    centro autorizado.
-6. **Protección de datos (RGPD/LOPDGDD)** — Fase 1 sin cuentas ni datos personales (todo local). Con cuentas (Fase 6):
+6. **Protección de datos (RGPD/LOPDGDD)** — Fase 1 sin cuentas (todo local). Único dato personal opcional: el nombre que el alumno pone en su tarjeta ficticia; se guarda solo en el navegador, no se envía a ningún servidor y se borra desde Ajustes. Si en la Fase 6 se sincroniza con una cuenta, deberá figurar en la política de privacidad. Con cuentas (Fase 6):
    política de privacidad, base jurídica, encargados (Supabase, Stripe), transferencias internacionales, derecho de
    supresión (ya existe borrado local) y analítica sin cookies o con consentimiento.
 7. **Consumidores y comercio electrónico** — Condiciones de venta, derecho de desistimiento en contenido digital,

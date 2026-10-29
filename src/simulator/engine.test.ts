@@ -314,3 +314,22 @@ describe('simulador: llave de contacto', () => {
     ]);
   });
 });
+
+describe('simulador: nombre del titular', () => {
+  it('el alumno pone su nombre en la tarjeta y aparece en la bienvenida', () => {
+    let s = run(createInitialSim(), { type: 'RENAME_CARD', cardId: 'card-a', name: '  María   José Núñez ' });
+    expect(s.cards['card-a']!.holderName).toBe('María José Núñez');
+    expect(s.cards['card-a']!.displayId).toBe('SIM-ES-0000-A1');
+    s = run(s, { type: 'INSERT_CARD', cardId: 'card-a' });
+    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('María José Núñez');
+  });
+
+  it('rechaza nombres vacíos, demasiado largos o con símbolos', () => {
+    const base = createInitialSim();
+    for (const name of ['', '   ', 'A'.repeat(19), 'Ana<script>', '1234', 'Pepe@x']) {
+      expect(run(base, { type: 'RENAME_CARD', cardId: 'card-a', name })).toBe(base);
+    }
+    expect(run(base, { type: 'RENAME_CARD', cardId: 'no-existe', name: 'Ana' })).toBe(base);
+    expect(run(base, { type: 'RENAME_CARD', cardId: 'card-a', name: "D'Angelo Ruiz-Gil" }).cards['card-a']!.holderName).toBe("D'Angelo Ruiz-Gil");
+  });
+});

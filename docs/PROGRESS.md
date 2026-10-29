@@ -2,6 +2,18 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.13 — Tutorial menos invasivo y nombre propio en la tarjeta (rama `ui-rediseno`)
+- [x] La tarjeta del tutorial busca un hueco que **no tape la pieza señalada ni el tacógrafo** (debajo, encima, a los
+      lados o en una esquina); si no cabe (p. ej. en móvil), se **minimiza** a una barra con el título del paso, que se
+      puede desplegar. Botón «Minimizar» en cualquier paso y oscurecido más suave
+- [x] **Tu nombre en la tarjeta ficticia**: en la bienvenida, en el primer paso del tutorial, en la bandeja («Poner mi
+      nombre en esta tarjeta») y en Ajustes («Tu tarjeta»). Aparece en la bandeja, la bienvenida del tacógrafo y los
+      tickets; se mantiene al reiniciar o cargar escenarios. Se guarda solo en el navegador y se puede borrar
+- [x] Acción `RENAME_CARD` con validación (1–18 letras, espacios, guion, apóstrofo); el identificador sigue siendo
+      ficticio (`SIM-…`)
+- [x] 118 pruebas unitarias (colocación de la tarjeta, nombres) + E2E que comprueba en cada paso que el tutorial no
+      tapa la pantalla ni las teclas
+
 ## v0.12 — Tutorial de inicio y guía (rama `ui-rediseno`)
 - [x] **Tutorial interactivo** de 16 pasos sobre el simulador real: oscurece la pantalla salvo la pieza del paso,
       explica qué hacer y avanza solo cuando el alumno lo hace (tarjeta, bienvenida, última retirada, país, llave I y
