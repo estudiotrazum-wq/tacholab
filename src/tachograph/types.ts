@@ -50,6 +50,8 @@ export type Screen =
   /** start: país de inicio · end: país de fin al retirar · prev-end: país de fin de la jornada anterior (entrada manual). */
   | { kind: 'COUNTRY'; purpose: 'start' | 'end'; index: number }
   | { kind: 'COUNTRY'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
+  /** Al retirar la tarjeta: ¿imprimir el resumen de 24 h antes de expulsarla? */
+  | { kind: 'WITHDRAW_PRINT'; yes: boolean }
   | { kind: 'MENU'; index: number }
   | { kind: 'TIMES' }
   | { kind: 'DAY_ACTIVITIES'; offset: number }
@@ -101,6 +103,13 @@ export interface DeviceState {
   warning: DeviceWarning | null;
   /** Avisos ya emitidos (clave = aviso + periodo al que se refiere). */
   warnFlags: Record<string, true>;
+  /** Último ticket impreso (la interfaz lo muestra saliendo de la impresora). */
+  printout?: Printout | null;
+}
+
+export interface Printout {
+  seq: number;
+  lines: string[];
 }
 
 export function initialDevice(): DeviceState {

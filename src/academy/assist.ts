@@ -35,6 +35,8 @@ export function assistHint(sim: SimState): AssistHint {
         : d.screen.purpose === 'start'
           ? { text: 'Indica el país donde empiezas hoy (▲▼) y pulsa OK.', target: 'UP_DOWN' }
           : { text: 'Indica el país donde terminas la jornada (▲▼) y pulsa OK para sacar la tarjeta.', target: 'UP_DOWN' };
+    case 'WITHDRAW_PRINT':
+      return { text: 'Elige con ▲▼ si quieres el ticket de las últimas 24 h y pulsa OK: la tarjeta saldrá de la ranura.', target: 'OK' };
     case 'MENU':
       return { text: 'Navega con ▲▼, abre con ✓ y vuelve con ✕.', target: 'UP_DOWN' };
     default:

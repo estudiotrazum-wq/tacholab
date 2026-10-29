@@ -84,7 +84,7 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
       select('WORK'), adv(15),
       move(true), adv(240), move(false), select('REST'), adv(45),
       move(true), adv(180), move(false), select('REST'),
-      ...P('EJECT', 'OK'),
+      ...P('EJECT', 'OK', 'OK'),
     ]);
     expect(result).toMatchObject({ passed: true, score: 100, stars: 3 });
   });
@@ -94,7 +94,7 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
       select('WORK'), adv(15),
       move(true), adv(300), move(false), ...P('OK'), select('REST'), adv(45),
       move(true), adv(60), move(false), ...P('OK'), select('REST'),
-      ...P('EJECT', 'OK'),
+      ...P('EJECT', 'OK', 'OK'),
     ]);
     expect(result.errors[0]).toMatchObject({ ruleId: 'R561-ART7-CONT', penalty: 40 });
     expect(result.passed).toBe(false);

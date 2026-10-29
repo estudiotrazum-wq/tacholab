@@ -2,6 +2,16 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.11 — Extracción de tarjeta como en los equipos reales (rama `ui-rediseno`)
+- [x] **Botón ⏏ de expulsión** junto a cada ranura (con piloto de tarjeta insertada) y **pulsación larga de la tecla 1**
+      con barra de progreso, como alternativa habitual en los tacógrafos digitales
+- [x] Retirada completa: **país de fin** → **¿Imprimir 24 h?** (SÍ/NO) → la tarjeta **asoma por la ranura** y vuelve a
+      la bandeja. ✕ en «¿Imprimir?» vuelve al país; ✕ en el país cancela la retirada. Con el vehículo en marcha no se
+      puede retirar
+- [x] La impresión pasa al motor (`PRINT_DAILY`, `device.printout`, registro `PRINTOUT`): el ticket es el mismo desde
+      la impresora o al retirar la tarjeta
+- [x] 109 pruebas unitarias + E2E con pulsación larga, cancelación, botón ⏏, impresión y expulsión
+
 ## v0.10 — Procedimiento de inserción real y llave de contacto (rama `ui-rediseno`)
 - [x] Secuencia de inserción como en los tacógrafos digitales europeos: **bienvenida** (titular y hora local) →
       **última retirada** de la tarjeta (fecha y hora UTC) → **¿entrada manual?** → entradas manuales campo a campo

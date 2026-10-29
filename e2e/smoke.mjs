@@ -151,6 +151,29 @@ try {
   await goTo('Simulador', 'Panel');
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
 
+  // Retirada de la tarjeta como en un tacógrafo real
+  // a) Mantener pulsada la tecla 1 inicia la retirada; ✕ la cancela
+  const key1 = await page.getByRole('button', { name: 'Botón de actividad' }).boundingBox();
+  await page.mouse.move(key1.x + key1.width / 2, key1.y + key1.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(1500);
+  await page.mouse.up();
+  assert((await line(0)).includes('País de fin'), 'mantener pulsada la tecla 1 pide el país de fin');
+  await page.getByRole('button', { name: 'Retroceder' }).click();
+  assert((await page.getByTestId('card-slot').getAttribute('aria-label')).includes('insertada'), '✕ cancela la retirada');
+  // b) Botón ⏏ de la ranura → país de fin → ¿imprimir 24 h? SÍ → ticket y tarjeta fuera
+  await page.getByTestId('eject-1').click();
+  assert((await line(0)).includes('País de fin'), 'el botón ⏏ pide el país de fin');
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert((await line(0)).includes('¿Imprimir 24 h?'), 'pregunta si imprimir antes de expulsar');
+  await page.getByRole('button', { name: 'Arriba' }).click();
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert(await page.getByTestId('card-ejected').isVisible(), 'la tarjeta asoma por la ranura al expulsarse');
+  assert((await page.getByTestId('ticket').innerText()).includes('IMPRESIÓN DIARIA'), 'sale el ticket de 24 h al retirar la tarjeta');
+  await page.screenshot({ path: 'e2e/screenshots/09-card-eject.png' });
+  await page.getByRole('button', { name: '✂ Cortar ticket' }).click();
+  assert((await page.getByTestId('card-slot').getAttribute('aria-label')).includes('arrastra aquí'), 'la ranura queda vacía');
+
   await goTo('Mis semanas', 'Informe');
   assert((await page.getByTestId('findings').innerText()).includes('4 h 30 min'), 'el informe muestra la infracción de conducción continua con su norma');
   await page.screenshot({ path: 'e2e/screenshots/06-report.png', fullPage: true });

@@ -1,17 +1,17 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ACTIVITY_LABEL } from '@/shared/types';
-import { lcdPlain, renderDisplay, ticketLines } from '@/tachograph/display';
+import { lcdPlain, renderDisplay } from '@/tachograph/display';
 import type { Button } from '@/tachograph/types';
 import type { AssistTarget } from '@/academy/assist';
-import { deriveSummary } from '@/simulator/derived';
 import { useSimStore } from '@/simulator/store';
-import { formatDateTime } from '@/time-engine/zoned';
 import { LcdLine } from './Lcd';
 
 export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
 
 /** Tiempo que hay que mantener pulsada la tecla 1 para expulsar la tarjeta. */
-const LONG_PRESS_MS = 900;
+const LONG_PRESS_MS = 1200;
+/** Tiempo que la tarjeta expulsada asoma por la ranura antes de volver a la bandeja. */
+const EJECT_SHOW_MS = 1800;
 
 /**
  * Tacógrafo ficticio «TL-1 EDU» en formato DIN, con los elementos comunes a
@@ -26,17 +26,18 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   const press = (button: Button) => dispatch({ type: 'PRESS', button });
   const hl = (t: AssistTarget) => (highlight === t ? 'assist-target' : '');
   const [hint, setHint] = useState<string | null>(null);
-  const [ticket, setTicket] = useState<string[] | null>(null);
+  const printout = sim.device.printout ?? null;
+  // El ticket que ya existía al abrir la pantalla no vuelve a salir.
+  const [cutSeq, setCutSeq] = useState(() => printout?.seq ?? 0);
+  const ticket = printout && printout.seq > cutSeq ? printout.lines : null;
   const flash = (m: string) => {
     setHint(m);
     window.setTimeout(() => setHint(null), 3000);
   };
 
   const print = () => {
-    const sum = deriveSummary(sim);
-    if (!sum.driverId) return flash('Para imprimir, inserta una tarjeta.');
-    const tz = sim.scenario.timeZone;
-    setTicket([`TL-1 EDU · ${formatDateTime(sim.clock.now, tz)} UTC`, 'IMPRESIÓN DIARIA (24 h)', '────────────────────', ...ticketLines(sim, sum)]);
+    if (!sim.device.insertedCardId) return flash('Para imprimir, inserta una tarjeta.');
+    dispatch({ type: 'PRINT_DAILY' });
   };
 
   return (
@@ -45,7 +46,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
       {ticket && (
         <div className="absolute right-[4%] top-[34%] z-30 w-60 animate-[ticket_700ms_ease-out] rounded-b-sm border-t-4 border-dashed border-slate-400 bg-[#f7f5ee] px-3 pb-2 pt-3 font-mono text-[10px] leading-4 text-slate-800 shadow-2xl" data-testid="ticket">
           {ticket.map((l, i) => <div key={i} className="truncate">{l}</div>)}
-          <button type="button" onClick={() => setTicket(null)} className="mt-2 w-full rounded border border-slate-400 py-1 text-[11px] text-slate-700 hover:bg-slate-200">✂ Cortar ticket</button>
+          <button type="button" onClick={() => setCutSeq(printout?.seq ?? 0)} className="mt-2 w-full rounded border border-slate-400 py-1 text-[11px] text-slate-700 hover:bg-slate-200">✂ Cortar ticket</button>
         </div>
       )}
 
@@ -122,47 +123,85 @@ function Key({ label, onClick, children, className = '', shortcut }: { label: st
 }
 
 /**
- * Ranura con su tecla. Ranura 1: conductor (tecla 1 = actividad; mantener = expulsar).
+ * Ranura con su tecla y su botón de expulsión, como en los tacógrafos reales:
+ * - Tecla 1: pulsación corta = cambiar actividad; mantener pulsada = expulsar la tarjeta (la barra muestra el progreso).
+ * - Botón ⏏ junto a la ranura: inicia directamente la retirada (país de fin → ¿imprimir? → expulsión).
  * Ranura 2: segundo conductor, para la conducción en equipo (módulo aún no disponible).
  */
 function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistTarget; onHint: (m: string) => void }) {
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
   const [over, setOver] = useState(false);
+  const [holding, setHolding] = useState(false);
   const timer = useRef<number | null>(null);
   const longDone = useRef(false);
   const card = slot === 1 && sim.device.insertedCardId ? sim.cards[sim.device.insertedCardId] : null;
   const unavailable = () => onHint('Ranura 2: segundo conductor (conducción en equipo). Disponible en una próxima versión.');
 
+  // Al expulsarla, la tarjeta asoma un momento por la ranura antes de volver a la bandeja.
+  const prevCard = useRef(card);
+  const [ejected, setEjected] = useState<typeof card>(null);
+  useEffect(() => {
+    if (prevCard.current && !card) setEjected(prevCard.current);
+    if (card) setEjected(null);
+    prevCard.current = card;
+  }, [card]);
+  useEffect(() => {
+    if (!ejected) return;
+    const t = window.setTimeout(() => setEjected(null), EJECT_SHOW_MS);
+    return () => window.clearTimeout(t);
+  }, [ejected]);
+
+  const eject = () => {
+    if (slot === 2) return unavailable();
+    if (!card) return onHint('La ranura 1 está vacía: no hay tarjeta que sacar.');
+    dispatch({ type: 'PRESS', button: 'EJECT' });
+  };
   const startPress = () => {
     longDone.current = false;
+    if (!card) return;
+    setHolding(true);
     timer.current = window.setTimeout(() => {
       longDone.current = true;
+      setHolding(false);
       dispatch({ type: 'PRESS', button: 'EJECT' });
     }, LONG_PRESS_MS);
   };
   const endPress = () => {
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = null;
+    setHolding(false);
   };
+  // Retirada en curso: la tarjeta parpadea en la ranura hasta que sale.
+  const screen = sim.device.screen;
+  const withdrawing = card !== null && (screen.kind === 'WITHDRAW_PRINT' || (screen.kind === 'COUNTRY' && screen.purpose === 'end'));
 
   return (
     <div className="flex items-center gap-2">
       <button
         type="button"
         aria-label={slot === 1 ? 'Botón de actividad' : 'Tecla 2 (segundo conductor)'}
-        title={slot === 1 ? 'Tecla 1: cambia la actividad (A). Mantén pulsado para sacar la tarjeta (E).' : 'Tecla 2: segundo conductor'}
+        title={slot === 1 ? 'Tecla 1: pulsa para cambiar la actividad (A). Mantén pulsada para sacar la tarjeta (E).' : 'Tecla 2: segundo conductor'}
         onPointerDown={slot === 1 ? startPress : undefined}
         onPointerUp={slot === 1 ? endPress : undefined}
         onPointerLeave={slot === 1 ? endPress : undefined}
+        onPointerCancel={slot === 1 ? endPress : undefined}
+        onContextMenu={(e) => e.preventDefault()}
         onClick={() => {
           if (slot === 2) return unavailable();
           if (!longDone.current) dispatch({ type: 'PRESS', button: 'ACTIVITY' });
         }}
-        className={`flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] text-slate-100 shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] ${slot === 1 ? (highlight === 'ACTIVITY' || highlight === 'EJECT' ? 'assist-target' : '') : 'opacity-60'}`}
+        className={`relative flex h-12 w-14 shrink-0 select-none flex-col items-center justify-center overflow-hidden rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] text-slate-100 shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] ${slot === 1 ? (highlight === 'ACTIVITY' ? 'assist-target' : '') : 'opacity-60'}`}
       >
         <span className="text-base font-bold leading-none">{slot}</span>
-        <span className="mt-0.5 text-[8px] tracking-wider text-slate-400">{slot === 1 ? 'ACT · ⏏' : 'ACT · ⏏'}</span>
+        <span className="mt-0.5 text-[8px] tracking-wider text-slate-400">ACT · ⏏</span>
+        {/* Progreso de la pulsación larga */}
+        <span
+          className="absolute inset-x-0 bottom-0 h-1 origin-left bg-amber-400"
+          style={{ transform: `scaleX(${holding ? 1 : 0})`, transition: holding ? `transform ${LONG_PRESS_MS}ms linear` : 'none' }}
+          aria-hidden="true"
+          data-testid={slot === 1 ? 'hold-progress' : undefined}
+        />
       </button>
       <button
         type="button"
@@ -192,24 +231,41 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
           const id = e.dataTransfer.getData(CARD_DRAG_TYPE);
           if (id) dispatch({ type: 'INSERT_CARD', cardId: id });
         }}
-        className={`relative h-12 min-w-0 flex-1 overflow-hidden rounded-md border bg-[#0a0b0d] shadow-[inset_0_3px_6px_rgba(0,0,0,0.9)] transition ${
+        className={`relative h-12 min-w-0 flex-1 rounded-md border bg-[#0a0b0d] shadow-[inset_0_3px_6px_rgba(0,0,0,0.9)] transition ${
           over ? 'border-cyan-300 ring-2 ring-cyan-400/60' : 'border-black/70'
         } ${slot === 1 && highlight === 'CARD_SLOT' ? 'assist-target' : ''} ${card ? 'cursor-default' : 'cursor-pointer hover:border-slate-500'}`}
       >
         {/* Boca de la ranura */}
         <span className="absolute inset-x-3 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-black shadow-[0_1px_0_rgba(255,255,255,0.06)]" aria-hidden="true" />
         {card ? (
-          <span className="absolute inset-x-6 top-1/2 flex h-6 -translate-y-1/2 items-center justify-between rounded-sm bg-gradient-to-r from-sky-600 to-cyan-500 px-2 text-[10px] font-semibold text-white shadow">
+          <span className={`absolute inset-x-6 top-1/2 flex h-6 -translate-y-1/2 items-center justify-between rounded-sm bg-gradient-to-r from-sky-600 to-cyan-500 px-2 text-[10px] font-semibold text-white shadow ${withdrawing ? 'animate-pulse' : ''}`}>
             <span className="truncate">{card.holderName}</span>
             <span className="font-mono">{card.displayId.slice(-2)}</span>
           </span>
+        ) : ejected ? (
+          <span className="card-eject absolute inset-x-6 top-1/2 z-10 flex h-6 items-center justify-between rounded-sm bg-gradient-to-r from-sky-600 to-cyan-500 px-2 text-[10px] font-semibold text-white shadow-lg" data-testid="card-ejected">
+            <span className="truncate">{ejected.holderName}</span>
+          </span>
         ) : (
           <span className={`absolute bottom-1 left-0 right-0 text-center text-[9px] tracking-[0.2em] ${over ? 'text-cyan-200' : 'text-slate-500'}`}>
-            {over ? 'SUELTA LA TARJETA' : slot === 1 ? 'TARJETA 1 · CONDUCTOR' : 'TARJETA 2 · SEGUNDO CONDUCTOR'}
+            {over ? 'SUELTA LA TARJETA' : slot === 1 ? 'TARJETA 1' : 'TARJETA 2'}
           </span>
         )}
       </button>
-      <span className={`h-2 w-2 shrink-0 rounded-full ${card ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-slate-700'}`} aria-label={card ? `Actividad: ${ACTIVITY_LABEL[sim.device.selected]}` : undefined} />
+      {/* Botón de expulsión de la ranura */}
+      <button
+        type="button"
+        onClick={eject}
+        aria-label={slot === 1 ? 'Sacar tarjeta 1' : 'Sacar tarjeta 2'}
+        title={slot === 1 ? 'Sacar la tarjeta del conductor (E)' : 'Sacar la tarjeta 2'}
+        data-testid={`eject-${slot}`}
+        className={`relative flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] transition active:translate-y-[2px] ${
+          card ? 'text-amber-300' : 'text-slate-500'
+        } ${slot === 2 ? 'opacity-60' : ''} ${slot === 1 && highlight === 'EJECT' ? 'assist-target' : ''}`}
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 5 4 15h16Z" /><rect x="4" y="17" width="16" height="2.5" rx="1" /></svg>
+        <span className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${card ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-700'}`} aria-label={card ? `Actividad: ${ACTIVITY_LABEL[sim.device.selected]}` : undefined} />
+      </button>
     </div>
   );
 }

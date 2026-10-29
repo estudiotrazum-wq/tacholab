@@ -193,3 +193,13 @@ body {
 .tl-range::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(34,211,238,0.35), 0 4px 10px rgba(0,0,0,0.5); }
 .tl-range:focus-visible { outline: none; }
 .tl-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(34,211,238,0.7); }
+
+/* Tarjeta expulsada: asoma por la ranura y sale hacia arriba */
+.card-eject { animation: card-eject 1.8s ease-out forwards; }
+@keyframes card-eject {
+  0% { transform: translateY(-50%); opacity: 1; }
+  25% { transform: translateY(-110%); opacity: 1; }
+  80% { transform: translateY(-110%); opacity: 1; }
+  100% { transform: translateY(-160%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .card-eject { animation: none; transform: translateY(-50%); } }

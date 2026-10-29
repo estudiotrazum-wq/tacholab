@@ -120,6 +120,13 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
   ];
 }
 
+/** Ticket completo de la impresión diaria (cabecera + resumen), o null si no hay tarjeta. */
+export function printoutLines(sim: SimState): string[] | null {
+  const sum = deriveSummary(sim);
+  if (!sum.driverId) return null;
+  return [`TL-1 EDU · ${formatDate(sim.clock.now, sim.scenario.timeZone)} ${formatTime(sim.clock.now, sim.scenario.timeZone)} UTC`, 'IMPRESIÓN DIARIA (24 h)', '────────────────────', ...ticketLines(sim, sum)];
+}
+
 function short(ms: number, tz: string): string {
   const p = zonedParts(ms, tz);
   return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')} ${formatTime(ms, tz)}`;
@@ -192,6 +199,8 @@ export function renderDisplay(sim: SimState): DisplayModel {
     }
     case 'MANUAL_ASK':
       return view('¿Entrada manual?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
+    case 'WITHDRAW_PRINT':
+      return view('¿Imprimir 24 h?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
     case 'MANUAL_EDIT': {
       // Línea 1: inicio del tramo. Línea 2: actividad y fin; el campo en edición va entre corchetes.
       const a = MANUAL_TOKEN[s.draft.activity];

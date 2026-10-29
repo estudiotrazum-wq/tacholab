@@ -95,12 +95,47 @@ describe('simulador: tarjeta y actividades', () => {
     let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT'));
     expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'end' });
     s = run(s, ...press('OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'WITHDRAW_PRINT', yes: false });
+    expect(lcdPlain(renderDisplay(s).lines[0])).toContain('¿Imprimir 24 h?');
+    s = run(s, ...press('OK'));
     expect(s.device.insertedCardId).toBeNull();
+    expect(s.device.printout ?? null).toBeNull();
     expect(s.cards['card-a']!.lastWithdrawalAt).toBe(s.clock.now);
   });
 
+  it('retirada con impresión: el ticket sale antes de expulsar la tarjeta', () => {
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'UP'));
+    expect(s.device.screen).toMatchObject({ kind: 'WITHDRAW_PRINT', yes: true });
+    s = run(s, ...press('OK'));
+    expect(s.device.insertedCardId).toBeNull();
+    expect(s.device.printout?.lines).toContain('IMPRESIÓN DIARIA (24 h)');
+    expect(s.device.printout?.lines).toContain('Alex Prácticas');
+    expect(s.log.map((l) => l.kind).slice(-3)).toEqual(['COUNTRY_END', 'PRINTOUT', 'CARD_OUT']);
+  });
+
+  it('✕ en «¿Imprimir 24 h?» vuelve al país de fin; ✕ en el país cancela la retirada', () => {
+    let s = run(withCard(), ...press('EJECT', 'OK', 'BACK'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'end' });
+    s = run(s, ...press('BACK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.device.insertedCardId).toBe('card-a');
+  });
+
+  it('no se puede retirar la tarjeta con el vehículo en marcha', () => {
+    const s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 50 }, ...press('EJECT'));
+    expect(s.device.screen.kind).toBe('STANDARD');
+    expect(s.device.notice?.text).toBe('Detenga el vehículo para retirar la tarjeta');
+  });
+
+  it('impresión diaria desde la impresora', () => {
+    expect(run(createInitialSim(), { type: 'PRINT_DAILY' }).device.notice?.text).toBe('Inserte una tarjeta para imprimir');
+    const s = run(withCard(), { type: 'PRINT_DAILY' }, { type: 'PRINT_DAILY' });
+    expect(s.device.printout?.seq).toBe(2);
+    expect(s.device.insertedCardId).toBe('card-a');
+  });
+
   it('entrada manual del periodo sin tarjeta', () => {
-    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK'));
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'OK'));
     const withdrawnAt = s.clock.now;
     s = run(s, { type: 'ADVANCE_BY', ms: 10 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK'));
     expect(s.device.screen.kind).toBe('LAST_WITHDRAWAL');
@@ -120,7 +155,7 @@ describe('simulador: tarjeta y actividades', () => {
   });
 
   it('entrada manual con dos segmentos (trabajo 1 h + descanso)', () => {
-    let s = run(withCard(), ...press('EJECT', 'OK'));
+    let s = run(withCard(), ...press('EJECT', 'OK', 'OK'));
     const w = s.clock.now;
     s = run(s, { type: 'ADVANCE_BY', ms: 3 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK'));
     // actividad: DOWN → otros trabajos; OK → hora: DOWN ×2 = −2 h (1 h tras la retirada); OK → minutos; OK

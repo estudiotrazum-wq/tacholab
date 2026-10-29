@@ -21,6 +21,7 @@ export type LogKind =
   | 'VEHICLE_START'
   | 'VEHICLE_STOP'
   | 'IGNITION'
+  | 'PRINTOUT'
   | 'ACTIVITY_SELECTED';
 
 export interface LogEntry {

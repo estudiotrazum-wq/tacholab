@@ -118,7 +118,7 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
       { text: 'Conduce y, antes de llegar a 4 h 30 min, haz una pausa de 45 min (detente y selecciona descanso).', target: 'VEHICLE', done: (c) => contPeriods(c) >= 1 && total(c.sim, 'DRIVING') >= HOUR },
       { text: 'Sigue conduciendo hasta sumar entre 6 h y 9 h de conducción.', target: 'VEHICLE', done: (c) => total(c.sim, 'DRIVING') >= 6 * HOUR },
       { text: 'Detén el vehículo y selecciona descanso.', target: 'ACTIVITY', done: (c) => !c.sim.vehicle.moving && c.sim.device.selected === 'REST' },
-      { text: 'Retira la tarjeta (⏏) y confirma el país de fin.', target: 'EJECT', done: (c) => logged(c, 'CARD_OUT') },
+      { text: 'Retira la tarjeta (⏏), confirma el país de fin y elige si imprimir.', target: 'EJECT', done: (c) => logged(c, 'CARD_OUT') },
     ],
     success: [
       { text: 'Entre 6 h y 9 h de conducción', check: (c) => total(c.sim, 'DRIVING') >= 6 * HOUR && total(c.sim, 'DRIVING') <= 9 * HOUR },

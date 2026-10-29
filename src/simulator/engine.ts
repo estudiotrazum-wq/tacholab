@@ -12,6 +12,7 @@ import {
   type Screen,
 } from '@/tachograph/types';
 import { cycleManualActivity, HOUR_STEP, MIN_MANUAL_GAP, MINUTE_STEP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
+import { printoutLines } from '@/tachograph/display';
 import { nextStop, warningTriggers } from './warnings';
 import type { LogKind, SimConfig, SimState } from './state';
 
@@ -28,6 +29,8 @@ export type SimAction =
   | { type: 'SET_VEHICLE_SPEED'; kmh: number }
   /** Llave de contacto: 0 (apagado), I (contacto) o arranque (motor en marcha). */
   | { type: 'SET_IGNITION'; position: 'off' | 'on' | 'start' }
+  /** Impresión diaria (24 h) de la tarjeta insertada. */
+  | { type: 'PRINT_DAILY' }
   | { type: 'DISMISS_NOTICE' }
   | { type: 'SET_CONFIG'; patch: Partial<SimConfig> };
 
@@ -166,6 +169,13 @@ function completeWithdrawal(sim: SimState): SimState {
   return notice(syncTimeline(s), 'Tarjeta retirada');
 }
 
+function printDaily(sim: SimState): SimState {
+  const lines = printoutLines(sim);
+  if (!lines) return notice(sim, 'Inserte una tarjeta para imprimir');
+  const s: SimState = { ...sim, device: { ...sim.device, printout: { seq: (sim.device.printout?.seq ?? 0) + 1, lines } } };
+  return log(s, 'PRINTOUT', 'Impresión diaria (24 h)');
+}
+
 function afterWelcome(sim: SimState): SimState {
   const card = sim.cards[sim.device.insertedCardId ?? ''];
   const insertedAt = sim.device.insertedAt ?? sim.clock.now;
@@ -291,6 +301,11 @@ function pressButton(sim: SimState, button: Button): SimState {
       }
       return s;
     }
+    case 'WITHDRAW_PRINT':
+      if (up || down) return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: !screen.yes });
+      if (ok) return completeWithdrawal(screen.yes ? printDaily(s) : s);
+      if (back) return setScreen(s, { kind: 'COUNTRY', purpose: 'end', index: 0 });
+      return s;
     case 'MANUAL_EDIT': {
       const { to } = manualWindow(s);
       const { draft, segments } = screen;
@@ -337,7 +352,7 @@ function pressButton(sim: SimState, button: Button): SimState {
           return notice(setScreen(s, STANDARD), 'Listo para conducir');
         }
         s = log(s, 'COUNTRY_END', `País de fin: ${c.name}`);
-        return completeWithdrawal(s);
+        return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: false });
       }
       if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
       if (back && screen.purpose === 'prev-end') {
@@ -416,6 +431,8 @@ export function simReducer(sim: SimState, action: SimAction): SimState {
       return checkWarnings(insertCard(sim, action.cardId));
     case 'SET_MOVING':
       return checkWarnings(setMoving(sim, action.moving));
+    case 'PRINT_DAILY':
+      return printDaily(sim);
     case 'SET_IGNITION':
       return checkWarnings(setIgnition(sim, action.position));
     case 'SET_VEHICLE_SPEED': {
