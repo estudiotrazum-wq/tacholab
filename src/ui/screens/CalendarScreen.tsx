@@ -74,7 +74,7 @@ export function CalendarScreen() {
       <ExercisePanel compact />
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="cal-driver" className="text-sm text-slate-400">Conductor ficticio</label>
-        <select id="cal-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">
+        <select id="cal-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm">
           {Object.values(sim.cards).map((card) => <option key={card.id} value={card.id}>{card.holderName} ({card.displayId})</option>)}
         </select>
         <span className="text-xs text-slate-500">{sim.scenario.title} · todas las horas en UTC</span>
@@ -122,12 +122,12 @@ export function CalendarScreen() {
         <Panel title={`Registro de actividades (${events.length})`}>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-xs" data-testid="history-table">
-              <thead className="sticky top-0 bg-ink-900 text-slate-500">
+              <thead className="sticky top-0 bg-[#0b1220] text-slate-500">
                 <tr><th className="text-left font-normal">Actividad</th><th className="text-left font-normal">Inicio</th><th className="text-left font-normal">Fin</th><th className="text-right font-normal">Duración</th></tr>
               </thead>
               <tbody>
                 {[...events].reverse().map((e) => (
-                  <tr key={e.id} className="border-t border-ink-700/60">
+                  <tr key={e.id} className="border-t border-white/5">
                     <td className="py-1">
                       <span className="flex items-center gap-1.5" style={{ color: ACTIVITY_COLOR[e.activity] }}>
                         <ActivityIcon activity={e.activity} className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function CalendarScreen() {
         <Panel title={`Registro del equipo (${sim.log.length})`}>
           <ul className="max-h-96 space-y-1 overflow-auto text-xs">
             {[...sim.log].reverse().map((l) => (
-              <li key={l.id} className={`flex gap-2 border-t border-ink-700/60 py-1 ${l.kind === 'WARNING' ? 'text-amber-200' : 'text-slate-300'}`}>
+              <li key={l.id} className={`flex gap-2 border-t border-white/5 py-1 ${l.kind === 'WARNING' ? 'text-amber-200' : 'text-slate-300'}`}>
                 <span className="shrink-0 font-mono text-slate-500">{formatDateTime(l.at, tz)}</span>
                 <span>{l.text}</span>
               </li>
@@ -179,14 +179,14 @@ function DayRow(p: { day: Day; index: number; selected: boolean; onSelect: () =>
       onClick={p.onSelect}
       aria-pressed={p.selected}
       aria-label={`${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)}: ${formatDuration(driving)} de conducción${dayFindings.length ? `, ${dayFindings.length} infracción(es)` : ''}`}
-      className={`flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left ${p.index === 7 ? 'mt-3' : ''} ${p.selected ? 'bg-cyan-500/10 ring-1 ring-cyan-700' : 'hover:bg-ink-800'}`}
+      className={`flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left ${p.index === 7 ? 'mt-3' : ''} ${p.selected ? 'bg-cyan-500/10 ring-1 ring-cyan-700' : 'hover:bg-white/5'}`}
     >
       <div className="w-20 shrink-0 text-xs text-slate-400">
         <span className="inline-block w-7">{formatWeekday(d.start, tz)}</span>
         {formatDate(d.start, tz).slice(0, 5)}
       </div>
       <div className="relative h-7 flex-1">
-        <div className="absolute inset-x-0 top-0 h-4 overflow-hidden rounded bg-ink-800">
+        <div className="absolute inset-x-0 top-0 h-4 overflow-hidden rounded bg-white/5">
           {[6, 12, 18].map((h) => <span key={h} className="absolute inset-y-0 w-px bg-ink-600" style={{ left: `${(h / 24) * 100}%` }} />)}
           {p.events.map((e) => {
             const c = clip(e.start, eventEnd(e, now), d);
@@ -219,7 +219,7 @@ function DayDetail(p: { day: Day; events: ActivityEvent[]; tags: RestTag[]; find
   const hours = Math.round((d.end - d.start) / HOUR);
   return (
     <Panel title={`Detalle: ${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)} (UTC)`}>
-      <div className="relative h-14 rounded bg-ink-800" data-testid="day-detail">
+      <div className="relative h-14 rounded bg-white/5" data-testid="day-detail">
         {evs.map((e) => {
           const c = clip(e.start, eventEnd(e, now), d);
           return c && (
@@ -266,7 +266,7 @@ function DayDetail(p: { day: Day; events: ActivityEvent[]; tags: RestTag[]; find
 
 function Kpi({ label, value, sub, bad }: { label: string; value: string; sub: string; bad: boolean }) {
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-900/80 px-3 py-2">
+    <div className="glass rounded-2xl px-3 py-2">
       <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
       <div className={`font-mono text-lg ${bad ? 'text-rose-300' : 'text-slate-100'}`}>{value}</div>
       <div className="truncate text-[10px] text-slate-500" title={sub}>{sub}</div>

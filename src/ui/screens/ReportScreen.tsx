@@ -63,15 +63,15 @@ export function ReportScreen() {
       <ExercisePanel compact />
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="rep-driver" className="text-sm text-slate-400">Conductor ficticio</label>
-        <select id="rep-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">
+        <select id="rep-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm">
           {Object.values(sim.cards).map((c) => <option key={c.id} value={c.id}>{c.holderName}</option>)}
         </select>
         <span className="text-xs text-slate-500">
           {sim.scenario.title} · evaluado hasta {fmt(sim.clock.now)} UTC{finished ? ' · escenario terminado' : ' · escenario en curso'}
         </span>
         <span className="ml-auto flex gap-2 print:hidden">
-          <button type="button" onClick={() => window.print()} className="rounded-md border border-ink-600 px-3 py-1.5 text-xs hover:border-cyan-700">Imprimir / PDF</button>
-          <button type="button" onClick={downloadJson} data-testid="export-json" className="rounded-md border border-ink-600 px-3 py-1.5 text-xs hover:border-cyan-700">Descargar JSON</button>
+          <button type="button" onClick={() => window.print()} className="rounded-md border border-white/15 px-3 py-1.5 text-xs hover:border-cyan-700">Imprimir / PDF</button>
+          <button type="button" onClick={downloadJson} data-testid="export-json" className="rounded-md border border-white/15 px-3 py-1.5 text-xs hover:border-cyan-700">Descargar JSON</button>
         </span>
       </div>
 
@@ -79,7 +79,7 @@ export function ReportScreen() {
         <Panel title="Objetivos del escenario (comprobación automática)">
           <ul className="grid gap-2 sm:grid-cols-3" data-testid="objectives">
             {objectives.map((o) => (
-              <li key={o.text} className={`rounded-lg border px-3 py-2 text-sm ${o.status === 'done' ? 'border-emerald-600/50 text-emerald-200' : o.status === 'failed' ? 'border-rose-600/50 text-rose-200' : 'border-ink-600 text-slate-300'}`}>
+              <li key={o.text} className={`rounded-lg border px-3 py-2 text-sm ${o.status === 'done' ? 'border-emerald-600/50 text-emerald-200' : o.status === 'failed' ? 'border-rose-600/50 text-rose-200' : 'border-white/15 text-slate-300'}`}>
                 {o.status === 'done' ? '✓' : o.status === 'failed' ? '✗' : '…'} {o.text}
               </li>
             ))}
@@ -118,7 +118,7 @@ export function ReportScreen() {
         <Panel title="Obligaciones">
           <ul className="space-y-2">
             {report.obligations.map((o) => (
-              <li key={o.id} className="rounded-lg border border-ink-700 bg-ink-950/50 px-3 py-2 text-sm">
+              <li key={o.id} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <strong className="text-slate-100">{o.title}</strong>
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${OBLIGATION[o.status].cls}`}>{OBLIGATION[o.status].label}</span>
@@ -150,7 +150,7 @@ export function ReportScreen() {
                 const cl = p.closing;
                 const len = cl ? cl.block.end - cl.block.start : 0;
                 return (
-                  <tr key={p.start} className="border-t border-ink-700/60">
+                  <tr key={p.start} className="border-t border-white/5">
                     <td className="py-1 text-slate-500">{p.index + 1}</td>
                     <td className="font-mono">{fmt(p.start)}</td>
                     <td className="font-mono">{p.end ? fmt(p.end) : 'en curso'}</td>
@@ -182,7 +182,7 @@ export function ReportScreen() {
 
 function Kpi({ label, value, max, over }: { label: string; value: string; max: string; over: boolean }) {
   return (
-    <div className="rounded-xl border border-ink-700 bg-ink-900/80 p-3">
+    <div className="glass rounded-2xl p-3">
       <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
       <div className={`font-mono text-xl ${over ? 'text-rose-300' : 'text-slate-100'}`}>
         {value}{max && <span className="text-sm text-slate-500"> / {max}</span>}

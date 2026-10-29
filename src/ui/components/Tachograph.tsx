@@ -21,7 +21,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   return (
     <section
       aria-label="Tacógrafo educativo TL-1"
-      className={`relative mx-auto w-full ${compact ? 'max-w-xl' : 'max-w-3xl'} rounded-2xl border border-ink-600 bg-gradient-to-b from-[#1d2836] to-[#0e151f] p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5`}
+      className={`relative mx-auto w-full ${compact ? 'max-w-xl' : 'max-w-3xl'} rounded-2xl border border-white/15 bg-gradient-to-b from-[#1d2836] to-[#0e151f] p-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5`}
     >
       <div className="mb-3 flex items-center justify-between text-[10px] tracking-[0.25em] text-slate-500">
         <span className="font-semibold text-slate-400">TACHOLAB · TL-1 EDU</span>
@@ -122,7 +122,7 @@ function DeviceButton({
       aria-label={label}
       title={shortcut ? `${label} (${shortcut})` : label}
       onClick={onClick}
-      className={`flex h-11 items-center justify-center rounded-lg border border-ink-600 bg-gradient-to-b from-[#2a3849] to-[#18222f] text-lg text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_0_#05080d] transition active:translate-y-[2px] active:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-cyan-700 focus-visible:outline-2 focus-visible:outline-accent ${className}`}
+      className={`flex h-11 items-center justify-center rounded-lg border border-white/15 bg-gradient-to-b from-[#2a3849] to-[#18222f] text-lg text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_2px_0_#05080d] transition active:translate-y-[2px] active:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-cyan-700 focus-visible:outline-2 focus-visible:outline-accent ${className}`}
     >
       {children}
     </button>
@@ -140,7 +140,7 @@ function CardSlot({ cardId, highlight }: { cardId: string | null; highlight: boo
         data-testid="card-slot"
         aria-label={card ? `Tarjeta insertada: ${card.holderName}` : 'Insertar tarjeta ficticia de Alex Prácticas'}
         onClick={() => !card && dispatch({ type: 'INSERT_CARD', cardId: 'card-a' })}
-        className={`relative h-6 flex-1 overflow-hidden rounded-md border border-ink-600 bg-[#05090f] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] ${highlight ? 'assist-target' : ''} ${card ? 'cursor-default' : 'cursor-pointer hover:border-cyan-700'}`}
+        className={`relative h-6 flex-1 overflow-hidden rounded-md border border-white/15 bg-[#05090f] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] ${highlight ? 'assist-target' : ''} ${card ? 'cursor-default' : 'cursor-pointer hover:border-cyan-700'}`}
       >
         <span className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 bg-slate-700" />
         {card ? (

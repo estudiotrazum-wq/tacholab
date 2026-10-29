@@ -30,23 +30,30 @@ export function AcademyScreen() {
             Tienes un ejercicio en curso. <button type="button" className="underline" onClick={() => go('device')}>Continuar</button>
           </div>
         )}
-        <ol className="space-y-2" data-testid="exercise-list">
-          {EXERCISES.map((def) => {
+        <div data-testid="exercise-list" className="space-y-6">
+        {[
+          { title: 'Ejercicios iniciales', subtitle: 'Gratis · aprende lo básico paso a paso', items: EXERCISES.filter((e) => e.feature === 'academy-basic') },
+          { title: 'Ejercicios avanzados', subtitle: 'Premium · normativa en situaciones reales', items: EXERCISES.filter((e) => e.feature !== 'academy-basic' && e.status === 'available') },
+        ].map((group) => (
+        <section key={group.title}>
+          <h2 className="text-base font-semibold text-white">{group.title}</h2>
+          <p className="mb-3 text-xs text-slate-400">{group.subtitle}</p>
+        <ol className="space-y-2">
+          {group.items.map((def) => {
             const p = progress[def.id];
             const isFree = hasFeature(DEFAULT_ENTITLEMENTS, def.feature);
             const allowed = hasFeature(ent, def.feature);
             const available = def.status === 'available';
             return (
-              <li key={def.id} className="rounded-xl border border-ink-700 bg-ink-900/70">
+              <li key={def.id} className="glass rounded-2xl">
                 <button type="button" onClick={() => setOpen(open === def.id ? null : def.id)} aria-expanded={open === def.id} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                   <span className="w-6 font-mono text-slate-500">{String(def.number).padStart(2, '0')}</span>
                   <span className="flex-1 text-slate-100">{def.title}</span>
                   {p && <span className="text-amber-300" aria-label={`${p.stars} de 3 estrellas`}>{'★'.repeat(p.stars)}<span className="text-slate-700">{'★'.repeat(3 - p.stars)}</span></span>}
                   <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${isFree ? 'bg-emerald-500/15 text-emerald-300' : 'bg-violet-500/15 text-violet-300'}`}>{isFree ? 'Gratis' : 'Premium'}</span>
-                  {!available && <span className="rounded bg-slate-700/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-slate-300">Próximamente</span>}
                 </button>
                 {open === def.id && (
-                  <div className="border-t border-ink-700 px-4 py-3 text-sm">
+                  <div className="border-t border-white/10 px-4 py-3 text-sm">
                     <dl className="grid gap-2 sm:grid-cols-2">
                       <Item label="Objetivo">{def.objective}</Item>
                       {available && <Item label="Situación inicial">{def.situation}</Item>}
@@ -74,6 +81,19 @@ export function AcademyScreen() {
             );
           })}
         </ol>
+        </section>
+        ))}
+        <section>
+          <h2 className="text-base font-semibold text-white">Próximamente</h2>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {EXERCISES.filter((e) => e.status === 'planned').map((e) => (
+              <li key={e.id} className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-400" title={e.objective}>
+                {e.number}. {e.title}
+              </li>
+            ))}
+          </ul>
+        </section>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -86,7 +106,7 @@ export function AcademyScreen() {
             {BADGES.map((b) => {
               const got = earned.includes(b);
               return (
-                <li key={b.id} className={`rounded-lg border p-2 text-xs ${got ? 'border-amber-500/50 bg-amber-950/30 text-amber-100' : 'border-ink-700 text-slate-500'}`} title={b.description}>
+                <li key={b.id} className={`rounded-lg border p-2 text-xs ${got ? 'border-amber-500/50 bg-amber-950/30 text-amber-100' : 'border-white/10 text-slate-500'}`} title={b.description}>
                   <div className="font-semibold">{got ? '🏅 ' : ''}{b.title}</div>
                   <div className="mt-0.5 text-[11px] opacity-80">{b.description}</div>
                 </li>

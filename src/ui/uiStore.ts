@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { browserStorage, KEYS } from '@/persistence/storage';
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from '@/billing/plans';
+import { sectionOf } from './shell/nav';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
 export type View = 'home' | 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings';
@@ -38,6 +39,8 @@ function loadSettings(): Settings {
 
 interface UiStore extends Settings {
   view: View;
+  /** Última vista visitada de cada sección (para volver a la misma pestaña). */
+  lastViews: Partial<Record<string, View>>;
   go: (v: View) => void;
   update: (patch: Partial<Settings>) => void;
 }
@@ -45,7 +48,12 @@ interface UiStore extends Settings {
 export const useUiStore = create<UiStore>((set, get) => ({
   ...loadSettings(),
   view: 'home',
-  go: (view) => set({ view }),
+  lastViews: {},
+  go: (view) => {
+    const section = sectionOf(view);
+    set((st) => ({ view, lastViews: section ? { ...st.lastViews, [section.id]: view } : st.lastViews }));
+    if (typeof window !== 'undefined') window.scrollTo?.({ top: 0 });
+  },
   update: (patch) => {
     set(patch);
     const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview } = get();

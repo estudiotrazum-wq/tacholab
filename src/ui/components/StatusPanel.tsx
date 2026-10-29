@@ -6,13 +6,46 @@ import { CONTINUOUS_DRIVING_LIMIT, breakRemainingMs } from '@/regulations/contin
 import { ActivityIcon, ACTIVITY_COLOR } from './icons';
 import { Panel } from './Panel';
 
-export function StatusPanel() {
+export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
   const sim = useSimStore((s) => s.sim);
   const sum = deriveSummary(sim);
   const cont = sum.continuous;
   const pct = cont ? Math.min(100, (cont.drivingSinceBreakMs / CONTINUOUS_DRIVING_LIMIT) * 100) : 0;
   const over = cont ? cont.overrunMs > 0 : false;
 
+  if (bare) {
+    return (
+      <div>
+      <table className="mt-3 w-full text-xs">
+        <caption className="sr-only">Acumulados por actividad</caption>
+        <thead className="text-slate-500">
+          <tr>
+            <th className="text-left font-normal">Actividad</th>
+            <th className="text-right font-normal">Hoy</th>
+            <th className="text-right font-normal">Semana {sum.weekIndex}</th>
+            <th className="text-right font-normal">14 días</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono text-slate-200">
+          {ACTIVITIES.map((a) => (
+            <tr key={a} className="border-t border-white/5">
+              <td className="flex items-center gap-1.5 py-1 font-sans" style={{ color: ACTIVITY_COLOR[a] }}>
+                <ActivityIcon activity={a} className="h-4 w-4" />
+                <span className="text-slate-300">{ACTIVITY_LABEL[a]}</span>
+              </td>
+              <td className="text-right">{formatDuration(sum.today[a])}</td>
+              <td className="text-right">{formatDuration(sum.week[a])}</td>
+              <td className="text-right">{formatDuration(sum.twoWeeks[a])}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="mt-2 text-[11px] leading-snug text-slate-500">
+        «Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».
+      </p>
+      </div>
+    );
+  }
   return (
     <Panel title="Estado y acumulados">
       <div className="grid grid-cols-2 gap-2 text-sm">
@@ -53,7 +86,7 @@ export function StatusPanel() {
         </thead>
         <tbody className="font-mono text-slate-200">
           {ACTIVITIES.map((a) => (
-            <tr key={a} className="border-t border-ink-700/60">
+            <tr key={a} className="border-t border-white/5">
               <td className="flex items-center gap-1.5 py-1 font-sans" style={{ color: ACTIVITY_COLOR[a] }}>
                 <ActivityIcon activity={a} className="h-4 w-4" />
                 <span className="text-slate-300">{ACTIVITY_LABEL[a]}</span>
@@ -74,7 +107,7 @@ export function StatusPanel() {
 
 function Field({ label, children, testId }: { label: string; children: React.ReactNode; testId?: string }) {
   return (
-    <div className="rounded-md border border-ink-700 bg-ink-950/60 px-2 py-1.5">
+    <div className="rounded-md border border-white/10 bg-ink-950/60 px-2 py-1.5">
       <div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
       <div className="text-slate-100" data-testid={testId}>{children}</div>
     </div>

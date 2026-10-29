@@ -2,6 +2,18 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.7 — Interfaz simplificada y moderna (rama `ui-rediseno`)
+- [x] Navegación en 4 secciones: Inicio · Conducir (Cabina / Tacógrafo) · Mis semanas (Calendario / Informe) ·
+      Academia (Ejercicios / Escenarios); Premium y Ajustes como iconos; barra de pestañas inferior en móvil
+- [x] Barra de control única, al estilo de un reproductor: reloj, reproducir/pausa, velocidad, siguiente, arrancar/detener;
+      lo avanzado (+15 min, +1 h, avanzar hasta, puntos de restauración) en «Más»
+- [x] Tarjeta de estado única: «puedes conducir» con anillo, factor limitante, cuatro medidores y próximos descansos;
+      tabla de acumulados plegada en «Ver detalle»
+- [x] Fondo con brillos y retícula sutil, tarjetas de cristal, tipografía Inter incluida en la aplicación (sin Google Fonts)
+- [x] Inicio nuevo con vista previa en vivo del tacógrafo y «Continuar donde lo dejaste»
+- [x] Academia agrupada en iniciales / avanzados / próximamente
+- [x] E2E actualizada a la nueva navegación (en verde)
+
 ## Fase 5 — Academia ✅ (rama `fase-5-academia`)
 - [x] Modelo de ejercicio: objetivo, situación inicial, estado del tacógrafo, instrucciones opcionales paso a paso,
       condiciones de éxito, errores detectables con penalización y norma, puntuación (0–100, 0–3 estrellas) y explicación final

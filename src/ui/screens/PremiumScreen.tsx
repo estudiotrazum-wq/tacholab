@@ -21,7 +21,7 @@ export function PremiumScreen() {
       </Panel>
       <Panel title="Premium" aside={<span className="text-sm text-slate-200">{formatPrice(p.amountCents, p.currency)} · pago único</span>}>
         <ul className="space-y-1 text-sm text-slate-300">{premiumOnly.map((f) => <li key={f}>＋ {LABELS[f]}</li>)}</ul>
-        <button type="button" disabled className="mt-4 w-full cursor-not-allowed rounded-lg border border-ink-600 py-2 text-sm text-slate-500">
+        <button type="button" disabled className="mt-4 w-full cursor-not-allowed rounded-lg border border-white/15 py-2 text-sm text-slate-500">
           Pagos no disponibles todavía
         </button>
         <p className="mt-2 text-xs text-slate-500">

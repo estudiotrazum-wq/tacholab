@@ -3,7 +3,7 @@
 Simulador educativo **independiente y no homologado** de tacógrafo digital europeo.
 No reproduce ningún dispositivo comercial y no sustituye la formación oficial ni los equipos reales.
 
-Estado: **Fase 1 (núcleo funcional) + v0.2 (UTC y cabina de camión con LED)** — ver [`docs/PROGRESS.md`](docs/PROGRESS.md).
+Estado: **v0.7** — Fases 1 a 5 e interfaz simplificada (ver `docs/PROGRESS.md`) — ver [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## Requisitos
 - Node.js ≥ 20 (probado con 22)
@@ -22,7 +22,7 @@ npm run e2e          # prueba de interacción en navegador real (Playwright; req
 ```
 
 ## Cómo probar el prototipo a mano
-1. Acepta el aviso inicial → **Entrar en la cabina** → pulsa el tacógrafo iluminado.
+1. Acepta el aviso inicial → **Empezar a conducir** → pulsa el tacógrafo iluminado (o la pestaña **Tacógrafo**).
 2. Pulsa la **ranura** para insertar la tarjeta ficticia → ✓ (bienvenida) → ✓ (país).
 3. Pulsa el **botón de actividad** (trabajo → disponibilidad → descanso).
 4. **Iniciar marcha**: el equipo registra conducción automáticamente.

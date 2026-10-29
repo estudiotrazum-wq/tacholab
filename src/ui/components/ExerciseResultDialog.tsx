@@ -15,7 +15,7 @@ export function ExerciseResultDialog() {
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-auto bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="res-title">
-      <div className="w-full max-w-lg rounded-2xl border border-ink-600 bg-ink-900 p-6" data-testid="exercise-result">
+      <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0b1220] p-6" data-testid="exercise-result">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-300">Ejercicio {def.number} · resultado</div>
         <h2 id="res-title" className="mt-1 text-lg font-semibold text-white">{def.title}</h2>
         <div className="mt-3 flex items-center gap-4">
@@ -38,13 +38,13 @@ export function ExerciseResultDialog() {
             ))}
           </ul>
         )}
-        <p className="mt-4 rounded-lg border border-ink-700 bg-ink-950/60 p-3 text-xs leading-relaxed text-slate-300">{def.explanation}</p>
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-relaxed text-slate-300">{def.explanation}</p>
         {badges.length > 0 && (
           <p className="mt-3 text-xs text-slate-400">Insignias: {badges.map((b) => b.title).join(' · ')} ({badges.length}/{BADGES.length})</p>
         )}
         <div className="mt-5 flex flex-wrap gap-2">
-          <button type="button" onClick={() => { close(); go('academy'); }} className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-ink-950 hover:bg-cyan-400" data-testid="result-back">Volver a la academia</button>
-          <button type="button" onClick={() => { start(def); go('device'); }} className="rounded-lg border border-ink-600 px-4 py-2 text-sm text-slate-200">Repetir</button>
+          <button type="button" onClick={() => { close(); go('academy'); }} className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900" data-testid="result-back">Volver a la academia</button>
+          <button type="button" onClick={() => { start(def); go('device'); }} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200">Repetir</button>
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
         >
           {done ? 'Evaluar ejercicio ✓' : 'Evaluar ahora'}
         </button>
-        <button type="button" onClick={() => { if (window.confirm('¿Abandonar el ejercicio? No se guardará el resultado.')) { close(); go('academy'); } }} className="rounded-lg border border-ink-600 px-3 py-1.5 text-xs text-slate-300">
+        <button type="button" onClick={() => { if (window.confirm('¿Abandonar el ejercicio? No se guardará el resultado.')) { close(); go('academy'); } }} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300">
           Abandonar
         </button>
       </div>

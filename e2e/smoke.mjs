@@ -30,12 +30,23 @@ try {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   mkdirSync('e2e/screenshots', { recursive: true });
 
+  /** Sección principal (menú superior o inferior) y, si se indica, su pestaña. */
+  const goTo = async (section, tab) => {
+    await page.getByRole('navigation').getByRole('button', { name: section, exact: true }).click();
+    if (tab) await page.getByRole('tab', { name: tab, exact: true }).click();
+  };
+  /** Botón del menú «Más controles de tiempo» de la barra inferior. */
+  const tool = async (name) => {
+    await page.getByTestId('time-tools').click();
+    await page.getByRole('dialog', { name: 'Controles de tiempo' }).getByRole('button', { name, exact: true }).click();
+    await page.getByTestId('time-tools').click();
+  };
   await page.goto(URL);
   await page.getByRole('button', { name: 'Entendido' }).click();
-  assert(await page.getByRole('heading', { name: 'TachoLab EU' }).isVisible(), 'la página de inicio carga');
+  assert(await page.getByRole('button', { name: 'Empezar a conducir' }).isVisible(), 'la página de inicio carga');
   await page.screenshot({ path: 'e2e/screenshots/01-home.png' });
 
-  await page.getByRole('button', { name: 'Entrar en la cabina' }).click();
+  await page.getByRole('button', { name: 'Empezar a conducir' }).click();
   await page.getByTestId('led-magenta').click();
   assert((await page.locator('.cab-stage').getAttribute('style')).includes('#e879f9'), 'las luces LED cambian de color');
   await page.getByTestId('cab-gear').click();
@@ -81,39 +92,39 @@ try {
   await page.getByRole('button', { name: 'Botón de actividad' }).click();
   assert((await page.getByTestId('recorded-activity').innerText()) === 'Disponibilidad', 'botón de actividad cambia de otros trabajos (tras detener) a disponibilidad');
 
-  await page.getByRole('button', { name: '+1 h' }).click();
+  await tool('+1 h');
   await page.getByTestId('vehicle-toggle').click();
   assert((await page.getByTestId('recorded-activity').innerText()) === 'Conducción', 'el movimiento registra conducción');
 
   // Reloj ×60 durante ~2 s reales ≈ 2 min virtuales
   const before = await page.getByTestId('virtual-clock').innerText();
-  await page.getByRole('button', { name: '×60' }).click();
+  await page.getByTestId('control-dock').getByRole('button', { name: '×60' }).click();
   await page.waitForTimeout(2200);
-  await page.getByRole('button', { name: '❚❚' }).click();
+  await page.getByTestId('play-toggle').click();
   const after = await page.getByTestId('virtual-clock').innerText();
   assert(before !== after, `el reloj acelerado avanza (${before} → ${after})`);
 
   // Saltar hasta el aviso de 4 h 15
-  await page.getByRole('button', { name: 'Siguiente ⏭' }).click();
-  await page.getByRole('button', { name: 'Siguiente ⏭' }).click();
+  await tool('Siguiente ⏭');
+  await tool('Siguiente ⏭');
   assert((await page.getByTestId('display-title').innerText()).includes('AVISO'), 'aviso de conducción continua en pantalla');
   await page.screenshot({ path: 'e2e/screenshots/03-device-warning.png', fullPage: true });
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   // Seguir conduciendo tras el límite genera la infracción.
-  await page.getByRole('button', { name: '+15 min' }).click();
+  await tool('+15 min');
   await page.getByTestId('vehicle-toggle').click();
   assert((await page.getByTestId('infringement-count').innerText()).includes('1 infracción'), 'el panel normativo cuenta la infracción');
 
   const clockBeforeReload = await page.getByTestId('virtual-clock').innerText();
   await page.reload();
-  await page.getByRole('button', { name: 'Tacógrafo', exact: true }).click();
+  await goTo('Conducir', 'Tacógrafo');
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
 
-  await page.getByRole('button', { name: 'Informe', exact: true }).click();
+  await goTo('Mis semanas', 'Informe');
   assert((await page.getByTestId('findings').innerText()).includes('4 h 30 min'), 'el informe muestra la infracción de conducción continua con su norma');
   await page.screenshot({ path: 'e2e/screenshots/06-report.png', fullPage: true });
 
-  await page.getByRole('button', { name: 'Calendario', exact: true }).click();
+  await goTo('Mis semanas', 'Calendario');
   await page.getByTestId('history-table').waitFor();
   const rows = await page.getByTestId('history-table').locator('tbody tr').count();
   assert(rows >= 2, `el calendario muestra el registro de actividades (${rows})`);
@@ -121,19 +132,19 @@ try {
 
   // Biblioteca de escenarios: cargar la referencia 56 + 34 h
   page.on('dialog', (d) => d.accept());
-  await page.getByRole('button', { name: 'Escenarios', exact: true }).click();
+  await goTo('Academia', 'Escenarios');
   assert(await page.getByTestId('load-week2-34').isDisabled(), 'los escenarios premium están bloqueados en el plan gratuito');
   await page.getByTestId('load-ref-5634').click();
   await page.getByTestId('history-days').waitFor();
   await page.screenshot({ path: 'e2e/screenshots/04-calendar.png', fullPage: true });
-  await page.getByRole('button', { name: 'Informe', exact: true }).click();
+  await goTo('Mis semanas', 'Informe');
   await page.getByTestId('objectives').waitFor();
   const objectives = await page.getByTestId('objectives').innerText();
   assert(objectives.includes('✓ Semana 1 con 56 h') && objectives.includes('✓ Semana 2 con 34 h') && objectives.includes('✓ Sin infracciones'), 'la referencia 56 + 34 h cumple todos los objetivos');
   await page.screenshot({ path: 'e2e/screenshots/07-report-reference.png', fullPage: true });
 
   // Guardados: el plan gratuito permite uno
-  await page.getByRole('button', { name: 'Escenarios', exact: true }).click();
+  await goTo('Academia', 'Escenarios');
   await page.getByTestId('save-slot').click();
   await page.getByText('Escenario guardado').waitFor();
   await page.getByTestId('save-slot').click();
@@ -142,7 +153,7 @@ try {
   await page.screenshot({ path: 'e2e/screenshots/08-scenarios.png', fullPage: true });
 
   // Academia: ejercicio 1 resuelto con los botones del tacógrafo
-  await page.getByRole('button', { name: 'Academia', exact: true }).click();
+  await goTo('Academia', 'Ejercicios');
   await page.getByTestId('exercise-list').getByText('Conocer los botones').click();
   await page.getByTestId('start-buttons').click();
   await page.getByTestId('exercise-panel').waitFor();
@@ -165,11 +176,11 @@ try {
 
   // Vista móvil: modo dispositivo recomendado y barra de control fija
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Cabina', exact: true }).click();
+  await goTo('Conducir', 'Cabina');
   await page.getByRole('button', { name: 'Abrir el modo dispositivo' }).click();
-  await page.getByTestId('mobile-bar').waitFor();
-  assert(await page.getByTestId('mobile-bar').isVisible(), 'en móvil, modo dispositivo con barra de control fija');
-  await page.getByRole('button', { name: 'Tacógrafo', exact: true }).click();
+  await page.getByTestId('control-dock').waitFor();
+  assert(await page.getByTestId('control-dock').isVisible(), 'en móvil, modo dispositivo con barra de control fija');
+  await goTo('Conducir', 'Tacógrafo');
   await page.screenshot({ path: 'e2e/screenshots/05-mobile.png', fullPage: true });
 
   assert(errors.length === 0, `sin errores de ejecución en consola${errors.length ? ': ' + errors.join(' | ') : ''}`);

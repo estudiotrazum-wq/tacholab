@@ -37,7 +37,7 @@ export function SettingsScreen() {
 
       <Panel title="Cabina">
         <label className="block text-sm text-slate-300" htmlFor="quality">Calidad visual</label>
-        <select id="quality" value={cab.quality} onChange={(e) => cab.set({ quality: e.target.value as Quality })} className="mt-1 rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">
+        <select id="quality" value={cab.quality} onChange={(e) => cab.set({ quality: e.target.value as Quality })} className="mt-1 rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm">
           <option value="high">Alta (luces difuminadas, animaciones y mirada con el ratón)</option>
           <option value="low">Básica (para ordenadores modestos)</option>
         </select>
@@ -50,7 +50,7 @@ export function SettingsScreen() {
           id="after-stop"
           value={config.afterStopActivity}
           onChange={(e) => dispatch({ type: 'SET_CONFIG', patch: { afterStopActivity: e.target.value as SimConfig['afterStopActivity'] } })}
-          className="mt-1 rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm"
+          className="mt-1 rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm"
         >
           <option value="WORK">Otros trabajos</option>
           <option value="AVAILABILITY">Disponibilidad</option>

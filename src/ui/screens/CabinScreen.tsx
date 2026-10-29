@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { ACTIVITY_LABEL } from '@/shared/types';
-import { SPEEDS, type Speed } from '@/time-engine/clock';
 import { formatTime, zonedParts } from '@/time-engine/zoned';
 import { renderDisplay } from '@/tachograph/display';
 import { openEvent } from '@/time-engine/timeline';
@@ -15,6 +13,7 @@ import { CAMERAS, cameraTransform, type CameraId } from '../cabin/camera';
 import { useCabinStore } from '../cabin/cabinStore';
 import { playHorn } from '../cabin/horn';
 import { Tachograph } from '../components/Tachograph';
+import { ControlDock } from '../components/ControlDock';
 import { useDeviceKeys } from '../hooks/useDeviceKeys';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
@@ -92,7 +91,7 @@ export function CabinScreen() {
   };
 
   const stageClasses = [
-    'cab-stage relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-ink-700 bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]',
+    'cab-stage relative aspect-[16/9] w-full overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_40px_100px_-30px_rgba(0,0,0,0.95),0_0_0_1px_rgba(34,211,238,0.05)]',
     moving && running ? 'is-moving' : '',
     alert ? 'is-alert' : '',
     cab.ledOn ? '' : 'led-off',
@@ -100,16 +99,18 @@ export function CabinScreen() {
   ].join(' ');
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-4 pb-24 sm:pb-4">
+    <div className="mx-auto max-w-6xl px-4 py-4">
       <div className="mb-3">
         <ExercisePanel compact />
       </div>
       {small && (
-        <div className="mb-3 rounded-xl border border-cyan-800/60 bg-cyan-950/40 p-3 text-sm text-cyan-100">
+        <div className="mb-3 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3 text-sm text-cyan-50">
           En pantallas pequeñas te recomendamos el modo dispositivo: el tacógrafo a tamaño completo.
-          <button type="button" onClick={() => go('device')} className="mt-2 block w-full rounded-lg bg-cyan-500 py-2 font-semibold text-ink-950">Abrir el modo dispositivo</button>
+          <button type="button" onClick={() => go('device')} className="mt-2 block w-full rounded-xl bg-cyan-400 py-2 font-semibold text-slate-950">Abrir el modo dispositivo</button>
         </div>
       )}
+      {/* La cabina se ajusta a la altura de la ventana para que quepa sobre la barra de control. */}
+      <div className="mx-auto" style={{ maxWidth: 'min(100%, calc((100vh - 17.5rem) * 16 / 9))' }}>
       <div
         className={stageClasses}
         style={{ ['--led' as string]: LED_COLORS[ledColor].hex, ['--road-speed' as string]: roadSpeed, ['--led-intensity' as string]: String(cab.ledBrightness) }}
@@ -168,7 +169,7 @@ export function CabinScreen() {
         {showDevice && (
           <div className="absolute inset-x-0 bottom-0 flex max-h-full flex-col items-center gap-2 overflow-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-10" data-testid="cab-device">
             <Tachograph highlight={guide?.target ?? null} compact />
-            <CameraBack onBack={() => moveCamera('driver')} extra={<button type="button" onClick={() => go('device')} className="rounded-full border border-ink-600 bg-black/60 px-3 py-1 text-xs text-slate-200 hover:border-cyan-600">Laboratorio completo →</button>} />
+            <CameraBack onBack={() => moveCamera('driver')} extra={<button type="button" onClick={() => go('device')} className="rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs text-slate-200 hover:border-cyan-600">Laboratorio completo →</button>} />
           </div>
         )}
         {camera === 'mirror' && settled && (
@@ -195,48 +196,28 @@ export function CabinScreen() {
         )}
       </div>
 
-      {/* Barra de control bajo la cabina */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-ink-700 bg-ink-900/80 px-3 py-2">
-        <div className="font-mono text-sm">
-          <span className="text-cyan-200">{formatTime(sim.clock.now, 'UTC')} UTC</span>
-          <span className="ml-2 text-slate-500">{formatTime(sim.clock.now, local)} local</span>
-        </div>
-        <div className="flex gap-1" role="group" aria-label="Velocidad del reloj">
-          {SPEEDS.map((sp) => (
-            <button
-              key={sp}
-              type="button"
-              aria-pressed={speed === sp}
-              onClick={() => dispatch({ type: 'SET_SPEED', speed: sp as Speed })}
-              className={`rounded-md border px-2 py-1 text-xs ${speed === sp ? 'border-cyan-400 bg-cyan-400/15 text-cyan-100' : 'border-ink-600 text-slate-300 hover:border-cyan-700'}`}
-            >
-              {sp === 0 ? '❚❚' : sp === 1 ? '▶ ×1' : `×${sp}`}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1" role="group" aria-label="Cámara">
+      </div>
+
+      {/* Cámaras */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+        <div className="glass inline-flex rounded-full p-1" role="group" aria-label="Cámara">
           {(Object.keys(CAMERAS) as CameraId[]).map((id, i) => (
             <button
               key={id}
               type="button"
               aria-pressed={camera === id}
-              title={`${CAMERAS[id].label} (${i + 1})`}
+              title={`${CAMERAS[id].label} (tecla ${i + 1}). En la cabina, todo lo que brilla al pasar el ratón se puede pulsar.`}
               aria-label={`Cámara: ${CAMERAS[id].label}`}
               data-testid={`camera-${id}`}
               onClick={() => moveCamera(id)}
-              className={`rounded-md border px-2 py-1 text-xs ${camera === id ? 'border-cyan-400 bg-cyan-400/15 text-cyan-100' : 'border-ink-600 text-slate-300 hover:border-cyan-700'}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${camera === id ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white'}`}
             >
               {CAMERAS[id].label}
             </button>
           ))}
         </div>
-        <span className="text-xs text-slate-400">
-          Registrado: <span className="text-slate-100">{recorded ? ACTIVITY_LABEL[recorded] : '—'}</span>
-        </span>
       </div>
-      <p className="mt-2 text-xs text-slate-500">
-        Pulsa en la cabina el <strong className="text-slate-300">tacógrafo</strong>, el <strong className="text-slate-300">retrovisor</strong>, la <strong className="text-slate-300">consola del techo</strong>, el <strong className="text-slate-300">parasol</strong>, los <strong className="text-slate-300">interruptores</strong> (faros, luz interior, emergencia, LED), el <strong className="text-slate-300">selector de marcha</strong> N/D o el <strong className="text-slate-300">claxon</strong>. Teclas 1–4: cámaras. Mueve el ratón para mirar alrededor.
-      </p>
+      <ControlDock highlight={guide?.target ?? null} />
     </div>
   );
 }
@@ -244,7 +225,7 @@ export function CabinScreen() {
 function CameraBack({ onBack, extra }: { onBack: () => void; extra?: React.ReactNode }) {
   return (
     <div className="flex gap-2">
-      <button type="button" onClick={onBack} data-testid="camera-back" className="rounded-full border border-ink-600 bg-black/60 px-3 py-1 text-xs text-slate-200 hover:border-cyan-600">
+      <button type="button" onClick={onBack} data-testid="camera-back" className="rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs text-slate-200 hover:border-cyan-600">
         ← Vista de conducción
       </button>
       {extra}
@@ -254,7 +235,7 @@ function CameraBack({ onBack, extra }: { onBack: () => void; extra?: React.React
 
 function Overlay({ title, onBack, children, testId }: { title: string; onBack: () => void; children: React.ReactNode; testId?: string }) {
   return (
-    <div className="absolute bottom-3 left-1/2 w-[min(92%,26rem)] -translate-x-1/2 rounded-xl border border-ink-600 bg-black/75 p-3 text-sm text-slate-200 backdrop-blur" data-testid={testId}>
+    <div className="absolute bottom-3 left-1/2 w-[min(92%,26rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-black/75 p-3 text-sm text-slate-200 backdrop-blur" data-testid={testId}>
       <div className="mb-1 font-semibold text-white">{title}</div>
       <div className="text-xs text-slate-300">{children}</div>
       <div className="mt-2">
