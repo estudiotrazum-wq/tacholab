@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ACTIVITY_LABEL } from '@/shared/types';
 import { renderDisplay } from '@/tachograph/display';
 import type { Button } from '@/tachograph/types';
@@ -129,26 +129,42 @@ function DeviceButton({
   );
 }
 
+export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
+
 function CardSlot({ cardId, highlight }: { cardId: string | null; highlight: boolean }) {
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
+  const [over, setOver] = useState(false);
   const card = cardId ? sim.cards[cardId] : null;
   return (
     <div className="mt-4 flex items-center gap-3">
       <button
         type="button"
         data-testid="card-slot"
-        aria-label={card ? `Tarjeta insertada: ${card.holderName}` : 'Insertar tarjeta ficticia de Alex Prácticas'}
+        aria-label={card ? `Tarjeta insertada: ${card.holderName}` : 'Ranura de tarjeta: arrastra aquí una tarjeta o pulsa para insertar la de Alex Prácticas'}
         onClick={() => !card && dispatch({ type: 'INSERT_CARD', cardId: 'card-a' })}
-        className={`relative h-6 flex-1 overflow-hidden rounded-md border border-white/15 bg-[#05090f] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] ${highlight ? 'assist-target' : ''} ${card ? 'cursor-default' : 'cursor-pointer hover:border-cyan-700'}`}
+        onDragOver={(e) => {
+          if (card || !e.dataTransfer.types.includes(CARD_DRAG_TYPE)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setOver(false);
+          const id = e.dataTransfer.getData(CARD_DRAG_TYPE);
+          if (id) dispatch({ type: 'INSERT_CARD', cardId: id });
+        }}
+        className={`relative h-9 flex-1 overflow-hidden rounded-lg border bg-[#05090f] shadow-[inset_0_2px_6px_rgba(0,0,0,0.9)] transition ${over ? 'border-cyan-300 ring-2 ring-cyan-400/60' : 'border-white/15'} ${highlight ? 'assist-target' : ''} ${card ? 'cursor-default' : 'cursor-pointer hover:border-cyan-700'}`}
       >
         <span className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 bg-slate-700" />
         {card ? (
-          <span className="absolute inset-y-0.5 left-6 flex items-center rounded-sm bg-gradient-to-r from-sky-700 to-cyan-600 px-3 text-[10px] font-semibold tracking-wider text-white">
+          <span className="absolute inset-y-1 left-6 flex items-center rounded-sm bg-gradient-to-r from-sky-700 to-cyan-600 px-3 text-[11px] font-semibold tracking-wider text-white">
             {card.displayId}
           </span>
         ) : (
-          <span className="relative text-[10px] tracking-[0.3em] text-slate-500">RANURA · PULSA PARA INSERTAR</span>
+          <span className={`relative text-[10px] tracking-[0.25em] ${over ? 'text-cyan-200' : 'text-slate-500'}`}>{over ? 'SUELTA LA TARJETA' : 'RANURA · ARRASTRA AQUÍ TU TARJETA'}</span>
         )}
       </button>
       <span className={`h-2 w-2 rounded-full ${card ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : 'bg-slate-700'}`} aria-hidden="true" />

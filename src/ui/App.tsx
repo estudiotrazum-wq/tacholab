@@ -7,7 +7,6 @@ import { useSimStore } from '@/simulator/store';
 import { useAcademyStore } from '@/academy/store';
 import { ExerciseResultDialog } from './components/ExerciseResultDialog';
 import { useSimLoop } from './hooks/useSimLoop';
-import { HomeScreen } from './screens/HomeScreen';
 import { CabinScreen } from './screens/CabinScreen';
 import { DeviceScreen } from './screens/DeviceScreen';
 import { CalendarScreen } from './screens/CalendarScreen';
@@ -28,69 +27,62 @@ export function App() {
       if (s.sim !== prev.sim) useAcademyStore.getState().observe(s.sim);
     });
   }, []);
-  const { view, go, disclaimerAccepted, update, lastViews } = useUiStore();
+  const { view, go, disclaimerAccepted, update, lastViews, learningMode } = useUiStore();
   const section = sectionOf(view);
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full">
       <div className="app-bg" aria-hidden="true" />
-      <header className="sticky top-0 z-30 border-b border-white/5 bg-[#050913]/70 backdrop-blur-xl print:hidden">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
-          <button type="button" onClick={() => go('home')} className="flex items-center gap-2 font-semibold text-white" aria-label="TachoLab EU, inicio">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-xs font-bold text-slate-950 shadow-[0_0_20px_rgba(34,211,238,0.35)]">TL</span>
-            <span className="hidden sm:inline">TachoLab <span className="text-gradient">EU</span></span>
-          </button>
-          <nav aria-label="Secciones" className="mx-auto hidden md:block">
-            <div className="glass flex gap-1 rounded-full p-1">
-              {SECTIONS.map((sec) => {
-                const active = section?.id === sec.id;
-                return (
-                  <button
-                    key={sec.id}
-                    type="button"
-                    onClick={() => go(lastViews[sec.id] ?? sec.views[0]!.id)}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
-                  >
-                    <NavIcon name={sec.icon} className="h-4 w-4" />
-                    {sec.label}
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
-          <div className="ml-auto flex items-center gap-2 md:ml-0">
-            <button type="button" onClick={() => go('premium')} className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${view === 'premium' ? 'border-violet-400 bg-violet-500/20 text-violet-100' : 'border-violet-500/40 text-violet-200 hover:bg-violet-500/10'}`}>
-              <NavIcon name="star" className="h-3.5 w-3.5" /> Premium
-            </button>
-            <button type="button" onClick={() => go('settings')} aria-label="Ajustes" title="Ajustes" className={`grid h-9 w-9 place-items-center rounded-full transition ${view === 'settings' ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
-              <NavIcon name="settings" className="h-5 w-5" />
-            </button>
-          </div>
+
+      {/* Menú lateral (escritorio) */}
+      <aside className="sticky top-0 z-30 hidden h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-white/5 bg-[#050913]/70 py-4 backdrop-blur-xl md:flex print:hidden" aria-label="Menú">
+        <span className="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.35)]" title="TachoLab EU">TL</span>
+        <nav aria-label="Secciones" className="flex flex-col gap-1">
+          {SECTIONS.map((sec) => (
+            <RailButton key={sec.id} label={sec.label} icon={sec.icon} active={section?.id === sec.id} onClick={() => go(lastViews[sec.id] ?? sec.views[0]!.id)} />
+          ))}
+        </nav>
+        <div className="mt-auto flex flex-col gap-1">
+          <RailButton label={learningMode === 'assisted' ? 'Guía: sí' : 'Guía: no'} icon="help" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
+          <RailButton label="Premium" icon="star" active={view === 'premium'} onClick={() => go('premium')} />
+          <RailButton label="Ajustes" icon="settings" active={view === 'settings'} onClick={() => go('settings')} />
         </div>
-      </header>
+      </aside>
 
-      <SubTabs />
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Barra superior (móvil) */}
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-white/5 bg-[#050913]/80 px-4 backdrop-blur-xl md:hidden print:hidden">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-xs font-bold text-slate-950">TL</span>
+          <span className="font-semibold text-white">TachoLab <span className="text-gradient">EU</span></span>
+          <button type="button" onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} aria-pressed={learningMode === 'assisted'} className={`ml-auto rounded-full px-3 py-1 text-xs ${learningMode === 'assisted' ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400'}`}>
+            Guía {learningMode === 'assisted' ? 'sí' : 'no'}
+          </button>
+          <button type="button" onClick={() => go('settings')} aria-label="Ajustes" className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
+            <NavIcon name="settings" />
+          </button>
+        </header>
 
-      <main className="flex-1 pb-36 md:pb-28">
-        {view === 'home' && <HomeScreen />}
-        {view === 'cabin' && <CabinScreen />}
-        {view === 'device' && <DeviceScreen />}
-        {view === 'calendar' && <CalendarScreen />}
-        {view === 'report' && <ReportScreen />}
-        {view === 'scenarios' && <ScenariosScreen />}
-        {view === 'academy' && <AcademyScreen />}
-        {view === 'premium' && <PremiumScreen />}
-        {view === 'settings' && <SettingsScreen />}
-      </main>
+        <SubTabs />
 
-      <footer className={`px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-6 print:hidden ${section?.id === 'drive' ? 'hidden' : ''}`}>
-        TachoLab EU v0.7 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
-      </footer>
+        <main className="flex-1 pb-24 md:pb-6">
+          {view === 'cabin' && <CabinScreen />}
+          {view === 'device' && <DeviceScreen />}
+          {view === 'calendar' && <CalendarScreen />}
+          {view === 'report' && <ReportScreen />}
+          {view === 'scenarios' && <ScenariosScreen />}
+          {view === 'academy' && <AcademyScreen />}
+          {view === 'premium' && <PremiumScreen />}
+          {view === 'settings' && <SettingsScreen />}
+        </main>
+
+        <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
+          TachoLab EU v0.8 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+        </footer>
+      </div>
 
       {/* Navegación inferior en móvil */}
       <nav aria-label="Secciones (móvil)" className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050913]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden print:hidden">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-3">
           {SECTIONS.map((sec) => {
             const active = section?.id === sec.id;
             return (
@@ -107,21 +99,47 @@ export function App() {
       <ConfirmDialog />
 
       {!disclaimerAccepted && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="disc-title">
-          <div className="glass-strong max-w-lg rounded-3xl p-7">
-            <h2 id="disc-title" className="text-lg font-semibold text-white">Antes de empezar</h2>
-            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-slate-300">
-              <li>Es un <strong>simulador educativo independiente</strong>. No está homologado ni reproduce ningún tacógrafo comercial.</li>
-              <li>No sustituye las instrucciones oficiales, la formación profesional ni los dispositivos instalados en los vehículos.</li>
-              <li>Los cálculos normativos son <strong>preliminares</strong> y no constituyen asesoramiento jurídico.</li>
-              <li>Usa solo tarjetas y perfiles ficticios. Los datos se guardan únicamente en tu navegador.</li>
-            </ul>
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-auto bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="disc-title">
+          <div className="glass-strong max-w-xl rounded-3xl p-7">
+            <h2 id="disc-title" className="text-xl font-semibold text-white">Bienvenido a TachoLab EU</h2>
+            <p className="mt-1 text-sm text-slate-400">Un simulador para aprender a usar el tacógrafo digital en tres pasos:</p>
+            <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                ['1', 'Mete la tarjeta', 'Arrástrala desde la izquierda hasta la ranura del tacógrafo.'],
+                ['2', 'Arranca el camión', 'Pulsa ARRANCAR: el tacógrafo registra la conducción solo.'],
+                ['3', 'Deja correr el tiempo', 'Con ▶ y la velocidad ×60 verás pasar las horas.'],
+              ].map(([n, t, d]) => (
+                <li key={n} className="rounded-2xl bg-white/5 p-3">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-cyan-400 text-sm font-bold text-slate-950">{n}</span>
+                  <div className="mt-2 text-sm font-semibold text-white">{t}</div>
+                  <div className="mt-0.5 text-xs text-slate-400">{d}</div>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-5 text-xs leading-relaxed text-slate-400">
+              Es un <strong className="text-slate-200">simulador educativo independiente</strong>: no está homologado, no reproduce ningún tacógrafo comercial y no sustituye la formación oficial ni los equipos reales. Los cálculos normativos son orientativos. Solo se usan tarjetas ficticias y los datos se guardan en tu navegador.
+            </p>
             <button type="button" autoFocus onClick={() => update({ disclaimerAccepted: true })} className="mt-6 w-full rounded-2xl bg-white py-3 font-semibold text-slate-900 transition hover:scale-[1.01]">
-              Entendido
+              Entendido, empezar
             </button>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function RailButton({ label, icon, active, onClick, pressed }: { label: string; icon: Parameters<typeof NavIcon>[0]['name']; active: boolean; onClick: () => void; pressed?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={pressed === undefined && active ? 'page' : undefined}
+      aria-pressed={pressed}
+      className={`flex w-20 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-[11px] font-medium transition ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+    >
+      <NavIcon name={icon} className="h-5 w-5" />
+      {label}
+    </button>
   );
 }

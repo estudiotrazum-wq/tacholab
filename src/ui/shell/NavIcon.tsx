@@ -1,7 +1,7 @@
 import type { Section } from './nav';
 
-const PATHS: Record<Section['icon'] | 'settings' | 'star', string> = {
-  home: 'M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z',
+const PATHS: Record<Section['icon'] | 'settings' | 'star' | 'help', string> = {
+  help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-2.5-11.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01',
   drive: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 7a2 2 0 1 1 0 4 2 2 0 0 1 0-4ZM3.5 10.5h6M14.5 10.5h6M12 14v7',
   weeks: 'M4 6h16v14H4Zm0 4h16M8 3v4M16 3v4M7.5 14h3M13.5 14h3M7.5 17h3',
   learn: 'M3 9 12 5l9 4-9 4-9-4Zm4 2v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4M21 9v5',

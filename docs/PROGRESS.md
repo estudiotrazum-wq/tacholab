@@ -2,7 +2,17 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
-## v0.7 — Interfaz simplificada y moderna (rama `ui-rediseno`)
+## v0.8 — Simulador en una sola pantalla (rama `ui-rediseno`)
+- [x] La app abre directamente en el simulador; bienvenida con los tres pasos (tarjeta, arrancar, tiempo)
+- [x] Panel único: tarjetas ficticias a la izquierda (se **arrastran a la ranura** o se pulsan), tacógrafo y barra de
+      tiempo en el centro, velocímetro con cuentakilómetros y botón **ARRANCAR/PARAR** y estado a la derecha
+- [x] Menú lateral (Simulador · Mis semanas · Academia; guía sí/no, Premium, Ajustes); pestañas inferiores en móvil
+- [x] La cabina pasa a ser una vista opcional del simulador
+- [x] Confirmaciones dentro de la app (sin `window.confirm`)
+- [x] Inspirado en el modelo de interacción de los simuladores de formación (vídeo de referencia del usuario), con
+      diseño propio: no reproduce el aspecto, las pantallas ni los iconos de ningún fabricante
+
+## v0.7 — Interfaz simplificada y moderna
 - [x] Navegación en 4 secciones: Inicio · Conducir (Cabina / Tacógrafo) · Mis semanas (Calendario / Informe) ·
       Academia (Ejercicios / Escenarios); Premium y Ajustes como iconos; barra de pestañas inferior en móvil
 - [x] Barra de control única, al estilo de un reproductor: reloj, reproducir/pausa, velocidad, siguiente, arrancar/detener;

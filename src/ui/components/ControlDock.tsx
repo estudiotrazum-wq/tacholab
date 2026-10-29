@@ -16,7 +16,7 @@ const SPEED_OPTIONS: Speed[] = [1, 5, 30, 60];
  * Barra de control única, al estilo de un reproductor: reloj, reproducción,
  * velocidad, siguiente evento y marcha del vehículo. Lo avanzado va en «Más».
  */
-export function ControlDock({ highlight }: { highlight: AssistTarget }) {
+export function ControlDock({ highlight, inline = false }: { highlight: AssistTarget; inline?: boolean }) {
   const sim = useSimStore((s) => s.sim);
   const dispatch = useSimStore((s) => s.dispatch);
   const [tools, setTools] = useState(false);
@@ -33,16 +33,15 @@ export function ControlDock({ highlight }: { highlight: AssistTarget }) {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[60px] z-30 px-2 md:bottom-4 print:hidden" data-testid="control-dock">
-      <div className={`glass-strong pointer-events-auto relative mx-auto flex max-w-4xl items-center gap-2 rounded-2xl px-2 py-2 sm:gap-3 sm:px-3 ${highlight === 'CLOCK' ? 'assist-target' : ''}`}>
+    <div className={inline ? 'relative z-20 print:hidden' : 'pointer-events-none fixed inset-x-0 bottom-[60px] z-30 px-2 md:bottom-4 print:hidden'} data-testid="control-dock">
+      <div className={`${inline ? 'glass' : 'glass-strong pointer-events-auto mx-auto max-w-4xl'} relative flex items-center gap-2 rounded-2xl px-2 py-2 sm:gap-3 sm:px-3 ${highlight === 'CLOCK' ? 'assist-target' : ''}`}>
         {/* Reloj */}
         <div className="min-w-0 px-1 sm:px-2">
-          <div className="font-mono text-lg leading-tight text-white sm:text-xl" data-testid="virtual-clock">
-            <span className="hidden sm:inline">{formatDate(sim.clock.now, tz)} </span>
-            {formatTime(sim.clock.now, tz)}
+          <div className="whitespace-nowrap font-mono text-2xl leading-tight text-white" data-testid="virtual-clock">
+            {formatTime(sim.clock.now, tz)}<span className="ml-1 text-xs text-slate-400">UTC</span>
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-400">
-            {formatWeekday(sim.clock.now, tz)} · UTC · local {formatTime(sim.clock.now, sim.scenario.localTimeZone)}
+          <div className="whitespace-nowrap text-[11px] text-slate-400">
+            {formatWeekday(sim.clock.now, tz)} {formatDate(sim.clock.now, tz)} · local {formatTime(sim.clock.now, sim.scenario.localTimeZone)}
           </div>
         </div>
 
@@ -94,7 +93,7 @@ export function ControlDock({ highlight }: { highlight: AssistTarget }) {
               {ACTIVITY_LABEL[recorded]}
             </span>
           )}
-          <button
+          {!inline && <button
             type="button"
             data-testid="vehicle-toggle"
             aria-pressed={moving}
@@ -104,7 +103,7 @@ export function ControlDock({ highlight }: { highlight: AssistTarget }) {
             }`}
           >
             {moving ? '■ Detener' : '▶ Arrancar'}
-          </button>
+          </button>}
           <button
             type="button"
             onClick={() => setTools((t) => !t)}

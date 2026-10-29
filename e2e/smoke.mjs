@@ -42,11 +42,11 @@ try {
     await page.getByTestId('time-tools').click();
   };
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Entendido' }).click();
-  assert(await page.getByRole('button', { name: 'Empezar a conducir' }).isVisible(), 'la página de inicio carga');
+  await page.getByRole('button', { name: 'Entendido, empezar' }).click();
+  assert(await page.getByTestId('card-slot').isVisible(), 'la app abre directamente en el simulador');
   await page.screenshot({ path: 'e2e/screenshots/01-home.png' });
 
-  await page.getByRole('button', { name: 'Empezar a conducir' }).click();
+  await goTo('Simulador', 'Cabina');
   await page.getByTestId('led-magenta').click();
   assert((await page.locator('.cab-stage').getAttribute('style')).includes('#e879f9'), 'las luces LED cambian de color');
   await page.getByTestId('cab-gear').click();
@@ -83,7 +83,8 @@ try {
   assert((await line(1)).includes('SIN TARJETA'), 'sin tarjeta al inicio');
   assert((await page.getByTestId('display-title').innerText()).includes('UTC'), 'la pantalla del tacógrafo muestra la hora UTC');
 
-  await page.getByTestId('card-slot').click();
+  // La tarjeta se arrastra desde la bandeja hasta la ranura
+  await page.getByTestId('card-card-a').dragTo(page.getByTestId('card-slot'));
   assert((await page.getByTestId('display-title').innerText()).includes('BIENVENIDA'), 'inserción muestra bienvenida');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await page.getByTestId('display-title').innerText()).includes('PAÍS INICIO'), 'pide país de inicio');
@@ -117,7 +118,7 @@ try {
 
   const clockBeforeReload = await page.getByTestId('virtual-clock').innerText();
   await page.reload();
-  await goTo('Conducir', 'Tacógrafo');
+  await goTo('Simulador', 'Panel');
   assert((await page.getByTestId('virtual-clock').innerText()) === clockBeforeReload, 'el estado sobrevive a la recarga');
 
   await goTo('Mis semanas', 'Informe');
@@ -177,11 +178,11 @@ try {
 
   // Vista móvil: modo dispositivo recomendado y barra de control fija
   await page.setViewportSize({ width: 390, height: 844 });
-  await goTo('Conducir', 'Cabina');
+  await goTo('Simulador', 'Cabina');
   await page.getByRole('button', { name: 'Abrir el modo dispositivo' }).click();
   await page.getByTestId('control-dock').waitFor();
   assert(await page.getByTestId('control-dock').isVisible(), 'en móvil, modo dispositivo con barra de control fija');
-  await goTo('Conducir', 'Tacógrafo');
+  await goTo('Simulador', 'Panel');
   await page.screenshot({ path: 'e2e/screenshots/05-mobile.png', fullPage: true });
 
   assert(errors.length === 0, `sin errores de ejecución en consola${errors.length ? ': ' + errors.join(' | ') : ''}`);

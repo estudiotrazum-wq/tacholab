@@ -4,7 +4,7 @@ import { DEFAULT_ENTITLEMENTS, type Entitlements } from '@/billing/plans';
 import { sectionOf } from './shell/nav';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
-export type View = 'home' | 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings';
+export type View = 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings';
 export type LearningMode = 'assisted' | 'free';
 
 /** Colores de la iluminación ambiental LED de la cabina. */
@@ -47,7 +47,7 @@ interface UiStore extends Settings {
 
 export const useUiStore = create<UiStore>((set, get) => ({
   ...loadSettings(),
-  view: 'home',
+  view: 'device',
   lastViews: {},
   go: (view) => {
     const section = sectionOf(view);
