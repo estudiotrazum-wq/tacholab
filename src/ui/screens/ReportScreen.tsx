@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ExercisePanel } from '../components/ExercisePanel';
 import { RULES } from '@/regulations/rules';
 import type { Finding, Obligation } from '@/regulations/compliance';
 import { complianceFor } from '@/simulator/derived';
@@ -59,6 +60,7 @@ export function ReportScreen() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 px-4 py-4">
+      <ExercisePanel compact />
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="rep-driver" className="text-sm text-slate-400">Conductor ficticio</label>
         <select id="rep-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">

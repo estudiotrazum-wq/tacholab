@@ -5,7 +5,8 @@ import { formatTime, zonedParts } from '@/time-engine/zoned';
 import { renderDisplay } from '@/tachograph/display';
 import { openEvent } from '@/time-engine/timeline';
 import { useSimStore } from '@/simulator/store';
-import { assistHint } from '@/academy/assist';
+import { useGuidance } from '../hooks/useGuidance';
+import { ExercisePanel } from '../components/ExercisePanel';
 import { useUiStore, LED_COLORS, type LedColor } from '../uiStore';
 import { CabinScene } from '../cabin/CabinScene';
 import { CabinInterior } from '../cabin/CabinInterior';
@@ -49,7 +50,8 @@ export function CabinScreen() {
   const parallax = camera === 'driver' && cab.quality === 'high' && !reduceMotion && finePointer;
   const cam = cameraTransform(camera, parallax ? look : [0, 0]);
   const showDevice = camera === 'tacho' && settled;
-  const assisted = learningMode === 'assisted';
+  const guide = useGuidance();
+  const assisted = learningMode === 'assisted' || guide?.source === 'exercise';
 
   // El teclado maneja el tacógrafo cuando la cámara está sobre él.
   useDeviceKeys(showDevice);
@@ -99,6 +101,9 @@ export function CabinScreen() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-4 pb-24 sm:pb-4">
+      <div className="mb-3">
+        <ExercisePanel compact />
+      </div>
       {small && (
         <div className="mb-3 rounded-xl border border-cyan-800/60 bg-cyan-950/40 p-3 text-sm text-cyan-100">
           En pantallas pequeñas te recomendamos el modo dispositivo: el tacógrafo a tamaño completo.
@@ -162,7 +167,7 @@ export function CabinScreen() {
         {/* Cámara sobre el tacógrafo: el dispositivo real, a tamaño nítido */}
         {showDevice && (
           <div className="absolute inset-x-0 bottom-0 flex max-h-full flex-col items-center gap-2 overflow-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-10" data-testid="cab-device">
-            <Tachograph highlight={assisted ? assistHint(sim).target : null} compact />
+            <Tachograph highlight={guide?.target ?? null} compact />
             <CameraBack onBack={() => moveCamera('driver')} extra={<button type="button" onClick={() => go('device')} className="rounded-full border border-ink-600 bg-black/60 px-3 py-1 text-xs text-slate-200 hover:border-cyan-600">Laboratorio completo →</button>} />
           </div>
         )}

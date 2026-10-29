@@ -1,4 +1,5 @@
 import { useSimStore } from '@/simulator/store';
+import { useAcademyStore } from '@/academy/store';
 import type { SimConfig } from '@/simulator/state';
 import { useUiStore } from '../uiStore';
 import { Panel } from '../components/Panel';
@@ -78,6 +79,7 @@ export function SettingsScreen() {
           onClick={() => {
             if (window.confirm('¿Borrar todos los datos guardados de TachoLab en este navegador?')) {
               wipe();
+              useAcademyStore.setState({ progress: {}, session: null });
               ui.update({ disclaimerAccepted: false });
             }
           }}

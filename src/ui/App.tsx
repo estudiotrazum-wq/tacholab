@@ -1,4 +1,8 @@
+import { useEffect } from 'react';
 import { useUiStore, type View } from './uiStore';
+import { useSimStore } from '@/simulator/store';
+import { useAcademyStore } from '@/academy/store';
+import { ExerciseResultDialog } from './components/ExerciseResultDialog';
 import { useSimLoop } from './hooks/useSimLoop';
 import { HomeScreen } from './screens/HomeScreen';
 import { CabinScreen } from './screens/CabinScreen';
@@ -24,6 +28,13 @@ const NAV: { id: View; label: string }[] = [
 
 export function App() {
   useSimLoop();
+  // La academia observa cada cambio de la simulación para avanzar los pasos del ejercicio.
+  useEffect(() => {
+    useAcademyStore.getState().observe(useSimStore.getState().sim);
+    return useSimStore.subscribe((s, prev) => {
+      if (s.sim !== prev.sim) useAcademyStore.getState().observe(s.sim);
+    });
+  }, []);
   const { view, go, disclaimerAccepted, update } = useUiStore();
 
   return (
@@ -63,8 +74,10 @@ export function App() {
       </main>
 
       <footer className="print:hidden border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
-        TachoLab EU v0.5 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+        TachoLab EU v0.6 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
       </footer>
+
+      <ExerciseResultDialog />
 
       {!disclaimerAccepted && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="disc-title">

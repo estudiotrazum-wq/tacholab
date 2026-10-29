@@ -25,6 +25,7 @@ interface SimStore {
   reset: () => void;
   wipeAllData: () => void;
   loadScenario: (def: ScenarioDef) => void;
+  loadSim: (sim: SimState) => void;
   slots: () => SaveSlot[];
   saveSlot: (name: string, limit: number) => SaveResult;
   loadSlot: (id: string) => boolean;
@@ -66,8 +67,9 @@ export const useSimStore = create<SimStore>((set, get) => ({
     clearAll(getStorage());
     set({ sim: createInitialSim(), dirty: false });
   },
-  loadScenario: (def) => {
-    set({ sim: def.build() });
+  loadScenario: (def) => get().loadSim(def.build()),
+  loadSim: (sim) => {
+    set({ sim });
     get().persist();
   },
   slots: () => listSlots(getStorage()),

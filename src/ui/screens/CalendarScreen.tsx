@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ExercisePanel } from '../components/ExercisePanel';
 import { ACTIVITY_LABEL, type EpochMs } from '@/shared/types';
 import type { ComplianceReport, Finding } from '@/regulations/compliance';
 import { complianceFor } from '@/simulator/derived';
@@ -70,6 +71,7 @@ export function CalendarScreen() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
+      <ExercisePanel compact />
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="cal-driver" className="text-sm text-slate-400">Conductor ficticio</label>
         <select id="cal-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">

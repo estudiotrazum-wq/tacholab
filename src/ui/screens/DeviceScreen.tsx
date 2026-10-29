@@ -1,8 +1,8 @@
-import { assistHint } from '@/academy/assist';
-import { useSimStore } from '@/simulator/store';
 import { useUiStore } from '../uiStore';
 import { useDeviceKeys } from '../hooks/useDeviceKeys';
 import { MobileControlBar } from '../components/MobileControlBar';
+import { ExercisePanel } from '../components/ExercisePanel';
+import { useGuidance } from '../hooks/useGuidance';
 import { Tachograph } from '../components/Tachograph';
 import { TimeLab } from '../components/TimeLab';
 import { VehiclePanel } from '../components/VehiclePanel';
@@ -14,10 +14,9 @@ import { WarningDetail } from '../components/WarningDetail';
 
 /** Vista principal del simulador: tacógrafo ampliado + reloj + vehículo + estado. */
 export function DeviceScreen() {
-  const sim = useSimStore((s) => s.sim);
   const { learningMode, warningsEnabled, go } = useUiStore();
-  const hint = assistHint(sim);
-  const highlight = learningMode === 'assisted' ? hint.target : null;
+  const guide = useGuidance();
+  const highlight = guide?.target ?? null;
 
   useDeviceKeys();
 
@@ -31,7 +30,8 @@ export function DeviceScreen() {
           </button>
           <span className="text-xs text-slate-500">Modo {learningMode === 'assisted' ? 'asistido' : 'libre'}</span>
         </div>
-        {learningMode === 'assisted' && <AssistBanner hint={hint} />}
+        <ExercisePanel />
+        {guide?.source === 'assist' && <AssistBanner hint={guide} />}
         <Tachograph highlight={highlight} />
         {warningsEnabled && <WarningDetail />}
         <details className="rounded-xl border border-ink-700 bg-ink-900/60 p-3 text-xs text-slate-400">

@@ -32,7 +32,8 @@ npm run e2e          # prueba de interacción en navegador real (Playwright; req
 8. ⏏ retira la tarjeta; avanza unas horas y vuelve a insertarla para probar la **entrada manual**.
 9. **Calendario**: 14 días con la clasificación de cada descanso, infracciones y detalle por día. **Informe**: infracciones, obligaciones, jornadas y objetivos; se puede imprimir o descargar en JSON.
 10. **Escenarios**: carga la referencia 56 h + 34 h o guarda tu escenario (1 en el plan gratuito).
-11. Recarga la página: el estado se conserva (localStorage).
+11. **Academia**: empieza el ejercicio 1 y sigue los pasos; al evaluarlo obtienes puntuación, explicación e insignias.
+12. Recarga la página: el estado se conserva (localStorage).
 
 Todas las horas del tacógrafo y del laboratorio de tiempo son **UTC**; la hora local se muestra solo como referencia.
 

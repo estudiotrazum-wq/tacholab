@@ -141,6 +141,28 @@ try {
   assert((await page.getByTestId('slots').locator('li').count()) === 1, 'el plan gratuito limita a un escenario guardado');
   await page.screenshot({ path: 'e2e/screenshots/08-scenarios.png', fullPage: true });
 
+  // Academia: ejercicio 1 resuelto con los botones del tacógrafo
+  await page.getByRole('button', { name: 'Academia', exact: true }).click();
+  await page.getByTestId('exercise-list').getByText('Conocer los botones').click();
+  await page.getByTestId('start-buttons').click();
+  await page.getByTestId('exercise-panel').waitFor();
+  const press = (label, n = 1) => Array.from({ length: n }).reduce((p) => p.then(() => page.getByRole('button', { name: label, exact: true }).click()), Promise.resolve());
+  await press('Abajo', 2);
+  await press('Confirmar / menú');
+  await press('Abajo', 4);
+  await press('Confirmar / menú');
+  await press('Retroceder', 2);
+  await press('Botón de actividad');
+  assert((await page.getByTestId('exercise-steps').locator('li').filter({ hasText: '✓' }).count()) === 6, 'el ejercicio avanza paso a paso con los botones');
+  await page.screenshot({ path: 'e2e/screenshots/10-exercise.png', fullPage: true });
+  await page.getByTestId('exercise-finish').click();
+  assert((await page.getByTestId('exercise-score').innerText()) === '100', 'el ejercicio 1 se evalúa con 100 puntos');
+  await page.screenshot({ path: 'e2e/screenshots/11-exercise-result.png' });
+  await page.getByTestId('result-back').click();
+  assert((await page.getByTestId('free-progress').innerText()) === '1/5', 'la academia guarda el progreso');
+  assert((await page.getByTestId('badges').innerText()).includes('🏅 Primeros pasos'), 'se obtiene la insignia «Primeros pasos»');
+  await page.screenshot({ path: 'e2e/screenshots/12-academy.png', fullPage: true });
+
   // Vista móvil: modo dispositivo recomendado y barra de control fija
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Cabina', exact: true }).click();

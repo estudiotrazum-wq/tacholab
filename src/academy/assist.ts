@@ -3,7 +3,7 @@ import { deriveSummary } from '@/simulator/derived';
 import { CONTINUOUS_DRIVING_PREWARN } from '@/regulations/continuousDriving';
 
 /** Elemento de la interfaz a resaltar en modo asistido. */
-export type AssistTarget = 'CARD_SLOT' | 'OK' | 'UP_DOWN' | 'ACTIVITY' | 'VEHICLE' | 'CLOCK' | 'BACK' | null;
+export type AssistTarget = 'CARD_SLOT' | 'OK' | 'UP_DOWN' | 'ACTIVITY' | 'VEHICLE' | 'CLOCK' | 'BACK' | 'EJECT' | null;
 
 export interface AssistHint {
   text: string;

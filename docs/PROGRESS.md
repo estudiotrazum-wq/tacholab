@@ -2,6 +2,18 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## Fase 5 — Academia ✅ (rama `fase-5-academia`)
+- [x] Modelo de ejercicio: objetivo, situación inicial, estado del tacógrafo, instrucciones opcionales paso a paso,
+      condiciones de éxito, errores detectables con penalización y norma, puntuación (0–100, 0–3 estrellas) y explicación final
+- [x] Seguimiento puro (`academy/session.ts`): observa la simulación, acumula hechos y avanza los pasos en orden
+- [x] Ejercicios funcionales: 1–5 (gratuitos) y 6, 12, 14, 15 (premium; el 15 es un cuestionario sobre un historial)
+- [x] Ejercicios 7–11, 13 y 16 visibles como «Próximamente» (sin simular que funcionan)
+- [x] Las instrucciones se pueden ocultar (modo libre) y resaltan el control del paso actual en el tacógrafo y en la cabina
+- [x] Progreso y mejor resultado guardados; 10 insignias de aprendizaje sin rachas ni recompensas por infringir
+- [x] Un ejercicio con infracciones no se aprueba
+- [x] 99 pruebas unitarias (cada ejercicio resuelto bien y mal con el simulador real) + E2E del ejercicio 1
+- [ ] Certificado privado de finalización (no oficial): pendiente (Fase 6, junto con las cuentas)
+
 ## Fase 4 — Experiencia inmersiva ✅ (rama `fase-4-inmersiva`)
 - [x] Cámara con cuatro puntos de vista (conducción, tacógrafo, retrovisor, consola de techo), transiciones y encuadre
       limitado para no mostrar zonas vacías (`ui/cabin/camera.ts`, probado)
@@ -75,10 +87,10 @@
 - [ ] Sin internacionalización (textos en español en componentes)
 - [ ] Accesibilidad: falta auditoría completa (lectores de pantalla, contraste AA medido)
 
-## Siguiente paso: Fase 5 — Academia
-- Ejercicios guiados con puntuación, progreso e insignias (los cinco gratuitos primero), reutilizando los escenarios y
-  el modo asistido.
-- Posible evolución visual futura: cabina en React Three Fiber (la cámara y la iluminación ya están separadas del dibujo).
+## Siguiente paso: Fase 6 — Comercialización
+- Cuentas opcionales y sincronización (Supabase), validación de premium en servidor, Stripe en modo pruebas,
+  páginas legales, analítica respetuosa con la privacidad y despliegue público.
+- Completar los ejercicios premium 7–11, 13 y 16 y el certificado no oficial.
 
 ## (Histórico) Plan de la Fase 2
 1. ~~Obtener y archivar el texto consolidado vigente~~ (hecho: 31.12.2024). Contrastar la Directiva 2002/15/CE (disponibilidad).
