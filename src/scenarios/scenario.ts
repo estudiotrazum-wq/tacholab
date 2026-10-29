@@ -18,6 +18,8 @@ export interface ScenarioMeta {
   timeZone: string;
   /** Zona solo para mostrar la hora local de referencia (no interviene en cálculos). */
   localTimeZone: string;
+  /** Escenario de la biblioteca del que procede (objetivos y evaluación). */
+  libraryId?: string;
 }
 
 /**

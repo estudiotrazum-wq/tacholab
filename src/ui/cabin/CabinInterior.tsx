@@ -16,7 +16,25 @@ export interface CabinInteriorProps {
   onGear: () => void;
   onHorn: () => void;
   onLed: (c: LedColor) => void;
+  hazards: boolean;
+  headlights: boolean;
+  interiorLight: boolean;
+  visorDown: boolean;
+  ledOn: boolean;
+  onMirror: () => void;
+  onRoof: () => void;
+  onVisor: () => void;
+  onSwitch: (id: CabinSwitch) => void;
 }
+
+export type CabinSwitch = 'headlights' | 'interiorLight' | 'hazards' | 'ledOn';
+
+const SWITCHES: { id: CabinSwitch; label: string; icon: string }[] = [
+  { id: 'headlights', label: 'Faros', icon: 'M6 8h6l3 4-3 4H6M17 9h4M17 12h4M17 15h4' },
+  { id: 'interiorLight', label: 'Luz interior', icon: 'M12 4v3M6 9l2 2M18 9l-2 2M8 15a4 4 0 0 1 8 0Z' },
+  { id: 'hazards', label: 'Luces de emergencia', icon: 'M12 5 20 19H4Z' },
+  { id: 'ledOn', label: 'Iluminación LED ambiental', icon: 'M5 12h14M7 8h10M7 16h10' },
+];
 
 /** Contorno del habitáculo: todo menos el parabrisas y las ventanillas laterales. */
 const WINDSHIELD = 'M232 118 L1368 118 L1442 580 L158 580Z';
@@ -49,7 +67,7 @@ function Led({ d, width = 4, breathe = true }: { d: string; width?: number; brea
   );
 }
 
-function Mirror({ x, flip }: { x: number; flip: boolean }) {
+function Mirror({ x, flip, hazards }: { x: number; flip: boolean; hazards: boolean }) {
   const armX = flip ? x - 40 : x + 74;
   return (
     <g>
@@ -60,6 +78,10 @@ function Mirror({ x, flip }: { x: number; flip: boolean }) {
       {/* Lateral del semirremolque propio en el reflejo */}
       <path d={flip ? `M${x + 7} 236 L${x + 24} 236 L${x + 24} 342 L${x + 7} 342Z` : `M${x + 50} 236 L${x + 67} 236 L${x + 67} 342 L${x + 50} 342Z`} fill="#cfd6dd" opacity="0.55" />
       <rect x={flip ? x + 7 : x + 46} y="250" width="21" height="4" className="led-fill" opacity="0.5" />
+      {/* Marcas viales en el reflejo: se desplazan al circular */}
+      <path d={`M${flip ? x + 52 : x + 20} 300 L${flip ? x + 40 : x + 32} 346`} className="mirror-road" stroke="#f4f1e3" strokeWidth="2.5" strokeDasharray="6 10" />
+      {/* Repetidor de intermitente */}
+      <rect x={x + 22} y="408" width="30" height="7" rx="3" fill={hazards ? '#fbbf24' : '#3b3020'} className={hazards ? 'hazard-blink' : ''} />
     </g>
   );
 }
@@ -103,6 +125,14 @@ export function CabinInterior(p: CabinInteriorProps) {
           <stop offset="0.6" stopColor="#000" stopOpacity="0" />
           <stop offset="1" stopColor="#000" stopOpacity="0.55" />
         </radialGradient>
+        {/* Solo el habitáculo (sin cristales): para que la luz interior no se pinte sobre el paisaje */}
+        <clipPath id="interior">
+          <path d={FRAME} clipRule="evenodd" />
+        </clipPath>
+        <radialGradient id="dome" cx="0.5" cy="0" r="1">
+          <stop offset="0" stopColor="#ffe7b0" stopOpacity="0.45" />
+          <stop offset="1" stopColor="#fff1cf" stopOpacity="0" />
+        </radialGradient>
         <radialGradient id="ledwash" cx="0.5" cy="0" r="0.8">
           <stop offset="0" stopColor="var(--led)" stopOpacity={0.28 * glow} />
           <stop offset="1" stopColor="var(--led)" stopOpacity="0" />
@@ -120,8 +150,11 @@ export function CabinInterior(p: CabinInteriorProps) {
       </g>
 
       {/* Retrovisores (se ven a través de las ventanillas laterales) */}
-      <Mirror x={18} flip={false} />
-      <Mirror x={1508} flip />
+      <Hotspot label="Mirar el retrovisor izquierdo" onActivate={p.onMirror} testId="cab-mirror">
+        <Mirror x={18} flip={false} hazards={p.hazards} />
+        <rect x="12" y="214" width="86" height="206" rx="14" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="3" />
+      </Hotspot>
+      <Mirror x={1508} flip hazards={p.hazards} />
 
       {/* Habitáculo */}
       <path d={FRAME} fillRule="evenodd" fill="url(#trim)" />
@@ -140,9 +173,18 @@ export function CabinInterior(p: CabinInteriorProps) {
       <path d="M0 112 H1600 V380 H0Z" fill="url(#ledwash)" className="led-breathe pointer-events-none" />
       <Led d="M40 106 H1560" width={3.5} />
 
+      {/* Luz interior de techo */}
+      <g>
+        <rect x="1232" y="92" width="76" height="16" rx="8" fill={p.interiorLight ? '#fff3d6' : '#1c2430'} stroke="#2b3747" />
+        {p.interiorLight && <ellipse cx="1270" cy="300" rx="520" ry="420" fill="url(#dome)" clipPath="url(#interior)" pointerEvents="none" data-testid="dome-light" />}
+      </g>
+
       {/* Consola de techo: selector de iluminación ambiental */}
       <g>
-        <rect x="636" y="12" width="328" height="84" rx="12" fill="#121923" stroke="#2a3644" />
+        <Hotspot label="Acercarse a la consola de techo" onActivate={p.onRoof} testId="cab-roof">
+          <rect x="636" y="12" width="328" height="84" rx="12" fill="#121923" stroke="#2a3644" />
+          <rect x="632" y="8" width="336" height="92" rx="14" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="2" />
+        </Hotspot>
         <text x="800" y="36" textAnchor="middle" fill="#7c8a9c" fontSize="13" letterSpacing="4">AMBIENTE LED</text>
         {(Object.keys(LED_COLORS) as LedColor[]).map((c, i) => {
           const cx = 688 + i * 56;
@@ -158,8 +200,13 @@ export function CabinInterior(p: CabinInteriorProps) {
         })}
       </g>
 
-      {/* Parasol izquierdo bajado */}
-      <path d="M252 112 L610 112 L600 182 Q430 192 262 182Z" fill="#111821" opacity="0.94" stroke="#222d3a" />
+      {/* Parasol izquierdo: se sube o se baja */}
+      <Hotspot label={p.visorDown ? 'Subir el parasol' : 'Bajar el parasol'} onActivate={p.onVisor} testId="cab-visor">
+        <g style={{ transform: p.visorDown ? 'none' : 'translateY(-58px) scaleY(0.25)', transformOrigin: '430px 112px', transition: 'transform 400ms ease' }}>
+          <path d="M252 112 L610 112 L600 182 Q430 192 262 182Z" fill="#111821" opacity="0.94" stroke="#222d3a" />
+        </g>
+        <rect x="252" y="112" width="358" height="80" fill="transparent" />
+      </Hotspot>
 
       {/* Colgante (se balancea en marcha) */}
       <g className="cab-charm">
@@ -191,15 +238,23 @@ export function CabinInterior(p: CabinInteriorProps) {
         </g>
       ))}
 
-      {/* Panel de interruptores (luces, calefacción…): solo ambientación */}
+      {/* Panel de interruptores: faros, luz interior, emergencia y LED */}
       <g>
         <rect x="150" y="690" width="170" height="70" rx="10" fill="#0e141c" stroke="#222d3a" />
-        {[0, 1, 2, 3].map((i) => (
-          <g key={i}>
-            <rect x={164 + i * 38} y="704" width="28" height="42" rx="5" fill="#1a2330" stroke="#2c3a4b" />
-            <circle cx={178 + i * 38} cy="714" r="3" className={i % 2 ? '' : 'led-fill'} fill={i % 2 ? '#334155' : undefined} />
-          </g>
-        ))}
+        {SWITCHES.map((sw, i) => {
+          const on = p[sw.id];
+          const x = 164 + i * 38;
+          return (
+            <Hotspot key={sw.id} label={`${sw.label}: ${on ? 'encendido' : 'apagado'}`} onActivate={() => p.onSwitch(sw.id)} testId={`switch-${sw.id}`}>
+              <rect x={x} y="704" width="28" height="42" rx="5" fill={on ? '#243042' : '#1a2330'} stroke={on ? '#3f5168' : '#2c3a4b'} />
+              <circle cx={x + 14} cy="713" r="3.5" fill={on ? (sw.id === 'hazards' ? '#fbbf24' : '#34d399') : '#334155'} className={on && sw.id === 'hazards' ? 'hazard-blink' : ''} />
+              <g transform={`translate(${x + 4} 720) scale(0.85)`}>
+                <path d={sw.icon} fill="none" stroke={on ? '#e2e8f0' : '#64748b'} strokeWidth="1.8" strokeLinejoin="round" />
+              </g>
+              <rect x={x - 2} y="702" width="32" height="46" rx="6" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="2" />
+            </Hotspot>
+          );
+        })}
       </g>
 
       {/* Cuadro de instrumentos */}
@@ -217,6 +272,9 @@ export function CabinInterior(p: CabinInteriorProps) {
         <rect x="503" y="668" width="114" height="84" rx="10" fill="#071722" stroke="#123445" />
         <text x="560" y="712" textAnchor="middle" fill="#7df9ff" fontSize="34" fontFamily="monospace">{speed}</text>
         <text x="560" y="740" textAnchor="middle" fill="#5eead4" fontSize="14" fontFamily="monospace">{p.localTime}</text>
+        {/* Testigos: faros y emergencia */}
+        <path d="M506 684 h9 l4 5 -4 5 h-9Z" fill={p.headlights ? '#22c55e' : '#1e293b'} />
+        <path d="M604 680 l9 15 h-18Z" fill={p.hazards ? '#ef4444' : '#1e293b'} className={p.hazards ? 'hazard-blink' : ''} />
       </g>
 
       {/* Volante de camión: grande y casi horizontal */}

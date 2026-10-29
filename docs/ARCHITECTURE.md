@@ -36,15 +36,16 @@ dispositivo interactivo, reloj virtual acelerable, horizonte fijo de **dos seman
 src/
   shared/        tipos comunes (Activity, EpochMs)
   time-engine/   units, zoned (zonas horarias/DST), clock (reloj virtual), timeline (eventos)
-  regulations/   rules (catálogo), continuousDriving (art. 7, preliminar)
+  regulations/   rules (catálogo), continuousDriving (art. 7), compliance (arts. 6 y 8: jornadas, descansos, informe)
   tachograph/    types (máquina de estados), manualEntry, display (modelo de pantalla)
-  simulator/     state, engine (reductor), derived (resúmenes), store (Zustand)
-  scenarios/     scenario (horizonte 14 días), cards (tarjetas ficticias)
-  academy/       assist (modo asistido), exercises (catálogo)
-  achievements/  (Fase 5)
+  simulator/     state, engine (reductor), derived (resúmenes), warnings (avisos derivados del informe), store (Zustand)
+  scenarios/     scenario (horizonte 14 días), cards (tarjetas ficticias), builder (calendarios coherentes), library (biblioteca y objetivos)
+  academy/       assist (modo asistido), types, setup, basic (ej. 1–5), catalog (1–16), session (seguimiento y nota), store
+  achievements/  badges (insignias y progreso)
   billing/       plans (features, precios, entitlements)
-  persistence/   storage (localStorage, puntos guardados, borrado)
-  ui/            App, screens/, components/, hooks/
+  persistence/   storage (localStorage, punto de restauración, borrado), slots (escenarios guardados por plan)
+  ui/            App, screens/, components/, hooks/ (useDeviceKeys, useMediaQuery, useSimLoop),
+                 cabin/ (camera, lighting, cabinStore: estado visual separado, CabinScene, CabinInterior)
 e2e/             smoke.mjs (Playwright)
 docs/
 ```

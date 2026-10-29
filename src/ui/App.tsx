@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
 import { useUiStore, type View } from './uiStore';
+import { useSimStore } from '@/simulator/store';
+import { useAcademyStore } from '@/academy/store';
+import { ExerciseResultDialog } from './components/ExerciseResultDialog';
 import { useSimLoop } from './hooks/useSimLoop';
 import { HomeScreen } from './screens/HomeScreen';
 import { CabinScreen } from './screens/CabinScreen';
 import { DeviceScreen } from './screens/DeviceScreen';
-import { HistoryScreen } from './screens/HistoryScreen';
+import { CalendarScreen } from './screens/CalendarScreen';
+import { ScenariosScreen } from './screens/ScenariosScreen';
+import { ReportScreen } from './screens/ReportScreen';
 import { AcademyScreen } from './screens/AcademyScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -12,7 +18,9 @@ const NAV: { id: View; label: string }[] = [
   { id: 'home', label: 'Inicio' },
   { id: 'cabin', label: 'Cabina' },
   { id: 'device', label: 'Tacógrafo' },
-  { id: 'history', label: 'Historial' },
+  { id: 'calendar', label: 'Calendario' },
+  { id: 'report', label: 'Informe' },
+  { id: 'scenarios', label: 'Escenarios' },
   { id: 'academy', label: 'Academia' },
   { id: 'premium', label: 'Premium' },
   { id: 'settings', label: 'Ajustes' },
@@ -20,11 +28,18 @@ const NAV: { id: View; label: string }[] = [
 
 export function App() {
   useSimLoop();
+  // La academia observa cada cambio de la simulación para avanzar los pasos del ejercicio.
+  useEffect(() => {
+    useAcademyStore.getState().observe(useSimStore.getState().sim);
+    return useSimStore.subscribe((s, prev) => {
+      if (s.sim !== prev.sim) useAcademyStore.getState().observe(s.sim);
+    });
+  }, []);
   const { view, go, disclaimerAccepted, update } = useUiStore();
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-20 border-b border-ink-700 bg-ink-950/90 backdrop-blur">
+      <header className="sticky top-0 z-20 print:hidden border-b border-ink-700 bg-ink-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2">
           <button type="button" onClick={() => go('home')} className="flex items-center gap-2 font-semibold text-white">
             <span className="grid h-7 w-7 place-items-center rounded-md bg-cyan-500/15 font-mono text-xs text-cyan-300">TL</span>
@@ -50,15 +65,19 @@ export function App() {
         {view === 'home' && <HomeScreen />}
         {view === 'cabin' && <CabinScreen />}
         {view === 'device' && <DeviceScreen />}
-        {view === 'history' && <HistoryScreen />}
+        {view === 'calendar' && <CalendarScreen />}
+        {view === 'report' && <ReportScreen />}
+        {view === 'scenarios' && <ScenariosScreen />}
         {view === 'academy' && <AcademyScreen />}
         {view === 'premium' && <PremiumScreen />}
         {view === 'settings' && <SettingsScreen />}
       </main>
 
-      <footer className="border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
-        TachoLab EU v0.2 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+      <footer className="print:hidden border-t border-ink-800 px-4 py-3 text-center text-[11px] text-slate-500">
+        TachoLab EU v0.6 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
       </footer>
+
+      <ExerciseResultDialog />
 
       {!disclaimerAccepted && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="disc-title">

@@ -3,14 +3,6 @@ import { advanceClockTo, setSpeed, tickClock, type Speed } from '@/time-engine/c
 import { insertManualSegments, switchActivity, type ActivityTarget } from '@/time-engine/timeline';
 import { addZonedDays, formatDateTime, startOfZonedDay } from '@/time-engine/zoned';
 import {
-  computeContinuousDriving,
-  CONTINUOUS_DRIVING_LIMIT,
-  CONTINUOUS_DRIVING_PREWARN,
-  FULL_BREAK,
-  SPLIT_FIRST,
-  SPLIT_SECOND,
-} from '@/regulations/continuousDriving';
-import {
   COUNTRIES,
   INSERTION_FLOW,
   MENU_ITEMS,
@@ -20,7 +12,7 @@ import {
   type Screen,
 } from '@/tachograph/types';
 import { cycleManualActivity, MIN_MANUAL_GAP, newDraft, stepManualEnd } from '@/tachograph/manualEntry';
-import { currentDriverEvents } from './derived';
+import { nextStop, warningTriggers } from './warnings';
 import type { LogKind, SimConfig, SimState } from './state';
 
 export type SimAction =
@@ -74,84 +66,42 @@ function raiseWarning(sim: SimState, w: DeviceWarning): SimState {
   return log(next, 'WARNING', `${w.title}: ${w.text}`, w.at);
 }
 
-/** Detecta cruces de umbral de conducción continua tras cualquier cambio. */
+/** Emite, en orden y con su instante exacto, los avisos cuyo umbral ya se ha cruzado. */
 function checkWarnings(sim: SimState): SimState {
   if (!sim.device.insertedCardId) return sim;
-  const status = computeContinuousDriving(currentDriverEvents(sim), sim.clock.now);
-  const acc = status.drivingSinceBreakMs;
-  const flags = sim.device.warnFlags;
-  const crossingAt = (threshold: number) => sim.clock.now - (acc - threshold);
-
-  if (acc < CONTINUOUS_DRIVING_PREWARN) {
-    if (flags.prewarn || flags.exceeded) {
-      return { ...sim, device: { ...sim.device, warnFlags: { prewarn: false, exceeded: false } } };
-    }
-    return sim;
+  const due = warningTriggers(sim)
+    .filter((t) => t.at <= sim.clock.now && !sim.device.warnFlags[t.key])
+    .sort((a, b) => a.at - b.at);
+  let s = sim;
+  for (const t of due) {
+    s = { ...s, device: { ...s.device, warnFlags: { ...s.device.warnFlags, [t.key]: true } } };
+    s = raiseWarning(s, { ...t.warning, at: t.at });
   }
-  let next = sim;
-  if (acc >= CONTINUOUS_DRIVING_LIMIT && !flags.exceeded) {
-    next = { ...next, device: { ...next.device, warnFlags: { prewarn: true, exceeded: true } } };
-    return raiseWarning(next, {
-      code: 'CONT_DRIVING_EXCEEDED',
-      title: 'Conducción continua superada',
-      text: 'Has superado 4 h 30 min sin una pausa válida. Detén el vehículo y realiza una pausa.',
-      ruleId: 'R561-ART7-CONT',
-      at: crossingAt(CONTINUOUS_DRIVING_LIMIT),
-    });
-  }
-  if (!flags.prewarn) {
-    next = { ...next, device: { ...next.device, warnFlags: { ...flags, prewarn: true } } };
-    return raiseWarning(next, {
-      code: 'CONT_DRIVING_PREWARN',
-      title: 'Pausa próxima',
-      text: 'Llevas 4 h 15 min de conducción continua. Planifica una pausa en los próximos 15 min.',
-      ruleId: 'R561-ART7-CONT',
-      at: crossingAt(CONTINUOUS_DRIVING_PREWARN),
-    });
-  }
-  return next;
+  return s;
 }
 
-/** Avanza el reloj hasta `target` respetando los cruces de umbral intermedios. */
+/** Avanza el reloj hasta `target` deteniéndose en cada umbral intermedio. */
 function advanceTo(sim: SimState, target: EpochMs): SimState {
-  let s = sim;
-  // Detenerse en cada umbral para que los avisos se registren en orden y con su instante exacto.
-  for (let guard = 0; guard < 8; guard++) {
-    const stop = nextThreshold(s);
-    if (stop === null || stop >= target) break;
-    s = checkWarnings({ ...s, clock: advanceClockTo(s.clock, stop) });
+  let s = checkWarnings(sim);
+  for (let guard = 0; guard < 64; guard++) {
+    const stop = nextStop(s);
+    if (stop === null || stop.at >= target) break;
+    s = checkWarnings({ ...s, clock: advanceClockTo(s.clock, stop.at) });
+    if (s.clock.now >= s.clock.endsAt) break;
   }
   return checkWarnings({ ...s, clock: advanceClockTo(s.clock, target) });
 }
 
-/** Próximo instante en que cambia algo relevante de la conducción continua. */
-function nextThreshold(sim: SimState): EpochMs | null {
-  if (!sim.device.insertedCardId) return null;
-  const now = sim.clock.now;
-  const status = computeContinuousDriving(currentDriverEvents(sim), now);
-  const acc = status.drivingSinceBreakMs;
-  if (sim.vehicle.moving) {
-    const t = [CONTINUOUS_DRIVING_PREWARN, CONTINUOUS_DRIVING_LIMIT].find((th) => th > acc);
-    return t === undefined ? null : now + (t - acc);
-  }
-  if (sim.device.selected === 'REST' && status.currentBreakMs > 0 && acc > 0) {
-    const goals = status.splitFirstTaken ? [SPLIT_SECOND] : [SPLIT_FIRST, FULL_BREAK];
-    const g = goals.find((x) => x > status.currentBreakMs);
-    return g === undefined ? null : now + (g - status.currentBreakMs);
-  }
-  return null;
-}
-
-/** Siguiente evento relevante: umbral normativo, medianoche local o fin de escenario. */
+/** Siguiente evento relevante: umbral normativo, hito de descanso, medianoche UTC o fin de escenario. */
 export function nextRelevantEvent(sim: SimState): { at: EpochMs; label: string } {
   const now = sim.clock.now;
   const tz = sim.scenario.timeZone;
   const candidates: { at: EpochMs; label: string }[] = [
-    { at: addZonedDays(startOfZonedDay(now, tz), 1, tz), label: 'Medianoche (cambio de día)' },
+    { at: addZonedDays(startOfZonedDay(now, tz), 1, tz), label: 'Medianoche UTC (cambio de día)' },
     { at: sim.clock.endsAt, label: 'Fin del escenario' },
   ];
-  const th = nextThreshold(sim);
-  if (th !== null) candidates.push({ at: th, label: sim.vehicle.moving ? 'Umbral de conducción continua' : 'Pausa completada' });
+  const stop = nextStop(sim);
+  if (stop) candidates.push(stop);
   return candidates.filter((c) => c.at > now).sort((a, b) => a.at - b.at)[0] ?? { at: now, label: 'Fin' };
 }
 
@@ -190,7 +140,6 @@ function completeWithdrawal(sim: SimState): SimState {
       insertedCardId: null,
       insertedAt: null,
       screen: STANDARD,
-      warnFlags: { prewarn: false, exceeded: false },
     },
   };
   return notice(syncTimeline(s), 'Tarjeta retirada');
@@ -383,6 +332,7 @@ function setMoving(sim: SimState, moving: boolean): SimState {
     if (!s.device.insertedCardId) {
       s = raiseWarning(s, {
         code: 'DRIVING_WITHOUT_CARD',
+        severity: 'warning',
         title: 'Conducción sin tarjeta',
         text: 'El vehículo circula sin tarjeta de conductor. La actividad no se asigna a ningún conductor.',
         ruleId: null,

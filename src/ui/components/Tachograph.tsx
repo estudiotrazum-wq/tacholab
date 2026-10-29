@@ -91,7 +91,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
           <DeviceButton label="Abajo" onClick={() => press('DOWN')} className={hl('UP_DOWN')} shortcut="↓">▼</DeviceButton>
           <DeviceButton label="Retroceder" onClick={() => press('BACK')} className={hl('BACK')} shortcut="Esc">✕</DeviceButton>
           <DeviceButton label="Confirmar / menú" onClick={() => press('OK')} className={`${hl('OK')} text-cyan-300`} shortcut="Enter">✓</DeviceButton>
-          <DeviceButton label="Expulsar tarjeta" onClick={() => press('EJECT')} className="col-span-2 sm:col-span-2" shortcut="E">
+          <DeviceButton label="Expulsar tarjeta" onClick={() => press('EJECT')} className={`col-span-2 sm:col-span-2 ${hl('EJECT')}`} shortcut="E">
             ⏏ <span className="ml-1 text-[11px] tracking-wider">TARJETA</span>
           </DeviceButton>
         </div>

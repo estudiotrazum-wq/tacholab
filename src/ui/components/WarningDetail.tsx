@@ -9,8 +9,8 @@ export function WarningDetail() {
   if (!w) return null;
   const rule = w.ruleId ? RULES.find((r) => r.id === w.ruleId) : undefined;
   return (
-    <div className="rounded-xl border border-amber-500/50 bg-amber-950/30 p-4 text-sm" role="alert">
-      <div className="font-semibold text-amber-200">⚠ {w.title}</div>
+    <div className={`rounded-xl border p-4 text-sm ${w.severity === 'info' ? 'border-sky-500/50 bg-sky-950/30' : 'border-amber-500/50 bg-amber-950/30'}`} role="alert">
+      <div className="font-semibold text-amber-200">{w.severity === 'info' ? 'ℹ' : '⚠'} {w.title}{w.severity === 'infringement' && <span className="ml-2 rounded bg-rose-500/20 px-1.5 text-[10px] uppercase tracking-wider text-rose-200">infracción simulada</span>}</div>
       <p className="mt-1 text-amber-100/90">{w.text}</p>
       <p className="mt-1 text-xs text-amber-200/70">Instante: {formatDateTime(w.at, tz)}</p>
       {rule && (

@@ -1,59 +1,28 @@
-import { useEffect } from 'react';
-import { assistHint } from '@/academy/assist';
-import { useSimStore } from '@/simulator/store';
-import type { Button } from '@/tachograph/types';
 import { useUiStore } from '../uiStore';
+import { useDeviceKeys } from '../hooks/useDeviceKeys';
+import { MobileControlBar } from '../components/MobileControlBar';
+import { ExercisePanel } from '../components/ExercisePanel';
+import { useGuidance } from '../hooks/useGuidance';
 import { Tachograph } from '../components/Tachograph';
 import { TimeLab } from '../components/TimeLab';
 import { VehiclePanel } from '../components/VehiclePanel';
 import { StatusPanel } from '../components/StatusPanel';
+import { CompliancePanel } from '../components/CompliancePanel';
 import { AssistBanner } from '../components/AssistBanner';
 import { WarningDetail } from '../components/WarningDetail';
 
-const KEYMAP: Record<string, Button> = {
-  ArrowUp: 'UP',
-  ArrowDown: 'DOWN',
-  Enter: 'OK',
-  Escape: 'BACK',
-  a: 'ACTIVITY',
-  e: 'EJECT',
-};
 
 /** Vista principal del simulador: tacógrafo ampliado + reloj + vehículo + estado. */
 export function DeviceScreen() {
-  const sim = useSimStore((s) => s.sim);
-  const dispatch = useSimStore((s) => s.dispatch);
   const { learningMode, warningsEnabled, go } = useUiStore();
-  const hint = assistHint(sim);
-  const highlight = learningMode === 'assisted' ? hint.target : null;
+  const guide = useGuidance();
+  const highlight = guide?.target ?? null;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement;
-      if (el.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
-      // Enter y Escape sobre un botón enfocado conservan su comportamiento nativo.
-      if ((e.key === 'Enter' || e.key === ' ') && el.tagName === 'BUTTON') return;
-      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      const button = KEYMAP[key];
-      const state = useSimStore.getState().sim;
-      if (button) {
-        e.preventDefault();
-        dispatch({ type: 'PRESS', button });
-      } else if (key === 'm') {
-        dispatch({ type: 'SET_MOVING', moving: !state.vehicle.moving });
-      } else if (key === 'i') {
-        dispatch({ type: 'INSERT_CARD', cardId: 'card-a' });
-      } else if (key === ' ') {
-        e.preventDefault();
-        dispatch({ type: 'SET_SPEED', speed: state.clock.speed === 0 ? 60 : 0 });
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [dispatch]);
+  useDeviceKeys();
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 pb-24 sm:pb-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <MobileControlBar />
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <button type="button" onClick={() => go('cabin')} className="text-sm text-slate-400 hover:text-cyan-300">
@@ -61,7 +30,8 @@ export function DeviceScreen() {
           </button>
           <span className="text-xs text-slate-500">Modo {learningMode === 'assisted' ? 'asistido' : 'libre'}</span>
         </div>
-        {learningMode === 'assisted' && <AssistBanner hint={hint} />}
+        <ExercisePanel />
+        {guide?.source === 'assist' && <AssistBanner hint={guide} />}
         <Tachograph highlight={highlight} />
         {warningsEnabled && <WarningDetail />}
         <details className="rounded-xl border border-ink-700 bg-ink-900/60 p-3 text-xs text-slate-400">
@@ -82,6 +52,7 @@ export function DeviceScreen() {
       <div className="space-y-4">
         <TimeLab highlight={highlight} />
         <VehiclePanel highlight={highlight} />
+        <CompliancePanel />
         <StatusPanel />
       </div>
     </div>

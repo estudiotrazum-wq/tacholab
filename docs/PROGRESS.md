@@ -2,6 +2,58 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## Fase 5 — Academia ✅ (rama `fase-5-academia`)
+- [x] Modelo de ejercicio: objetivo, situación inicial, estado del tacógrafo, instrucciones opcionales paso a paso,
+      condiciones de éxito, errores detectables con penalización y norma, puntuación (0–100, 0–3 estrellas) y explicación final
+- [x] Seguimiento puro (`academy/session.ts`): observa la simulación, acumula hechos y avanza los pasos en orden
+- [x] Ejercicios funcionales: 1–5 (gratuitos) y 6, 12, 14, 15 (premium; el 15 es un cuestionario sobre un historial)
+- [x] Ejercicios 7–11, 13 y 16 visibles como «Próximamente» (sin simular que funcionan)
+- [x] Las instrucciones se pueden ocultar (modo libre) y resaltan el control del paso actual en el tacógrafo y en la cabina
+- [x] Progreso y mejor resultado guardados; 10 insignias de aprendizaje sin rachas ni recompensas por infringir
+- [x] Un ejercicio con infracciones no se aprueba
+- [x] 99 pruebas unitarias (cada ejercicio resuelto bien y mal con el simulador real) + E2E del ejercicio 1
+- [ ] Certificado privado de finalización (no oficial): pendiente (Fase 6, junto con las cuentas)
+
+## Fase 4 — Experiencia inmersiva ✅ (rama `fase-4-inmersiva`)
+- [x] Cámara con cuatro puntos de vista (conducción, tacógrafo, retrovisor, consola de techo), transiciones y encuadre
+      limitado para no mostrar zonas vacías (`ui/cabin/camera.ts`, probado)
+- [x] Mirada con el ratón (paralaje con profundidad: el paisaje se mueve menos que el interior)
+- [x] El tacógrafo se maneja **dentro de la cabina** (el componente real superpuesto, con teclado)
+- [x] Iluminación continua según la hora local: cielo, sol que recorre el cielo, luna, estrellas, carretera más oscura de
+      noche (`ui/cabin/lighting.ts`, probado)
+- [x] Interruptores funcionales: faros (haz sobre la calzada), luz interior, emergencia (testigos e intermitentes de los
+      espejos) y LED; parasol abatible; panel de techo con color e intensidad de los LED
+- [x] Reflejo del retrovisor con marcas viales en movimiento
+- [x] Calidad visual «Básica» para ordenadores modestos y respeto de «reducir movimiento»
+- [x] Tableta: cabina completa; móvil: modo dispositivo recomendado y barra de control fija
+- [x] 85 pruebas unitarias + E2E con cámaras, interruptores, LED y móvil
+
+## Fase 3 — Laboratorio de dos semanas ✅ (rama `fase-3-laboratorio`)
+- [x] Calendario de 14 días (sustituye al historial): actividad, franja con la clasificación normativa de cada descanso
+      (diario normal / fraccionado / reducido / insuficiente, semanal normal / reducido), ▲ infracciones y detalle por día
+- [x] Indicadores: semana 1, semana 2, total, ampliaciones, reducidos, disponible, infracciones y obligaciones pendientes
+- [x] Generador de calendarios coherentes (`scenarios/builder.ts`) y biblioteca de escenarios (`scenarios/library.ts`):
+      práctica libre, **referencia 56 h + 34 h** (gratis), semana 2: completa las 34 h, descanso semanal reducido y
+      compensación, encuentra los errores (premium)
+- [x] Objetivos por escenario con comprobación automática en el Informe
+- [x] Escenarios guardados con límite por plan (1 gratis / 5 premium) y borrado
+- [x] Informe imprimible (PDF desde el navegador) y descargable en JSON
+- [x] Vista previa premium solo en el servidor de desarrollo (no existe en la versión compilada)
+- [x] 77 pruebas unitarias + E2E (carga de la referencia, bloqueo premium, límite de guardados)
+
+## Fase 2 — Motor normativo ✅ (preliminar, rama `fase-2-motor-normativo`)
+- [x] Segmentación de la línea temporal en jornadas delimitadas por descansos (no por medianoche)
+- [x] Descanso diario normal / fraccionado 3 + 9 / reducido / insuficiente con la ventana de 24 h (art. 8.2)
+- [x] 9 h / 10 h y ampliaciones por semana, 56 h, 90 h, máximo tres diarios reducidos
+- [x] Descanso semanal normal/reducido, seis periodos de 24 h, dos semanas consecutivas (art. 8.6)
+- [x] Compensaciones con fecha límite; quedan pendientes aunque venzan fuera de las dos semanas
+- [x] Clasificación: infracción simulada / advertencia / requiere contexto / información
+- [x] Avisos del tacógrafo: ampliación, límites diario/semanal/bisemanal, hora de iniciar el descanso diario y el semanal
+- [x] «Siguiente evento» se detiene en los umbrales y en los hitos de descanso (15/30/45 min, 9/11/24/45 h)
+- [x] Panel «Límites normativos» (conducción disponible y factor limitante) y pantalla **Informe**
+- [x] Escenario de referencia 56 h + 34 h validado por pruebas automáticas
+- [x] 70 pruebas unitarias + E2E
+
 ## v0.2
 - [x] Cálculos y pantalla del tacógrafo en **UTC** (semana lunes 00:00 – domingo 24:00 UTC); hora local solo informativa
 - [x] Nueva cabina de camión con LED: carretera animada en perspectiva, día/noche según hora local, retrovisores de camión,
@@ -35,7 +87,12 @@
 - [ ] Sin internacionalización (textos en español en componentes)
 - [ ] Accesibilidad: falta auditoría completa (lectores de pantalla, contraste AA medido)
 
-## Siguiente paso: Fase 2 — Motor normativo
+## Siguiente paso: Fase 6 — Comercialización
+- Cuentas opcionales y sincronización (Supabase), validación de premium en servidor, Stripe en modo pruebas,
+  páginas legales, analítica respetuosa con la privacidad y despliegue público.
+- Completar los ejercicios premium 7–11, 13 y 16 y el certificado no oficial.
+
+## (Histórico) Plan de la Fase 2
 1. ~~Obtener y archivar el texto consolidado vigente~~ (hecho: 31.12.2024). Contrastar la Directiva 2002/15/CE (disponibilidad).
 2. Segmentar la línea temporal en **periodos de trabajo diarios** delimitados por descansos (11 h, 3+9, ≥9 h reducido).
 3. Reglas: 9 h/10 h (contador de ampliaciones por semana), 56 h, 90 h, descansos diarios/semanales, reducciones y

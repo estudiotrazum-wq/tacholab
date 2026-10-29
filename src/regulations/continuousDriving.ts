@@ -32,6 +32,8 @@ export interface ContinuousDrivingStatus {
   overrunMs: number;
   /** Instantes en que se superó el límite (uno por periodo de conducción). */
   overruns: EpochMs[];
+  /** Número de pausas válidas completadas: identifica el periodo de conducción actual. */
+  periodIndex: number;
 }
 
 interface Block {
@@ -69,6 +71,7 @@ export function computeContinuousDriving(
   let lastValidBreakEnd: EpochMs | null = null;
   const overruns: EpochMs[] = [];
   let overrunRecorded = false;
+  let periodIndex = 0;
 
   blocks.forEach((b, i) => {
     if (!b.rest) {
@@ -86,6 +89,7 @@ export function computeContinuousDriving(
     const valid = d >= FULL_BREAK || (splitFirst && d >= SPLIT_SECOND);
     if (valid) {
       acc = 0;
+      periodIndex++;
       splitFirst = false;
       overrunRecorded = false;
       lastValidBreakEnd = ongoing ? null : b.end;
@@ -104,6 +108,7 @@ export function computeContinuousDriving(
     lastValidBreakEnd,
     overrunMs: Math.max(0, acc - CONTINUOUS_DRIVING_LIMIT),
     overruns,
+    periodIndex,
   };
 }
 

@@ -1,13 +1,16 @@
 import { useSimStore } from '@/simulator/store';
+import { useAcademyStore } from '@/academy/store';
 import type { SimConfig } from '@/simulator/state';
 import { useUiStore } from '../uiStore';
 import { Panel } from '../components/Panel';
+import { useCabinStore, type Quality } from '../cabin/cabinStore';
 
 export function SettingsScreen() {
   const ui = useUiStore();
   const config = useSimStore((s) => s.sim.config);
   const dispatch = useSimStore((s) => s.dispatch);
   const wipe = useSimStore((s) => s.wipeAllData);
+  const cab = useCabinStore();
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6">
@@ -32,6 +35,15 @@ export function SettingsScreen() {
         </fieldset>
       </Panel>
 
+      <Panel title="Cabina">
+        <label className="block text-sm text-slate-300" htmlFor="quality">Calidad visual</label>
+        <select id="quality" value={cab.quality} onChange={(e) => cab.set({ quality: e.target.value as Quality })} className="mt-1 rounded-md border border-ink-600 bg-ink-900 px-2 py-1 text-sm">
+          <option value="high">Alta (luces difuminadas, animaciones y mirada con el ratón)</option>
+          <option value="low">Básica (para ordenadores modestos)</option>
+        </select>
+        <p className="mt-1 text-xs text-slate-500">Con «Básica» se desactivan los desenfoques y las animaciones decorativas. Si tu sistema pide reducir el movimiento, se respeta siempre.</p>
+      </Panel>
+
       <Panel title="Comportamiento del equipo (aproximación pedagógica)">
         <label className="block text-sm text-slate-300" htmlFor="after-stop">Actividad seleccionada al detener el vehículo</label>
         <select
@@ -48,6 +60,16 @@ export function SettingsScreen() {
         <p className="mt-1 text-xs text-slate-500">El comportamiento real depende del modelo, la generación y la configuración del equipo instalado.</p>
       </Panel>
 
+      {import.meta.env.DEV && (
+        <Panel title="Desarrollo">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={ui.devPremiumPreview} onChange={(e) => ui.update({ devPremiumPreview: e.target.checked })} className="accent-cyan-400" />
+            <span className="text-slate-100">Vista previa de contenido premium (solo en el servidor de desarrollo)</span>
+          </label>
+          <p className="mt-1 text-xs text-slate-500">No existe en la versión publicada. El acceso real se validará en servidor en la Fase 6.</p>
+        </Panel>
+      )}
+
       <Panel title="Datos y privacidad">
         <p className="text-sm text-slate-300">
           Todo se guarda solo en este navegador. No se solicitan datos reales de tarjetas, tacógrafos, matrículas ni documentación profesional; las tarjetas son ficticias.
@@ -57,6 +79,7 @@ export function SettingsScreen() {
           onClick={() => {
             if (window.confirm('¿Borrar todos los datos guardados de TachoLab en este navegador?')) {
               wipe();
+              useAcademyStore.setState({ progress: {}, session: null });
               ui.update({ disclaimerAccepted: false });
             }
           }}
