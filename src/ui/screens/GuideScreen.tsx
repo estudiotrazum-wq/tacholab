@@ -46,7 +46,7 @@ export function GuideScreen() {
         <Card n="1" title="Las piezas del tacógrafo">
           <Dl
             items={[
-              ['Pantalla', 'Dos líneas. Arriba: hora, actividad y velocidad. Abajo: conducción desde la última pausa y descanso.'],
+              ['Pantalla', 'Dos líneas. Arriba: hora, actividad y velocidad. Abajo: conducción desde la última pausa y descanso. Con ▲ ▼: tiempo restante de conducción, acumulados y hora UTC/local.'],
               ['✕ ▲ ▼ OK', 'Volver, moverse por las opciones y confirmar / abrir el menú.'],
               ['Tecla 1 / 2', 'Pulsación corta: cambia la actividad del conductor 1 o 2. Mantener pulsada: sacar la tarjeta.'],
               ['⏏', 'Botón de expulsión junto a cada ranura.'],
@@ -63,7 +63,7 @@ export function GuideScreen() {
               'Bienvenida: tu nombre y la hora local → OK.',
               'Última retirada: fecha y hora UTC en que sacaste la tarjeta → OK.',
               'Si hay un hueco sin tarjeta: «¿Entrada manual?» → ver punto 3.',
-              'País de inicio con ▲ ▼ → OK. «Listo para conducir».',
+              'País de inicio con ▲ ▼ → OK. En España, también la comunidad autónoma → OK. «Listo para conducir».',
               'Llave a I y luego a II para arrancar.',
             ]}
           />
@@ -78,7 +78,7 @@ export function GuideScreen() {
               '«¿Entrada manual?» SÍ → OK.',
               'Para cada tramo: actividad (▲ ▼) → OK → hora de fin → OK → minutos → OK.',
               'Si el tramo no llega hasta la inserción, se abre otro tramo.',
-              'País de fin de la jornada anterior → OK.',
+              'País (y en España, comunidad autónoma) de fin de la jornada anterior → OK.',
               '«¿Confirmar?» → OK. Después, país de inicio.',
             ]}
           />
@@ -109,7 +109,7 @@ export function GuideScreen() {
             items={[
               'Detén el camión (acelerador a 0) y elige la actividad.',
               'Pulsa ⏏ junto a la ranura o mantén pulsada la tecla 1.',
-              'País de fin con ▲ ▼ → OK.',
+              'País de fin con ▲ ▼ → OK (en España, también la comunidad autónoma).',
               '«¿Imprimir 24 h?» SÍ o NO → OK.',
               'La tarjeta sale: retírala. Con ✕ puedes cancelar antes de confirmar.',
             ]}

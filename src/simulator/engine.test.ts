@@ -13,8 +13,8 @@ const press = (...b: Button[]): SimAction[] => b.map((button) => ({ type: 'PRESS
 
 /** Inserta la tarjeta A y completa el procedimiento (sin entrada manual previa). */
 function withCard(sim = createInitialSim()): SimState {
-  // Bienvenida → última retirada (primer uso) → país de inicio
-  return run(sim, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK'));
+  // Bienvenida → última retirada (primer uso) → país de inicio → comunidad autónoma
+  return run(sim, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK', 'OK'));
 }
 
 describe('simulador: tarjeta y actividades', () => {
@@ -27,8 +27,15 @@ describe('simulador: tarjeta y actividades', () => {
     s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'start' });
     s = run(s, ...press('OK'));
+    // España: se pide la comunidad autónoma
+    expect(s.device.screen).toMatchObject({ kind: 'REGION', purpose: 'start' });
+    expect(lcdPlain(renderDisplay(s).lines[1])).toContain('Andalucía');
+    s = run(s, ...press('UP')); // la lista es circular: ▲ desde la primera lleva a la última (País Vasco)
+    s = run(s, ...press('UP', 'UP', 'UP')); // Navarra, Murcia, Madrid
+    s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
     expect(s.device.notice?.text).toBe('Listo para conducir');
+    expect(s.log.at(-1)?.text).toBe('País de inicio: España (Madrid)');
     expect(s.log.map((l) => l.kind)).toEqual(['CARD_IN', 'COUNTRY_START']);
   });
 
@@ -95,6 +102,8 @@ describe('simulador: tarjeta y actividades', () => {
     let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT'));
     expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'end' });
     s = run(s, ...press('OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'REGION', purpose: 'end' });
+    s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'WITHDRAW_PRINT', yes: false });
     expect(lcdPlain(renderDisplay(s).lines[0])).toContain('¿Imprimir 24 h?');
     s = run(s, ...press('OK'));
@@ -104,7 +113,7 @@ describe('simulador: tarjeta y actividades', () => {
   });
 
   it('retirada con impresión: el ticket sale antes de expulsar la tarjeta', () => {
-    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'UP'));
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'OK', 'UP'));
     expect(s.device.screen).toMatchObject({ kind: 'WITHDRAW_PRINT', yes: true });
     s = run(s, ...press('OK'));
     expect(s.device.insertedCardId).toBeNull();
@@ -135,27 +144,31 @@ describe('simulador: tarjeta y actividades', () => {
   });
 
   it('entrada manual del periodo sin tarjeta', () => {
-    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'OK'));
+    let s = run(withCard(), { type: 'ADVANCE_BY', ms: HOUR }, ...press('EJECT', 'OK', 'OK', 'OK'));
     const withdrawnAt = s.clock.now;
     s = run(s, { type: 'ADVANCE_BY', ms: 10 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK'));
     expect(s.device.screen.kind).toBe('LAST_WITHDRAWAL');
     s = run(s, ...press('OK'));
     expect(s.device.screen.kind).toBe('MANUAL_ASK');
-    // SÍ → actividad (descanso) → hora → minutos (fin = inserción) → país de fin anterior → confirmar → país de inicio
+    // SÍ → actividad (descanso) → hora → minutos (fin = inserción) → país y comunidad de fin anterior → confirmar → país y comunidad de inicio
     s = run(s, ...press('OK', 'OK', 'OK', 'OK'));
     expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'prev-end' });
     s = run(s, ...press('OK'));
+    expect(s.device.screen).toMatchObject({ kind: 'REGION', purpose: 'prev-end' });
+    s = run(s, ...press('BACK'));
+    expect(s.device.screen).toMatchObject({ kind: 'COUNTRY', purpose: 'prev-end' });
+    s = run(s, ...press('OK', 'DOWN', 'OK'));
     expect(s.device.screen.kind).toBe('MANUAL_CONFIRM');
-    s = run(s, ...press('OK', 'OK'));
+    s = run(s, ...press('OK', 'OK', 'OK'));
     expect(s.device.screen.kind).toBe('STANDARD');
-    expect(s.log.some((l) => l.text === 'País de fin de la jornada anterior: España')).toBe(true);
+    expect(s.log.some((l) => l.text === 'País de fin de la jornada anterior: España (Aragón)')).toBe(true);
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual).toHaveLength(1);
     expect(manual[0]).toMatchObject({ activity: 'REST', start: withdrawnAt, end: withdrawnAt + 10 * HOUR });
   });
 
   it('entrada manual con dos segmentos (trabajo 1 h + descanso)', () => {
-    let s = run(withCard(), ...press('EJECT', 'OK', 'OK'));
+    let s = run(withCard(), ...press('EJECT', 'OK', 'OK', 'OK'));
     const w = s.clock.now;
     s = run(s, { type: 'ADVANCE_BY', ms: 3 * HOUR }, { type: 'INSERT_CARD', cardId: 'card-a' }, ...press('OK', 'OK', 'OK'));
     // actividad: DOWN → otros trabajos; OK → hora: DOWN ×2 = −2 h (1 h tras la retirada); OK → minutos; OK
@@ -163,8 +176,9 @@ describe('simulador: tarjeta y actividades', () => {
     expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'minute' });
     s = run(s, ...press('OK'));
     expect(s.device.screen).toMatchObject({ kind: 'MANUAL_EDIT', field: 'activity' });
-    // Segundo tramo: descanso hasta la inserción → país de fin anterior → confirmar → país de inicio
-    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK', 'OK'));
+    // Segundo tramo: descanso hasta la inserción → país y comunidad de fin anterior → confirmar → país y comunidad de inicio
+    s = run(s, ...press('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK'));
+    expect(s.device.screen.kind).toBe('STANDARD');
     const manual = driverEvents(s.timeline, 'card-a').filter((e) => e.source === 'manual');
     expect(manual.map((e) => [e.activity, (e.end! - e.start) / HOUR])).toEqual([['WORK', 1], ['REST', 2]]);
     expect(manual[0]!.start).toBe(w);
@@ -331,5 +345,17 @@ describe('simulador: nombre del titular', () => {
     }
     expect(run(base, { type: 'RENAME_CARD', cardId: 'no-existe', name: 'Ana' })).toBe(base);
     expect(run(base, { type: 'RENAME_CARD', cardId: 'card-a', name: "D'Angelo Ruiz-Gil" }).cards['card-a']!.holderName).toBe("D'Angelo Ruiz-Gil");
+  });
+});
+
+describe('tacógrafo: tiempo de conducción restante', () => {
+  it('▼ desde la pantalla principal muestra lo que queda hasta la pausa y hasta el fin de la jornada', () => {
+    let s = run(withCard(), { type: 'SET_IGNITION', position: 'start' }, { type: 'SET_VEHICLE_SPEED', kmh: 80 }, { type: 'ADVANCE_BY', ms: 75 * MINUTE }, { type: 'DISMISS_NOTICE' });
+    s = run(s, ...press('DOWN'));
+    expect(s.device.screen).toMatchObject({ kind: 'STANDARD', page: 1 });
+    const d = renderDisplay(s);
+    expect(lcdPlain(d.lines[0])).toBe('⊙hasta pausa    3h15'.replace('⊙', lcdPlain('{D}')));
+    expect(lcdPlain(d.lines[1])).toContain('fin jornada');
+    expect(lcdPlain(d.lines[1])).toMatch(/fin jornada +8h45$/); // límite de 10 h: quedan ampliaciones esta semana
   });
 });

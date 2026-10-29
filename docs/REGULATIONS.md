@@ -85,6 +85,16 @@ Requisitos de diseño para la Fase 2:
 - Las obligaciones de compensación se modelan con fecha límite y estado `pendiente` más allá del horizonte de 14 días.
 - Diferenciar *aviso*, *infracción simulada* y *requiere contexto*.
 
+## Datos del tacógrafo (no son reglas de tiempos)
+- **Regiones de España** (`SPAIN_REGIONS` en `src/tachograph/types.ts`): códigos `RegionAlpha` de la definición 2.121
+  del anexo IC del Reglamento de Ejecución (UE) 2016/799 (generación 1), **verificados con el texto oficial**
+  (extracto en `docs/normativa/R2016-799_anexoIC_RegionAlpha.txt`). Para la generación 2 el reglamento remite a una
+  lista mantenida por el laboratorio de interoperabilidad, no consultada. El simulador pide la comunidad autónoma al
+  elegir España como país de inicio, de fin o de fin de la jornada anterior, como hacen los equipos en España.
+- **Tiempo restante** (pantalla estándar, ▼): hasta la pausa = 4 h 30 − conducción desde la última pausa válida
+  (art. 7); hasta el fin de la jornada = límite diario aplicable (9 h, o 10 h si quedan ampliaciones en la semana,
+  art. 6.1) − conducción de la jornada. Aproximación pedagógica: no tiene en cuenta los límites semanales.
+
 ## Pendiente
 - Art. 8.8 (lugar del descanso semanal): requiere un dato de ubicación que el simulador no registra.
 - Asignación óptima de descansos que abarcan dos semanas (art. 8.9): ahora se cuenta cada uno una vez, sin optimizar.

@@ -21,6 +21,31 @@ export const MENU_ITEMS = [
 ] as const;
 export type MenuItemId = (typeof MENU_ITEMS)[number]['id'];
 
+/**
+ * Regiones de España (comunidades autónomas) que el tacógrafo pide tras elegir España como país de
+ * inicio o de fin. Códigos según la tabla de regiones del anexo IC del Reglamento de Ejecución (UE)
+ * 2016/799 (ver docs/REGULATIONS.md). Nombres abreviados para la pantalla de 20 caracteres.
+ */
+export const SPAIN_REGIONS = [
+  { code: 'AN', name: 'Andalucía' },
+  { code: 'AR', name: 'Aragón' },
+  { code: 'AST', name: 'Asturias' },
+  { code: 'C', name: 'Cantabria' },
+  { code: 'CAT', name: 'Cataluña' },
+  { code: 'CL', name: 'Castilla y León' },
+  { code: 'CM', name: 'Cast.-La Mancha' },
+  { code: 'CV', name: 'C. Valenciana' },
+  { code: 'EXT', name: 'Extremadura' },
+  { code: 'G', name: 'Galicia' },
+  { code: 'IB', name: 'Islas Baleares' },
+  { code: 'IC', name: 'Canarias' },
+  { code: 'LR', name: 'La Rioja' },
+  { code: 'M', name: 'Madrid' },
+  { code: 'MU', name: 'Murcia' },
+  { code: 'NA', name: 'Navarra' },
+  { code: 'PV', name: 'País Vasco' },
+] as const;
+
 export const COUNTRIES = [
   { code: 'E', name: 'España' },
   { code: 'P', name: 'Portugal' },
@@ -34,7 +59,8 @@ export const COUNTRIES = [
 
 /** Máquina de estados de pantallas del dispositivo. */
 export type Screen =
-  | { kind: 'STANDARD'; page: 0 | 1 | 2 }
+  /** 0: principal · 1: tiempo restante de conducción · 2: acumulados · 3: hora UTC y local. */
+  | { kind: 'STANDARD'; page: 0 | 1 | 2 | 3 }
   | { kind: 'WELCOME' }
   /** Fecha y hora de la última retirada (fin de la jornada anterior). */
   | { kind: 'LAST_WITHDRAWAL' }
@@ -50,6 +76,9 @@ export type Screen =
   /** start: país de inicio · end: país de fin al retirar · prev-end: país de fin de la jornada anterior (entrada manual). */
   | { kind: 'COUNTRY'; purpose: 'start' | 'end'; index: number }
   | { kind: 'COUNTRY'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
+  /** Comunidad autónoma, solo cuando el país elegido es España. */
+  | { kind: 'REGION'; purpose: 'start' | 'end'; index: number }
+  | { kind: 'REGION'; purpose: 'prev-end'; index: number; segments: ManualDraftSegment[] }
   /** Al retirar la tarjeta: ¿imprimir el resumen de 24 h antes de expulsarla? */
   | { kind: 'WITHDRAW_PRINT'; yes: boolean }
   | { kind: 'MENU'; index: number }

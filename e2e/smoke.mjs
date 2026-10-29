@@ -94,6 +94,8 @@ try {
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await line(0)).includes('País de inicio'), 'pide país de inicio');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert((await line(0)).includes('Región inicio') && (await line(1)).includes('Andalucía'), 'en España pide la comunidad autónoma de inicio');
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
 
   // Llave de contacto junto al tacógrafo: 0 → I (pantalla iluminada) → II (arranque)
   await page.getByTestId('ignition-off').click();
@@ -166,6 +168,8 @@ try {
   // b) Botón ⏏ de la ranura → país de fin → ¿imprimir 24 h? SÍ → ticket y tarjeta fuera
   await page.getByTestId('eject-1').click();
   assert((await line(0)).includes('País de fin'), 'el botón ⏏ pide el país de fin');
+  await page.getByRole('button', { name: 'Confirmar / menú' }).click();
+  assert((await line(0)).includes('Región de fin'), 'en España pide la comunidad autónoma de fin');
   await page.getByRole('button', { name: 'Confirmar / menú' }).click();
   assert((await line(0)).includes('¿Imprimir 24 h?'), 'pregunta si imprimir antes de expulsar');
   await page.getByRole('button', { name: 'Arriba' }).click();
@@ -276,6 +280,7 @@ try {
   await ok();
   await expectStep('País de inicio');
   await ok();
+  await ok();
   await expectStep('Da el contacto');
   await page.getByTestId('ignition-on').click();
   await expectStep('Arranca el motor');
@@ -285,8 +290,9 @@ try {
   await expectStep('Haz pasar el tiempo');
   await tool('+15 min');
   await tool('+15 min');
-  await expectStep('Lee la pantalla');
-  await page.getByTestId('tutorial-next').click();
+  await expectStep('¿Cuánto te queda de conducción?');
+  await page.getByRole('button', { name: 'Abajo' }).click();
+  assert((await line(0)).includes('hasta pausa') && (await line(1)).includes('fin jornada'), 'el tacógrafo muestra el tiempo de conducción restante');
   await expectStep('Detén el camión');
   await page.getByTestId('truck-speed').fill('0');
   await expectStep('Elige la actividad: descanso');
@@ -295,6 +301,7 @@ try {
   await expectStep('Saca la tarjeta');
   await page.getByTestId('eject-1').click();
   await expectStep('País de fin e impresión');
+  await ok();
   await ok();
   await ok();
   await expectStep('¡Turno completado!');

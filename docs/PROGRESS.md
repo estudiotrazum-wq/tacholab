@@ -2,6 +2,15 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.14 — Tiempo restante en el tacógrafo y comunidad autónoma (rama `ui-rediseno`)
+- [x] Nueva pantalla estándar (▼ desde la principal): **conducción restante hasta la pausa** y **hasta el fin de la
+      jornada**; después acumulados y hora UTC/local
+- [x] Paso 11 del tutorial rehecho: «¿Cuánto te queda de conducción?» se completa pulsando ▼ en el tacógrafo y aclara
+      que el panel «Te limita» es una ayuda del simulador, no del equipo. Los pasos de país resaltan pantalla + teclas
+- [x] **Comunidad autónoma** al elegir España como país de inicio, de fin o de fin de la jornada anterior (✕ vuelve al
+      país); queda en el registro: «País de inicio: España (Madrid)». Códigos verificados con el R. (UE) 2016/799
+- [x] Academia, ayudas, guía y pruebas actualizadas: 119 pruebas unitarias + E2E
+
 ## v0.13 — Tutorial menos invasivo y nombre propio en la tarjeta (rama `ui-rediseno`)
 - [x] La tarjeta del tutorial busca un hueco que **no tape la pieza señalada ni el tacógrafo** (debajo, encima, a los
       lados o en una esquina); si no cabe (p. ej. en móvil), se **minimiza** a una barra con el título del paso, que se

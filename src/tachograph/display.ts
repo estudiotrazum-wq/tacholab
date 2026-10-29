@@ -1,11 +1,12 @@
 import type { Activity, SelectableActivity } from '@/shared/types';
 import { complianceFor, deriveSummary, type SimSummary } from '@/simulator/derived';
 import type { SimState } from '@/simulator/state';
+import { CONTINUOUS_DRIVING_LIMIT } from '@/regulations/continuousDriving';
 import { eventDuration, eventsInRange, driverEvents } from '@/time-engine/timeline';
 import { formatDuration } from '@/time-engine/units';
 import { addZonedDays, formatDate, formatTime, startOfZonedDay, zonedParts } from '@/time-engine/zoned';
 import type { WarningCode } from './types';
-import { COUNTRIES, MENU_ITEMS, type ManualActivity } from './types';
+import { COUNTRIES, MENU_ITEMS, SPAIN_REGIONS, type ManualActivity } from './types';
 
 /**
  * Pantalla del TL-1: LCD de 2 líneas × 20 caracteres, como los tacógrafos
@@ -162,6 +163,13 @@ export function renderDisplay(sim: SimState): DisplayModel {
         return view(top, `{D}${hm(c?.drivingSinceBreakMs ?? 0)}  {R}${hm(c?.currentBreakMs ?? 0)}`);
       }
       if (s.page === 1) {
+        // Tiempo de conducción restante: hasta la pausa obligatoria (art. 7) y hasta el límite diario (art. 6.1).
+        if (!cur) return view('{D} restante', ' Sin tarjeta');
+        const remCont = Math.max(0, CONTINUOUS_DRIVING_LIMIT - (sum.continuous?.drivingSinceBreakMs ?? 0));
+        const remDay = Math.max(0, cur.dailyCapMs - cur.dailyDrivingMs);
+        return view(spread('{D}hasta pausa', hm(remCont)), spread('{D}fin jornada', hm(remDay)));
+      }
+      if (s.page === 2) {
         if (!cur) return view('{D} acumulados', ' Sin tarjeta');
         return view(`{D}jorn ${hm(cur.dailyDrivingMs)}/${hm(cur.dailyCapMs)}`, `sem ${hm(cur.weekDrivingMs)} 2s ${hm(cur.biweekDrivingMs)}`);
       }
@@ -218,6 +226,11 @@ export function renderDisplay(sim: SimState): DisplayModel {
       const c = COUNTRIES[s.index]!;
       const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'prev-end' ? '{M}País fin jornada' : '{L}País de fin';
       return view(title, `▸ ${c.code.padEnd(3)}${c.name}`);
+    }
+    case 'REGION': {
+      const r = SPAIN_REGIONS[s.index]!;
+      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'prev-end' ? '{M}E Región fin' : '{L}E Región de fin';
+      return view(title, `▸${r.code.padEnd(4)}${r.name}`);
     }
   }
 }

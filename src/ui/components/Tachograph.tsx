@@ -55,7 +55,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
         <div className="rounded-[10px] bg-gradient-to-b from-[#24272d] via-[#1b1d22] to-[#141619] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),inset_0_-2px_4px_rgba(0,0,0,0.5)] sm:p-4">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_11rem] sm:gap-4">
             {/* Pantalla */}
-            <div>
+            <div data-tour="console">
               <div
                 className={`relative overflow-hidden rounded-md border-[3px] border-[#0b0c0e] px-3 py-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.55)] ${model.mode === 'warning' ? 'lcd-warning' : ''}`}
                 style={{ background: model.backlight ? 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)' : 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', transition: 'background 400ms' }}

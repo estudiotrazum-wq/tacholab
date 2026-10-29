@@ -52,9 +52,9 @@ export const BASIC_EXERCISES: ExerciseDef[] = [
       { text: 'Comprueba la última retirada (fin de la jornada anterior) y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_ASK') },
       { text: 'Elige SÍ para hacer la entrada manual del tiempo sin tarjeta y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_EDIT') },
       { text: 'Deja la cama (descanso) como actividad y pulsa OK; la hora y los minutos de fin ya llegan hasta ahora: OK y OK.', target: 'OK', done: (c) => has(c, 'screen:COUNTRY') },
-      { text: 'Indica el país donde terminó la jornada anterior (España) y pulsa OK.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
+      { text: 'Indica el país donde terminó la jornada anterior (España) y la comunidad autónoma, con OK en cada pantalla.', target: 'OK', done: (c) => has(c, 'screen:MANUAL_CONFIRM') },
       { text: 'Confirma la entrada manual con SÍ.', target: 'OK', done: (c) => logged(c, 'MANUAL_ENTRY') },
-      { text: 'Selecciona el país de inicio (España) y confírmalo: el equipo muestra «Listo para conducir».', target: 'OK', done: (c) => logged(c, 'COUNTRY_START') },
+      { text: 'Selecciona el país de inicio (España) y la comunidad autónoma, y confírmalos: el equipo muestra «Listo para conducir».', target: 'OK', done: (c) => logged(c, 'COUNTRY_START') },
     ],
     success: [
       {

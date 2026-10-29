@@ -5,6 +5,7 @@ import { addZonedDays, formatDateTime, startOfZonedDay } from '@/time-engine/zon
 import {
   COUNTRIES,
   INSERTION_FLOW,
+  SPAIN_REGIONS,
   MENU_ITEMS,
   effectiveActivity,
   type Button,
@@ -248,7 +249,7 @@ function pressButton(sim: SimState, button: Button): SimState {
 
   switch (screen.kind) {
     case 'STANDARD': {
-      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 3) as 0 | 1 | 2 });
+      if (up || down) return setScreen(s, { kind: 'STANDARD', page: wrap(screen.page + (down ? 1 : -1), 4) as 0 | 1 | 2 | 3 });
       if (ok) return setScreen(s, { kind: 'MENU', index: 0 });
       if (back) return setScreen(s, STANDARD);
       return s;
@@ -347,15 +348,9 @@ function pressButton(sim: SimState, button: Button): SimState {
       if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), COUNTRIES.length) });
       if (ok) {
         const c = COUNTRIES[screen.index]!;
-        if (screen.purpose === 'prev-end') {
-          return setScreen(s, { kind: 'MANUAL_CONFIRM', segments: screen.segments, yes: true, prevCountry: c.name });
-        }
-        if (screen.purpose === 'start') {
-          s = log(s, 'COUNTRY_START', `País de inicio: ${c.name}`);
-          return notice(setScreen(s, STANDARD), 'Listo para conducir');
-        }
-        s = log(s, 'COUNTRY_END', `País de fin: ${c.name}`);
-        return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: false });
+        // En España se pide además la comunidad autónoma.
+        if (c.code === 'E') return setScreen(s, { ...screen, kind: 'REGION', index: 0 });
+        return confirmPlace(s, screen, c.name);
       }
       if (back && screen.purpose === 'end') return setScreen(s, STANDARD);
       if (back && screen.purpose === 'prev-end') {
@@ -364,7 +359,28 @@ function pressButton(sim: SimState, button: Button): SimState {
       }
       return s;
     }
+    case 'REGION': {
+      if (up || down) return setScreen(s, { ...screen, index: wrap(screen.index + (down ? 1 : -1), SPAIN_REGIONS.length) });
+      if (ok) return confirmPlace(s, screen, `España (${SPAIN_REGIONS[screen.index]!.name})`);
+      if (back) return setScreen(s, { ...screen, kind: 'COUNTRY', index: 0 });
+      return s;
+    }
   }
+}
+
+type PlaceScreen = Extract<Screen, { kind: 'COUNTRY' | 'REGION' }>;
+
+/** Lugar confirmado (país, y en España la comunidad autónoma): sigue el procedimiento correspondiente. */
+function confirmPlace(sim: SimState, screen: PlaceScreen, place: string): SimState {
+  if (screen.purpose === 'prev-end') {
+    return setScreen(sim, { kind: 'MANUAL_CONFIRM', segments: screen.segments, yes: true, prevCountry: place });
+  }
+  if (screen.purpose === 'start') {
+    const s = log(sim, 'COUNTRY_START', `País de inicio: ${place}`);
+    return notice(setScreen(s, STANDARD), 'Listo para conducir');
+  }
+  const s = log(sim, 'COUNTRY_END', `País de fin: ${place}`);
+  return setScreen(s, { kind: 'WITHDRAW_PRINT', yes: false });
 }
 
 // ---------------------------------------------------------------- vehículo
@@ -385,8 +401,9 @@ function setMoving(sim: SimState, moving: boolean): SimState {
   let s: SimState = { ...sim, vehicle: { ...sim.vehicle, moving, ...(moving ? { ignition: 'running' as const } : {}) } };
   if (moving) {
     s = log(s, 'VEHICLE_START', 'Vehículo en marcha');
-    const kind = s.device.screen.kind;
-    if (INSERTION_FLOW.includes(kind) || (kind === 'COUNTRY' && s.device.screen.kind === 'COUNTRY' && s.device.screen.purpose === 'start')) {
+    const scr = s.device.screen;
+    const kind = scr.kind;
+    if (INSERTION_FLOW.includes(kind) || ((scr.kind === 'COUNTRY' || scr.kind === 'REGION') && scr.purpose !== 'end')) {
       s = notice(setScreen(s, STANDARD), 'Procedimiento interrumpido por movimiento');
     } else if (kind !== 'STANDARD') {
       s = setScreen(s, STANDARD);

@@ -61,15 +61,15 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
   });
 
   it('2 · tarjeta con entrada manual: 100 puntos', () => {
-    // Bienvenida, última retirada, SÍ, actividad, hora, minutos, país fin anterior, confirmar, país de inicio
-    const { result, sim, session } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
+    // Bienvenida, última retirada, SÍ, actividad, hora, minutos, país y comunidad de fin anterior, confirmar, país y comunidad de inicio
+    const { result, sim, session } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK', 'OK')]);
     expect(session.stepIndex).toBe(8);
     expect(sim.device.screen.kind).toBe('STANDARD');
     expect(result).toMatchObject({ passed: true, score: 100 });
   });
 
   it('2 · tarjeta sin entrada manual: suspende y penaliza', () => {
-    const { result } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'DOWN', 'OK', 'OK')]);
+    const { result } = play('insert-card', [{ type: 'INSERT_CARD', cardId: 'card-a' }, ...P('OK', 'OK', 'DOWN', 'OK', 'OK', 'OK')]);
     expect(result.passed).toBe(false);
     expect(result.errors.map((e) => e.penalty)).toEqual([40]);
   });
@@ -84,7 +84,7 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
       select('WORK'), adv(15),
       move(true), adv(240), move(false), select('REST'), adv(45),
       move(true), adv(180), move(false), select('REST'),
-      ...P('EJECT', 'OK', 'OK'),
+      ...P('EJECT', 'OK', 'OK', 'OK'),
     ]);
     expect(result).toMatchObject({ passed: true, score: 100, stars: 3 });
   });
@@ -94,7 +94,7 @@ describe('ejercicios gratuitos resueltos con el simulador', () => {
       select('WORK'), adv(15),
       move(true), adv(300), move(false), ...P('OK'), select('REST'), adv(45),
       move(true), adv(60), move(false), ...P('OK'), select('REST'),
-      ...P('EJECT', 'OK', 'OK'),
+      ...P('EJECT', 'OK', 'OK', 'OK'),
     ]);
     expect(result.errors[0]).toMatchObject({ ruleId: 'R561-ART7-CONT', penalty: 40 });
     expect(result.passed).toBe(false);

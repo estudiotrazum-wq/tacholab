@@ -37,6 +37,8 @@ export function assistHint(sim: SimState): AssistHint {
           : { text: 'Indica el país donde terminas la jornada (▲▼) y pulsa OK para sacar la tarjeta.', target: 'UP_DOWN' };
     case 'WITHDRAW_PRINT':
       return { text: 'Elige con ▲▼ si quieres el ticket de las últimas 24 h y pulsa OK: la tarjeta saldrá de la ranura.', target: 'OK' };
+    case 'REGION':
+      return { text: 'En España el tacógrafo pide también la comunidad autónoma: elígela con ▲▼ y pulsa OK (✕ vuelve al país).', target: 'UP_DOWN' };
     case 'MENU':
       return { text: 'Navega con ▲▼, abre con ✓ y vuelve con ✕.', target: 'UP_DOWN' };
     default:

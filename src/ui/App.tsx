@@ -91,7 +91,7 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.13 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.14 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
         </footer>
       </div>
 

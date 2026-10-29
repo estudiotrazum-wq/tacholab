@@ -1,0 +1,16 @@
+Reglamento de Ejecución (UE) 2016/799 — anexo IC, apéndice 1 (diccionario de datos), extracto
+Fuente: https://publications.europa.eu/resource/celex/32016R0799 (versión en español, DO L 139 de 26.5.2016),
+obtenida a través del servicio de la Oficina de Publicaciones de la UE (consultado el 29/10/2026).
+
+2.121. RegionAlpha
+Referencia alfabética a una región perteneciente a un país especificado.
+RegionAlpha ::= IA5STRING(SIZE(3))
+Generación 1: Asignación de valor:
+‘ ’ No information available,
+Spain: ‘AN ’ Andalucía, ‘AR ’ Aragón, ‘AST’ Asturias, ‘C ’ Cantabria, ‘CAT’ Cataluña, ‘CL ’ Castilla-León,
+‘CM ’ Castilla-La-Mancha, ‘CV’ Valencia, ‘EXT’ Extremadura, ‘G ’ Galicia, ‘IB ’ Baleares, ‘IC ’ Canarias,
+‘LR ’ La Rioja, ‘M ’ Madrid, ‘MU ’ Murcia, ‘NA ’ Navarra, ‘PV ’ País Vasco
+Generación 2: Los códigos alfabéticos que identifican a las distintas regiones figurarán en una lista mantenida
+en el sitio web del laboratorio designado para realizar los ensayos de interoperabilidad.
+
+2.122. RegionNumeric (misma lista con códigos ‘01’H a ‘11’H).

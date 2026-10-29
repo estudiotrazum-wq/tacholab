@@ -33,15 +33,16 @@ const SCRIPT: Record<string, SimAction[]> = {
   insert: [{ type: 'INSERT_CARD', cardId: 'card-a' }],
   welcome: press('OK'),
   'last-withdrawal': press('OK'),
-  'country-start': press('OK'),
+  'country-start': press('OK', 'OK'),
   'ignition-on': [{ type: 'SET_IGNITION', position: 'on' }],
   'ignition-start': [{ type: 'SET_IGNITION', position: 'start' }],
   drive: [{ type: 'SET_VEHICLE_SPEED', kmh: 80 }],
   time: [{ type: 'ADVANCE_BY', ms: 15 * MINUTE }, { type: 'ADVANCE_BY', ms: 15 * MINUTE }],
+  read: press('DOWN'),
   stop: [{ type: 'SET_VEHICLE_SPEED', kmh: 0 }],
   activity: press('ACTIVITY', 'ACTIVITY'),
   eject: press('EJECT'),
-  'country-end': press('OK', 'OK'),
+  'country-end': press('OK', 'OK', 'OK'),
 };
 
 describe('tutorial de inicio', () => {
