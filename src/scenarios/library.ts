@@ -1,3 +1,4 @@
+import { msg, N_, t } from '@/i18n';
 import type { EpochMs } from '@/shared/types';
 import type { FeatureKey } from '@/billing/plans';
 import type { ComplianceReport } from '@/regulations/compliance';
@@ -40,8 +41,8 @@ function simWith(def: Pick<ScenarioDef, 'id' | 'title'>, plan: SchedulePlan | nu
     timeline: { events, nextSeq: 1 },
     device: { ...base.device, insertedCardId: DRIVER, insertedAt: scenario.startsAt, selected: last.activity === 'DRIVING' ? 'WORK' : last.activity },
     log: [
-      { id: 1, at: scenario.startsAt, kind: 'CARD_IN', text: 'Tarjeta SIM-ES-0000-A1 insertada', driverId: DRIVER },
-      { id: 2, at: now, kind: 'COUNTRY_START', text: `Escenario cargado: ${def.title}`, driverId: DRIVER },
+      { id: 1, at: scenario.startsAt, kind: 'CARD_IN', text: N_('Tarjeta SIM-ES-0000-A1 insertada'), driverId: DRIVER },
+      { id: 2, at: now, kind: 'COUNTRY_START', ...msg('Escenario cargado: {title}', { title: { id: def.title } }), driverId: DRIVER },
     ],
     logSeq: 3,
   };
@@ -72,45 +73,45 @@ const noInfringements = (r: ComplianceReport): ObjectiveResult['status'] =>
 export const SCENARIOS: readonly ScenarioDef[] = [
   {
     id: 'free-1',
-    title: 'Práctica libre — dos semanas',
-    summary: 'Escenario vacío de 14 días. Inserta la tarjeta y registra tus propias jornadas.',
+    title: N_('Práctica libre — dos semanas'),
+    summary: N_('Escenario vacío de 14 días. Inserta la tarjeta y registra tus propias jornadas.'),
     feature: 'active-scenario',
-    objectives: ['Practica libremente: el informe te mostrará los errores.'],
-    build: () => simWith({ id: 'free-1', title: 'Práctica libre — dos semanas' }, null, (s) => s.startsAt, false),
+    objectives: [N_('Practica libremente: el informe te mostrará los errores.')],
+    build: () => simWith({ id: 'free-1', title: N_('Práctica libre — dos semanas') }, null, (s) => s.startsAt, false),
   },
   {
     id: 'ref-5634',
-    title: 'Referencia: 56 h + 34 h = 90 h',
-    summary: 'Demostración completa de dos semanas legales: 56 h la primera (con las dos ampliaciones) y 34 h la segunda.',
+    title: N_('Referencia: 56 h + 34 h = 90 h'),
+    summary: N_('Demostración completa de dos semanas legales: 56 h la primera (con las dos ampliaciones) y 34 h la segunda.'),
     feature: 'active-scenario',
     objectives: [
-      'Observa en el calendario cómo se reparten las 56 h: seis jornadas, dos de ellas de 10 h.',
-      'Comprueba que el descanso semanal del fin de semana dura más de 45 h.',
-      'Verifica en el informe que 56 + 34 = 90 h no supera ningún límite.',
+      N_('Observa en el calendario cómo se reparten las 56 h: seis jornadas, dos de ellas de 10 h.N_('),
+      N_(')Comprueba que el descanso semanal del fin de semana dura más de 45 h.N_('),
+      N_(')Verifica en el informe que 56 + 34 = 90 h no supera ningún límite.'),
     ],
     build: () => {
-      const def = { id: 'ref-5634', title: 'Referencia: 56 h + 34 h = 90 h' };
+      const def = { id: 'ref-5634', title: N_('Referencia: 56 h + 34 h = 90 h') };
       const meta = createInitialSim(REFERENCE_ANCHOR).scenario;
       return simWith(def, reference5634Plan(meta), (s) => s.endsAt, false);
     },
     evaluate: (r) => [
-      { text: 'Semana 1 con 56 h de conducción', status: r.weeks[0]!.drivingMs === 56 * HOUR ? 'done' : 'failed' },
-      { text: 'Semana 2 con 34 h de conducción', status: r.weeks[1]!.drivingMs === 34 * HOUR ? 'done' : 'failed' },
-      { text: 'Sin infracciones', status: noInfringements(r) },
+      { text: N_('Semana 1 con 56 h de conducción'), status: r.weeks[0]!.drivingMs === 56 * HOUR ? 'done' : 'failed' },
+      { text: N_('Semana 2 con 34 h de conducción'), status: r.weeks[1]!.drivingMs === 34 * HOUR ? 'done' : 'failed' },
+      { text: N_('Sin infracciones'), status: noInfringements(r) },
     ],
   },
   {
     id: 'week2-34',
-    title: 'Semana 2: completa las 34 h',
-    summary: 'La semana 1 ya tiene 56 h. Planifica la semana 2 para llegar a 90 h sin superar ningún límite.',
+    title: N_('Semana 2: completa las 34 h'),
+    summary: N_('La semana 1 ya tiene 56 h. Planifica la semana 2 para llegar a 90 h sin superar ningún límite.'),
     feature: 'complex-scenarios',
     objectives: [
-      'Conduce 34 h en la semana 2 (total 90 h).',
-      'Respeta pausas, jornadas y descansos diarios.',
-      'Termina el escenario con un descanso semanal normal.',
+      N_('Conduce 34 h en la semana 2 (total 90 h).N_('),
+      N_(')Respeta pausas, jornadas y descansos diarios.N_('),
+      N_(')Termina el escenario con un descanso semanal normal.'),
     ],
     build: () => {
-      const def = { id: 'week2-34', title: 'Semana 2: completa las 34 h' };
+      const def = { id: 'week2-34', title: N_('Semana 2: completa las 34 h') };
       const meta = createInitialSim(REFERENCE_ANCHOR).scenario;
       const p = week56(new SchedulePlan(meta.startsAt), meta);
       p.restUntil(week2Start(meta));
@@ -120,10 +121,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
       const w2 = r.weeks[1]!.drivingMs;
       const finished = sim.clock.now >= sim.clock.endsAt;
       return [
-        { text: `Conducción semana 2: ${Math.round((w2 / HOUR) * 10) / 10} h de 34 h`, status: w2 >= 34 * HOUR ? 'done' : finished ? 'failed' : 'pending' },
-        { text: 'Sin infracciones', status: noInfringements(r) },
+        { text: t('Conducción semana 2: {h} h de 34 h', { h: Math.round((w2 / HOUR) * 10) / 10 }), status: w2 >= 34 * HOUR ? 'done' : finished ? 'failed' : 'pending' },
+        { text: N_('Sin infracciones'), status: noInfringements(r) },
         {
-          text: 'Descansos semanales de las dos semanas correctos',
+          text: N_('Descansos semanales de las dos semanas correctos'),
           status: r.obligations.find((o) => o.id === 'weekly-pair')?.status === 'fulfilled' ? 'done' : finished ? 'failed' : 'pending',
         },
       ];
@@ -131,16 +132,16 @@ export const SCENARIOS: readonly ScenarioDef[] = [
   },
   {
     id: 'reduced-weekly',
-    title: 'Descanso semanal reducido y compensación',
-    summary: 'Tras seis jornadas, solo descansas 30 h el fin de semana. Debes compensar 15 h antes de la fecha límite.',
+    title: N_('Descanso semanal reducido y compensación'),
+    summary: N_('Tras seis jornadas, solo descansas 30 h el fin de semana. Debes compensar 15 h antes de la fecha límite.'),
     feature: 'complex-scenarios',
     objectives: [
-      'Identifica en el informe la compensación pendiente y su fecha límite.',
-      'En la semana 2, toma un descanso semanal normal (obligatorio tras un reducido).',
-      'Para compensar dentro del escenario, ese descanso debe durar al menos 45 h + 15 h = 60 h.',
+      N_('Identifica en el informe la compensación pendiente y su fecha límite.N_('),
+      N_(')En la semana 2, toma un descanso semanal normal (obligatorio tras un reducido).N_('),
+      N_(')Para compensar dentro del escenario, ese descanso debe durar al menos 45 h + 15 h = 60 h.'),
     ],
     build: () => {
-      const def = { id: 'reduced-weekly', title: 'Descanso semanal reducido y compensación' };
+      const def = { id: 'reduced-weekly', title: N_('Descanso semanal reducido y compensación') };
       const meta = createInitialSim(REFERENCE_ANCHOR).scenario;
       const p = new SchedulePlan(meta.startsAt);
       for (let i = 0; i < 6; i++) p.restUntil(meta.startsAt + i * DAY).add(...day9());
@@ -150,24 +151,24 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     evaluate: (r) => {
       const comp = r.obligations.find((o) => o.ruleId === 'R561-ART8-COMP');
       return [
-        { text: 'Compensación de 15 h realizada', status: comp?.status === 'fulfilled' ? 'done' : comp?.status === 'overdue' ? 'failed' : 'pending' },
-        { text: 'Sin infracciones', status: noInfringements(r) },
+        { text: N_('Compensación de 15 h realizada'), status: comp?.status === 'fulfilled' ? 'done' : comp?.status === 'overdue' ? 'failed' : 'pending' },
+        { text: N_('Sin infracciones'), status: noInfringements(r) },
       ];
     },
   },
   {
     id: 'find-errors',
-    title: 'Encuentra los errores',
-    summary: 'Una semana registrada con varios errores típicos. Analiza el calendario y el informe para encontrarlos.',
+    title: N_('Encuentra los errores'),
+    summary: N_('Una semana registrada con varios errores típicos. Analiza el calendario y el informe para encontrarlos.'),
     feature: 'detailed-evaluation',
     objectives: [
-      'Localiza la conducción continua de más de 4 h 30 min.',
-      'Localiza la jornada con más de 10 h de conducción.',
-      'Localiza el descanso diario insuficiente.',
-      'Explica cómo se habría evitado cada error.',
+      N_('Localiza la conducción continua de más de 4 h 30 min.N_('),
+      N_(')Localiza la jornada con más de 10 h de conducción.N_('),
+      N_(')Localiza el descanso diario insuficiente.N_('),
+      N_(')Explica cómo se habría evitado cada error.'),
     ],
     build: () => {
-      const def = { id: 'find-errors', title: 'Encuentra los errores' };
+      const def = { id: 'find-errors', title: N_('Encuentra los errores') };
       const meta = createInitialSim(REFERENCE_ANCHOR).scenario;
       const p = new SchedulePlan(meta.startsAt);
       p.add(...day9()).restUntil(meta.startsAt + DAY);
@@ -183,9 +184,9 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     evaluate: (r) => {
       const has = (id: string) => (r.findings.some((f) => f.ruleId === id) ? 'done' : 'failed') as ObjectiveResult['status'];
       return [
-        { text: 'El informe detecta la conducción continua excesiva', status: has('R561-ART7-CONT') },
-        { text: 'El informe detecta la jornada de más de 10 h', status: has('R561-ART6-DAILY10') },
-        { text: 'El informe detecta el descanso diario insuficiente', status: has('R561-ART8-24H') },
+        { text: N_('El informe detecta la conducción continua excesiva'), status: has('R561-ART7-CONT') },
+        { text: N_('El informe detecta la jornada de más de 10 h'), status: has('R561-ART6-DAILY10') },
+        { text: N_('El informe detecta el descanso diario insuficiente'), status: has('R561-ART8-24H') },
       ];
     },
   },

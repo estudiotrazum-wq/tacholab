@@ -1,3 +1,4 @@
+import type { I18nText } from '@/i18n';
 import type { EpochMs, SelectableActivity } from '@/shared/types';
 import { createClock, type ClockState } from '@/time-engine/clock';
 import { emptyTimeline, type Timeline } from '@/time-engine/timeline';
@@ -31,6 +32,8 @@ export interface LogEntry {
   at: EpochMs;
   kind: LogKind;
   text: string;
+  /** Identificador y datos para traducir el texto (los registros antiguos no lo tienen). */
+  i18n?: I18nText;
   driverId: string | null;
 }
 

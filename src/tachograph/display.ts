@@ -7,6 +7,7 @@ import { formatDuration } from '@/time-engine/units';
 import { addZonedDays, formatDate, formatTime, startOfZonedDay, zonedParts } from '@/time-engine/zoned';
 import type { WarningCode } from './types';
 import { COUNTRIES, MENU, SPAIN_REGIONS, type ManualActivity } from './types';
+import { N_, t } from '@/i18n';
 
 /**
  * Pantalla del TL-1: LCD de 2 líneas × 20 caracteres, como los tacógrafos
@@ -86,20 +87,21 @@ function wrap(text: string): [string, string] {
   return [fit(a), fit(words.slice(i).join(' '))];
 }
 
+/** Textos de los avisos en pantalla (máximo 20 columnas en cada idioma). */
 const WARNING_TEXT: Record<WarningCode, [string, string]> = {
-  CONT_DRIVING_PREWARN: ['!{D} 4h15 PAUSA', 'próxima pausa'],
-  CONT_DRIVING_EXCEEDED: ['!{D} 4h30', 'pausa ahora'],
-  DRIVING_WITHOUT_CARD: ['!{C} sin tarjeta', 'conducción'],
-  DAILY_DRIVING_PREWARN: ['!{D} jornada', 'faltan 15 min'],
-  DAILY_EXTENSION: ['i {D} ampliación', 'a 10h en uso'],
-  DAILY_DRIVING_EXCEEDED: ['!{D} límite diario', 'detenga el vehículo'],
-  WEEKLY_DRIVING_PREWARN: ['!{D} semana 55h', 'límite 56h'],
-  WEEKLY_DRIVING_EXCEEDED: ['!{D} semana 56h', 'límite alcanzado'],
-  BIWEEKLY_DRIVING_PREWARN: ['!{D} 2 semanas 89h', 'límite 90h'],
-  BIWEEKLY_DRIVING_EXCEEDED: ['!{D} 2 semanas 90h', 'límite alcanzado'],
-  DAILY_REST_DUE: ['!{R} descanso diario', 'iniciar ahora'],
-  DAILY_REST_LAST_CALL: ['!{R} descanso diario', 'fuera de plazo'],
-  WEEKLY_REST_DUE: ['!{R} desc. semanal', 'pendiente'],
+  CONT_DRIVING_PREWARN: [N_('!{D} 4h15 PAUSA'), N_('próxima pausa')],
+  CONT_DRIVING_EXCEEDED: ['!{D} 4h30', N_('pausa ahora')],
+  DRIVING_WITHOUT_CARD: [N_('!{C} sin tarjeta'), N_('conducción')],
+  DAILY_DRIVING_PREWARN: [N_('!{D} jornada'), N_('faltan 15 min')],
+  DAILY_EXTENSION: [N_('i {D} ampliación'), N_('a 10h en uso')],
+  DAILY_DRIVING_EXCEEDED: [N_('!{D} límite diario'), N_('detenga el vehículo')],
+  WEEKLY_DRIVING_PREWARN: [N_('!{D} semana 55h'), N_('límite 56h')],
+  WEEKLY_DRIVING_EXCEEDED: [N_('!{D} semana 56h'), N_('límite alcanzado')],
+  BIWEEKLY_DRIVING_PREWARN: [N_('!{D} 2 semanas 89h'), N_('límite 90h')],
+  BIWEEKLY_DRIVING_EXCEEDED: [N_('!{D} 2 semanas 90h'), N_('límite alcanzado')],
+  DAILY_REST_DUE: [N_('!{R} descanso diario'), N_('iniciar ahora')],
+  DAILY_REST_LAST_CALL: [N_('!{R} descanso diario'), N_('fuera de plazo')],
+  WEEKLY_REST_DUE: [N_('!{R} desc. semanal'), N_('pendiente')],
 };
 
 export function ticketLines(sim: SimState, sum: SimSummary): string[] {
@@ -109,16 +111,16 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
   return [
     `${card?.holderName ?? '—'}`,
     `${card?.displayId ?? ''}`,
-    `Día ${formatDate(now, tz)} (UTC)`,
-    `Conducción  ${formatDuration(sum.today.DRIVING)}`,
-    `Otros trab. ${formatDuration(sum.today.WORK)}`,
-    `Disponib.   ${formatDuration(sum.today.AVAILABILITY)}`,
-    `Descanso    ${formatDuration(sum.today.REST)}`,
-    `Cont. ${formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0)} / 4:30`,
-    `Jornada: ${formatDuration(complianceFor(sim, sum.driverId)?.current.dailyDrivingMs ?? 0)} cond.`,
-    `Semana ${sum.weekIndex}: ${formatDuration(sum.week.DRIVING)}`,
-    `2 semanas: ${formatDuration(sum.twoWeeks.DRIVING)}`,
-    '— Simulador educativo —',
+    t('Día {date} (UTC)', { date: formatDate(now, tz) }),
+    t('Conducción  {d}', { d: formatDuration(sum.today.DRIVING) }),
+    t('Otros trab. {d}', { d: formatDuration(sum.today.WORK) }),
+    t('Disponib.   {d}', { d: formatDuration(sum.today.AVAILABILITY) }),
+    t('Descanso    {d}', { d: formatDuration(sum.today.REST) }),
+    t('Cont. {d} / 4:30', { d: formatDuration(sum.continuous?.drivingSinceBreakMs ?? 0) }),
+    t('Jornada: {d} cond.', { d: formatDuration(complianceFor(sim, sum.driverId)?.current.dailyDrivingMs ?? 0) }),
+    t('Semana {n}: {d}', { n: sum.weekIndex, d: formatDuration(sum.week.DRIVING) }),
+    t('2 semanas: {d}', { d: formatDuration(sum.twoWeeks.DRIVING) }),
+    t('— Simulador educativo —'),
   ];
 }
 
@@ -126,7 +128,7 @@ export function ticketLines(sim: SimState, sum: SimSummary): string[] {
 export function printoutLines(sim: SimState): string[] | null {
   const sum = deriveSummary(sim);
   if (!sum.driverId) return null;
-  return [`TL-1 EDU · ${formatDate(sim.clock.now, sim.scenario.timeZone)} ${formatTime(sim.clock.now, sim.scenario.timeZone)} UTC`, 'IMPRESIÓN DIARIA (24 h)', '────────────────────', ...ticketLines(sim, sum)];
+  return [`TL-1 EDU · ${formatDate(sim.clock.now, sim.scenario.timeZone)} ${formatTime(sim.clock.now, sim.scenario.timeZone)} UTC`, t('IMPRESIÓN DIARIA (24 h)'), '────────────────────', ...ticketLines(sim, sum)];
 }
 
 /** Duración de la actividad actual del conductor (desde que empezó, uniendo tramos contiguos iguales). */
@@ -147,6 +149,11 @@ function short(ms: number, tz: string, year = false): string {
   const p = zonedParts(ms, tz);
   const yy = year ? `.${String(p.year % 100).padStart(2, '0')}` : '';
   return `${String(p.day).padStart(2, '0')}.${String(p.month).padStart(2, '0')}${yy} ${formatTime(ms, tz)}`;
+}
+
+/** Selector SÍ / NO de la pantalla. */
+function yesNo(yes: boolean): string {
+  return yes ? t('   [SÍ]      no') : t('    sí     [NO]');
 }
 
 /** Lectura del cuentakilómetros con un decimal. */
@@ -170,12 +177,12 @@ export function renderDisplay(sim: SimState): DisplayModel {
     if (code === 'CONT_DRIVING_PREWARN' || code === 'CONT_DRIVING_EXCEEDED') {
       // «1 ¡Pausa!» con la conducción continua y el descanso acumulado del conductor 1
       const c = sum.continuous;
-      return view(spread('1 ¡Pausa!', 'OK'), `1{D}${hm(c?.drivingSinceBreakMs ?? 0)} {R}${hm(c?.currentBreakMs ?? 0)}`, 'warning');
+      return view(spread(t('1 ¡Pausa!'), 'OK'), `1{D}${hm(c?.drivingSinceBreakMs ?? 0)} {R}${hm(c?.currentBreakMs ?? 0)}`, 'warning');
     }
     const [a, b] = WARNING_TEXT[code];
-    return view(a, `${b}`.padEnd(LCD_COLS - 2) + 'OK', 'warning');
+    return view(t(a), `${t(b)}`.padEnd(LCD_COLS - 2) + 'OK', 'warning');
   }
-  if (d.notice) return { ...base, mode: 'notice', lines: wrap(d.notice.text) };
+  if (d.notice) return { ...base, mode: 'notice', lines: wrap(t(d.notice.text)) };
 
   const s = d.screen;
   const act = sum.recorded ? ACTIVITY_TOKEN[sum.recorded] : ' ';
@@ -186,73 +193,73 @@ export function renderDisplay(sim: SimState): DisplayModel {
         // abajo, ranura 1 (tarjeta y actividad), cuentakilómetros y actividad de la ranura 2.
         const cond = d.condition === 'FERRY' ? '{F}' : d.condition === 'OUT' ? '{X}' : '';
         const top = spread(`${formatTime(now, sim.scenario.localTimeZone)}{L} {O}${cond}`, `${speed}km/h`);
-        if (!card) return view(top, spread(' Inserte tarjeta', '2 -'));
+        if (!card) return view(top, spread(t(' Inserte tarjeta'), '2 -'));
         return view(top, spread(`1{C}${act}`, `${odometer(sim)}km  -2`));
       }
       if (s.page === 1) {
         // Tiempos del conductor (b), anexo IC req. 160: si conduce, conducción continua y descanso acumulado;
         // si no, duración de la actividad actual y descanso acumulado. Debajo, el segundo conductor.
-        if (!card) return view(' 1 sin tarjeta', ' 2 sin tarjeta');
+        if (!card) return view(t(' 1 sin tarjeta'), t(' 2 sin tarjeta'));
         const c = sum.continuous;
         const driving = sum.recorded === 'DRIVING';
-        const t = driving ? (c?.drivingSinceBreakMs ?? 0) : currentActivityMs(sim, d.insertedCardId!, now);
-        return view(`1${act}${hm(t)} {R}${hm(c?.currentBreakMs ?? 0)}`, ' 2 sin tarjeta');
+        const dur = driving ? (c?.drivingSinceBreakMs ?? 0) : currentActivityMs(sim, d.insertedCardId!, now);
+        return view(`1${act}${hm(dur)} {R}${hm(c?.currentBreakMs ?? 0)}`, t(' 2 sin tarjeta'));
       }
       if (s.page === 2) {
         // Tiempo de conducción restante: hasta la pausa obligatoria (art. 7) y hasta el límite diario (art. 6.1).
-        if (!cur) return view('{D} restante', ' Sin tarjeta');
+        if (!cur) return view(t('{D} restante'), t(' Sin tarjeta'));
         const remCont = Math.max(0, CONTINUOUS_DRIVING_LIMIT - (sum.continuous?.drivingSinceBreakMs ?? 0));
         const remDay = Math.max(0, cur.dailyCapMs - cur.dailyDrivingMs);
-        return view(spread('{D}hasta pausa', hm(remCont)), spread('{D}fin jornada', hm(remDay)));
+        return view(spread(t('{D}hasta pausa'), hm(remCont)), spread(t('{D}fin jornada'), hm(remDay)));
       }
       if (s.page === 3) {
         // Amplitud de la jornada (art. 8.2 R. 561/2006): el descanso diario debe caber en las 24 h desde el inicio
         // de la jornada → como máximo 13 h de jornada con descanso normal (11 h) o 15 h con reducido (9 h).
         const by = cur?.dailyRestStartBy;
-        if (!cur || !by) return view('{R} jornada', ' Sin jornada abierta');
-        const left = (t: number) => hm(Math.max(0, t - now));
-        return view(spread('Jornada 13h', left(by.normal)), spread('Reducida 15h', by.reduced !== null ? left(by.reduced) : 'agotada'));
+        if (!cur || !by) return view(t('{R} jornada'), t(' Sin jornada abierta'));
+        const left = (at: number) => hm(Math.max(0, at - now));
+        return view(spread(t('Jornada 13h'), left(by.normal)), spread(t('Reducida 15h'), by.reduced !== null ? left(by.reduced) : t('agotada')));
       }
       if (s.page === 4) {
-        if (!cur) return view('{D} acumulados', ' Sin tarjeta');
-        return view(`{D}jorn ${hm(cur.dailyDrivingMs)}/${hm(cur.dailyCapMs)}`, `sem ${hm(cur.weekDrivingMs)} 2s ${hm(cur.biweekDrivingMs)}`);
+        if (!cur) return view(t('{D} acumulados'), t(' Sin tarjeta'));
+        return view(t('{D}jorn {d}/{cap}', { d: hm(cur.dailyDrivingMs), cap: hm(cur.dailyCapMs) }), t('sem {w} 2s {b}', { w: hm(cur.weekDrivingMs), b: hm(cur.biweekDrivingMs) }));
       }
-      return view(spread(`${formatTime(now, 'UTC')}{U}`, 'UTC'), spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, 'local'));
+      return view(spread(`${formatTime(now, 'UTC')}{U}`, 'UTC'), spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, t('local')));
     }
     case 'MENU': {
       const group = MENU[s.index]!;
-      return view(spread('MENÚ', `${s.index + 1}/${MENU.length}`), `▸${group.label}`);
+      return view(spread(t('MENÚ'), `${s.index + 1}/${MENU.length}`), `▸${t(group.label)}`);
     }
     case 'SUBMENU': {
       const group = MENU[s.group]!;
       const item = group.items[s.index]!;
       const label =
-        item.id === 'FERRY' ? (d.condition === 'FERRY' ? '{F}Final ferry/tren' : '{F}Comienzo ferry/tren')
-        : item.id === 'OUT' ? (d.condition === 'OUT' ? '{X}Final OUT' : '{X}Comienzo OUT')
-        : item.id === 'ENTRY_START' ? '{L}País comienzo'
-        : item.id === 'ENTRY_END' ? '{L}País final'
-        : item.label;
-      return view(spread(group.label, group.items.length > 1 ? `${s.index + 1}/${group.items.length}` : ''), `▸${label}`);
+        item.id === 'FERRY' ? (d.condition === 'FERRY' ? t('{F}Final ferry/tren') : t('{F}Comienzo ferry/tren'))
+        : item.id === 'OUT' ? (d.condition === 'OUT' ? t('{X}Final OUT') : t('{X}Comienzo OUT'))
+        : item.id === 'ENTRY_START' ? t('{L}País comienzo')
+        : item.id === 'ENTRY_END' ? t('{L}País final')
+        : t(item.label);
+      return view(spread(t(group.label), group.items.length > 1 ? `${s.index + 1}/${group.items.length}` : ''), `▸${label}`);
     }
     case 'TIMES': {
       const c = sum.continuous;
-      return view(`{D}cont ${hm(c?.drivingSinceBreakMs ?? 0)} /4h30`, `disp ${hm(cur?.availableDrivingMs ?? 0)} {R}${hm(c?.currentBreakMs ?? 0)}`);
+      return view(t('{D}cont {d} /4h30', { d: hm(c?.drivingSinceBreakMs ?? 0) }), t('disp {a} {R}{b}', { a: hm(cur?.availableDrivingMs ?? 0), b: hm(c?.currentBreakMs ?? 0) }));
     }
     case 'DAY_ACTIVITIES': {
       const dayStart = startOfZonedDay(now, tz);
       const evs = d.insertedCardId ? eventsInRange(driverEvents(sim.timeline, d.insertedCardId), dayStart, addZonedDays(dayStart, 1, tz), now) : [];
-      if (evs.length === 0) return view('HOY', 'Sin actividades');
+      if (evs.length === 0) return view(t('HOY'), t('Sin actividades'));
       const i = Math.min(s.offset, evs.length - 1);
       const e = evs[i]!;
-      return view(spread('HOY', `${i + 1}/${evs.length}`), `${formatTime(Math.max(e.start, dayStart), tz)} ${ACTIVITY_TOKEN[e.activity]} ${hm(eventDuration(e, now))}${e.source === 'manual' ? ' {M}' : ''}`);
+      return view(spread(t('HOY'), `${i + 1}/${evs.length}`), `${formatTime(Math.max(e.start, dayStart), tz)} ${ACTIVITY_TOKEN[e.activity]} ${hm(eventDuration(e, now))}${e.source === 'manual' ? ' {M}' : ''}`);
     }
     case 'TICKET': {
       const rows = ticketLines(sim, sum);
       const i = Math.min(s.offset, rows.length - 1);
-      return view(spread('RESUMEN', `${i + 1}/${rows.length}`), rows[i]!);
+      return view(spread(t('RESUMEN'), `${i + 1}/${rows.length}`), rows[i]!);
     }
     case 'DEVICE_INFO':
-      return view('TL-1 EDU   simulador', 'NO HOMOLOGADO');
+      return view(t('TL-1 EDU   simulador'), t('NO HOMOLOGADO'));
     case 'WELCOME':
       // Nombre del titular y hora local y UTC (unos segundos, como en los equipos reales)
       return view(`1{C} ${card?.holderName ?? ''}`, spread(`${formatTime(now, sim.scenario.localTimeZone)}{L}`, `${formatTime(now, 'UTC')}UTC`));
@@ -260,12 +267,12 @@ export function renderDisplay(sim: SimState): DisplayModel {
       // Fin de la jornada anterior: fecha y hora de la última retirada de la tarjeta.
       const last = card?.lastWithdrawalAt;
       // En hora local, como la muestran los equipos
-      return view('Última retirada', last != null ? `{C}↑ ${short(last, sim.scenario.localTimeZone, true)}{L}` : '{C}↑ primer uso');
+      return view(t('Última retirada'), last != null ? `{C}↑ ${short(last, sim.scenario.localTimeZone, true)}{L}` : t('{C}↑ primer uso'));
     }
     case 'MANUAL_ASK':
-      return view('¿Entrada manual?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
+      return view(t('¿Entrada manual?'), yesNo(s.yes));
     case 'WITHDRAW_PRINT':
-      return view('¿Imprimir 24 h?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
+      return view(t('¿Imprimir 24 h?'), yesNo(s.yes));
     case 'MANUAL_EDIT': {
       // Línea 1: inicio del tramo. Línea 2: actividad y fin; el campo en edición va entre corchetes.
       const a = MANUAL_TOKEN[s.draft.activity];
@@ -278,16 +285,16 @@ export function renderDisplay(sim: SimState): DisplayModel {
       return view(`{M}  ${short(s.draft.start, tz)}`, line2);
     }
     case 'MANUAL_CONFIRM':
-      return view('{M}¿Confirmar?', s.yes ? '   [SÍ]      no' : '    sí     [NO]');
+      return view(t('{M}¿Confirmar?'), yesNo(s.yes));
     case 'COUNTRY': {
       const c = COUNTRIES[s.index]!;
-      const title = s.purpose === 'start' ? '{L}País de inicio' : s.purpose === 'manual-start' ? '{M}País comienzo' : s.purpose === 'border' ? '{L}País: frontera' : s.purpose === 'entry-start' ? '{L}País comienzo' : s.purpose === 'entry-end' ? '{L}País final' : '{L}País de fin';
-      return view(title, `▸ ${c.code.padEnd(3)}${c.name}`);
+      const title = s.purpose === 'start' ? N_('{L}País de inicio') : s.purpose === 'manual-start' ? N_('{M}País comienzo') : s.purpose === 'border' ? N_('{L}País: frontera') : s.purpose === 'entry-start' ? N_('{L}País comienzo') : s.purpose === 'entry-end' ? N_('{L}País final') : N_('{L}País de fin');
+      return view(t(title), `▸ ${c.code.padEnd(3)}${t(c.name)}`);
     }
     case 'REGION': {
       const r = SPAIN_REGIONS[s.index]!;
-      const title = s.purpose === 'start' ? '{L}E Región inicio' : s.purpose === 'manual-start' ? '{M}E Región comienzo' : s.purpose === 'border' ? '{L}E Región entrada' : s.purpose === 'entry-start' ? '{L}E Región comienzo' : s.purpose === 'entry-end' ? '{L}E Región final' : '{L}E Región de fin';
-      return view(title, `▸${r.code.padEnd(4)}${r.name}`);
+      const title = s.purpose === 'start' ? N_('{L}E Región inicio') : s.purpose === 'manual-start' ? N_('{M}E Región comienzo') : s.purpose === 'border' ? N_('{L}E Región entrada') : s.purpose === 'entry-start' ? N_('{L}E Región comienzo') : s.purpose === 'entry-end' ? N_('{L}E Región final') : N_('{L}E Región de fin');
+      return view(t(title), `▸${r.code.padEnd(4)}${t(r.name)}`);
     }
   }
 }

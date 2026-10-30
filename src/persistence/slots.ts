@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { SimState } from '@/simulator/state';
 import { SIM_STATE_VERSION } from '@/simulator/state';
 import { KEYS, type KeyValueStorage } from './storage';
@@ -32,11 +33,11 @@ export type SaveResult = { ok: true; slot: SaveSlot } | { ok: false; reason: str
 export function saveSlot(storage: KeyValueStorage, sim: SimState, name: string, limit: number, savedAt = Date.now()): SaveResult {
   const slots = listSlots(storage);
   if (slots.length >= limit) {
-    return { ok: false, reason: `Tu plan permite ${limit} escenario(s) guardado(s). Borra uno para guardar otro.` };
+    return { ok: false, reason: t('Tu plan permite {n} escenario(s) guardado(s). Borra uno para guardar otro.', { n: limit }) };
   }
   const slot: SaveSlot = {
     id: `slot-${savedAt}-${slots.length}`,
-    name: name.trim().slice(0, 60) || 'Sin nombre',
+    name: name.trim().slice(0, 60) || t('Sin nombre'),
     savedAt,
     scenarioTitle: sim.scenario.title,
     simNow: sim.clock.now,
@@ -46,7 +47,7 @@ export function saveSlot(storage: KeyValueStorage, sim: SimState, name: string, 
     storage.setItem(SLOTS_KEY, JSON.stringify([...slots, slot]));
     return { ok: true, slot };
   } catch {
-    return { ok: false, reason: 'No hay espacio de almacenamiento disponible en este navegador.' };
+    return { ok: false, reason: t('No hay espacio de almacenamiento disponible en este navegador.') };
   }
 }
 

@@ -1,3 +1,4 @@
+import { N_, type I18nText } from '@/i18n';
 import type { Activity, EpochMs, SelectableActivity } from '@/shared/types';
 
 /** Botones físicos del dispositivo ficticio TL-1. */
@@ -19,42 +20,42 @@ export interface ManualDraftSegment {
 export const MENU = [
   {
     id: 'PRINT_D1',
-    label: 'Imprimir conduc.1',
+    label: N_('Imprimir conduc.1'),
     needsCard: true,
-    items: [{ id: 'PRINT_DAY', label: '24h act. diaria' }],
+    items: [{ id: 'PRINT_DAY', label: N_('24h act. diaria') }],
   },
   {
     id: 'ENTRY_D1',
-    label: 'Entrada conduc.1',
+    label: N_('Entrada conduc.1'),
     needsCard: true,
     items: [
-      { id: 'ENTRY_START', label: 'País comienzo' },
-      { id: 'ENTRY_END', label: 'País final' },
+      { id: 'ENTRY_START', label: N_('País comienzo') },
+      { id: 'ENTRY_END', label: N_('País final') },
       /** País en el que se entra tras cruzar una frontera (art. 34.7 R. 165/2014). */
-      { id: 'BORDER', label: 'Cruce frontera' },
+      { id: 'BORDER', label: N_('Cruce frontera') },
     ],
   },
   {
     id: 'ENTRY_VEH',
-    label: 'Entrada vehículo',
+    label: N_('Entrada vehículo'),
     needsCard: false,
     /** Condiciones específicas (anexo IC, req. 62). */
     items: [
-      { id: 'OUT', label: 'Fuera de ámbito' },
-      { id: 'FERRY', label: 'Ferry/tren' },
+      { id: 'OUT', label: N_('Fuera de ámbito') },
+      { id: 'FERRY', label: N_('Ferry/tren') },
     ],
   },
   {
     id: 'SHOW_D1',
-    label: 'Visualizar cond.1',
+    label: N_('Visualizar cond.1'),
     needsCard: true,
     items: [
-      { id: 'DAY_ACTIVITIES', label: '24h act. diaria' },
-      { id: 'TIMES', label: 'Tiempos' },
-      { id: 'TICKET', label: 'Resumen jornada' },
+      { id: 'DAY_ACTIVITIES', label: N_('24h act. diaria') },
+      { id: 'TIMES', label: N_('Tiempos') },
+      { id: 'TICKET', label: N_('Resumen jornada') },
     ],
   },
-  { id: 'INFO', label: 'Información equipo', needsCard: false, items: [] },
+  { id: 'INFO', label: N_('Información equipo'), needsCard: false, items: [] },
 ] as const;
 export type MenuGroupId = (typeof MENU)[number]['id'];
 export type MenuItemId = (typeof MENU)[number]['items'][number]['id'];
@@ -77,34 +78,34 @@ export function menuPosition(item: MenuItemId): { group: number; index: number }
  * 2016/799 (ver docs/REGULATIONS.md). Nombres abreviados para la pantalla de 20 caracteres.
  */
 export const SPAIN_REGIONS = [
-  { code: 'AN', name: 'Andalucía' },
-  { code: 'AR', name: 'Aragón' },
-  { code: 'AST', name: 'Asturias' },
-  { code: 'C', name: 'Cantabria' },
-  { code: 'CAT', name: 'Cataluña' },
-  { code: 'CL', name: 'Castilla y León' },
-  { code: 'CM', name: 'Cast.-La Mancha' },
-  { code: 'CV', name: 'C. Valenciana' },
-  { code: 'EXT', name: 'Extremadura' },
-  { code: 'G', name: 'Galicia' },
-  { code: 'IB', name: 'Islas Baleares' },
-  { code: 'IC', name: 'Canarias' },
-  { code: 'LR', name: 'La Rioja' },
-  { code: 'M', name: 'Madrid' },
-  { code: 'MU', name: 'Murcia' },
-  { code: 'NA', name: 'Navarra' },
-  { code: 'PV', name: 'País Vasco' },
+  { code: 'AN', name: N_('Andalucía') },
+  { code: 'AR', name: N_('Aragón') },
+  { code: 'AST', name: N_('Asturias') },
+  { code: 'C', name: N_('Cantabria') },
+  { code: 'CAT', name: N_('Cataluña') },
+  { code: 'CL', name: N_('Castilla y León') },
+  { code: 'CM', name: N_('Cast.-La Mancha') },
+  { code: 'CV', name: N_('C. Valenciana') },
+  { code: 'EXT', name: N_('Extremadura') },
+  { code: 'G', name: N_('Galicia') },
+  { code: 'IB', name: N_('Islas Baleares') },
+  { code: 'IC', name: N_('Canarias') },
+  { code: 'LR', name: N_('La Rioja') },
+  { code: 'M', name: N_('Madrid') },
+  { code: 'MU', name: N_('Murcia') },
+  { code: 'NA', name: N_('Navarra') },
+  { code: 'PV', name: N_('País Vasco') },
 ] as const;
 
 export const COUNTRIES = [
-  { code: 'E', name: 'España' },
-  { code: 'P', name: 'Portugal' },
-  { code: 'F', name: 'Francia' },
-  { code: 'I', name: 'Italia' },
-  { code: 'D', name: 'Alemania' },
-  { code: 'B', name: 'Bélgica' },
-  { code: 'NL', name: 'Países Bajos' },
-  { code: 'PL', name: 'Polonia' },
+  { code: 'E', name: N_('España') },
+  { code: 'P', name: N_('Portugal') },
+  { code: 'F', name: N_('Francia') },
+  { code: 'I', name: N_('Italia') },
+  { code: 'D', name: N_('Alemania') },
+  { code: 'B', name: N_('Bélgica') },
+  { code: 'NL', name: N_('Países Bajos') },
+  { code: 'PL', name: N_('Polonia') },
 ] as const;
 
 /** Máquina de estados de pantallas del dispositivo. */
@@ -170,6 +171,8 @@ export interface DeviceWarning {
   severity: 'info' | 'warning' | 'infringement';
   title: string;
   text: string;
+  /** Texto traducible del aviso (identificador y datos). */
+  textI18n?: I18nText;
   ruleId: string | null;
   at: EpochMs;
 }

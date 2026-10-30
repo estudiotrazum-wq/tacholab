@@ -1,3 +1,4 @@
+import { msg, N_, type I18nText } from '@/i18n';
 import type { EpochMs } from '@/shared/types';
 import { eventEnd, type ActivityEvent } from '@/time-engine/timeline';
 import { HOUR, MINUTE } from '@/time-engine/units';
@@ -60,6 +61,9 @@ export interface Finding {
   at: EpochMs;
   title: string;
   detail: string;
+  /** Identificadores traducibles cuando el texto lleva datos. */
+  titleI18n?: I18nText;
+  detailI18n?: I18nText;
 }
 
 export interface Obligation {
@@ -71,6 +75,8 @@ export interface Obligation {
   fulfilledAt?: EpochMs;
   owedMs?: number;
   detail: string;
+  titleI18n?: I18nText;
+  detailI18n?: I18nText;
 }
 
 export interface RestBlock {
@@ -227,6 +233,12 @@ export function drivingCrossing(
   return null;
 }
 
+/** Campo de texto con datos: el texto en español y su identificador traducible. */
+function I<F extends 'title' | 'detail'>(field: F, id: string, p?: Record<string, string | number>): Record<F, string> & Record<`${F}I18n`, I18nText> {
+  const m = msg(id, p);
+  return { [field]: m.text, [`${field}I18n`]: m.i18n } as Record<F, string> & Record<`${F}I18n`, I18nText>;
+}
+
 const h = (ms: number) => {
   const m = Math.round(ms / MINUTE);
   return `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ''}`;
@@ -289,8 +301,8 @@ export function analyzeCompliance(
         ruleId: 'R561-ART8-24H',
         severity: 'infringement',
         at: p.windowEnd - LIMITS.DAILY_REST_REDUCED,
-        title: 'Descanso diario insuficiente en la ventana de 24 h',
-        detail: `La jornada empezó el ${fmt(p.start)}. Dentro de las 24 h siguientes solo hubo ${h(inside)} de descanso; se necesitan al menos 9 h (reducido) u 11 h (normal). Art. 8.2.`,
+        title: N_('Descanso diario insuficiente en la ventana de 24 h'),
+        ...I('detail', 'La jornada empezó el {p0}. Dentro de las 24 h siguientes solo hubo {p1} de descanso; se necesitan al menos 9 h (reducido) u 11 h (normal). Art. 8.2.', { p0: fmt(p.start), p1: h(inside) }),
       });
     }
     if (kind === 'REDUCED' && !weekly && !provisional) {
@@ -300,8 +312,8 @@ export function analyzeCompliance(
           ruleId: 'R561-ART8-DR9',
           severity: 'infringement',
           at: b.start,
-          title: 'Más de tres descansos diarios reducidos',
-          detail: `Descanso diario reducido n.º ${reducedSinceWeekly} desde el último descanso semanal (máximo 3). Art. 8.4.`,
+          title: N_('Más de tres descansos diarios reducidos'),
+          ...I('detail', 'Descanso diario reducido n.º {p0} desde el último descanso semanal (máximo 3). Art. 8.4.', { p0: reducedSinceWeekly }),
         });
       }
     }
@@ -313,8 +325,10 @@ export function analyzeCompliance(
         ruleId: 'R561-ART9-FERRY',
         severity: 'info',
         at: b.start,
-        title: 'Descanso en transbordador/tren con interrupciones (art. 9)',
-        detail: `El descanso que empieza el ${fmt(b.start)} se interrumpió ${b.ferryGaps.count} ${b.ferryGaps.count === 1 ? 'vez' : 'veces'} (${h(b.ferryGaps.ms)} en total) durante un trayecto en transbordador/tren. Se admite como descanso continuo si el conductor tenía acceso a cama o litera. Art. 9.1.`,
+        title: N_('Descanso en transbordador/tren con interrupciones (art. 9)'),
+        ...(b.ferryGaps.count === 1
+          ? I('detail', 'El descanso que empieza el {start} se interrumpió 1 vez ({total} en total) durante un trayecto en transbordador/tren. Se admite como descanso continuo si el conductor tenía acceso a cama o litera. Art. 9.1.', { start: fmt(b.start), total: h(b.ferryGaps.ms) })
+          : I('detail', 'El descanso que empieza el {start} se interrumpió {n} veces ({total} en total) durante un trayecto en transbordador/tren. Se admite como descanso continuo si el conductor tenía acceso a cama o litera. Art. 9.1.', { start: fmt(b.start), n: b.ferryGaps.count, total: h(b.ferryGaps.ms) })),
       });
     }
     if (b.end <= ctx.startsAt || periodStart === null || b.start < periodStart) continue;
@@ -328,8 +342,8 @@ export function analyzeCompliance(
           ruleId: 'R561-ART8-6DAYS',
           severity: 'infringement',
           at: deadline,
-          title: 'Descanso semanal iniciado demasiado tarde',
-          detail: `Debía empezar antes del ${fmt(deadline)} (seis periodos de 24 h tras el anterior); empezó el ${fmt(b.start)}. Art. 8.6.`,
+          title: N_('Descanso semanal iniciado demasiado tarde'),
+          ...I('detail', 'Debía empezar antes del {p0} (seis periodos de 24 h tras el anterior); empezó el {p1}. Art. 8.6.', { p0: fmt(deadline), p1: fmt(b.start) }),
         });
       }
       lastWeeklyEnd = b.end;
@@ -356,17 +370,17 @@ export function analyzeCompliance(
         ruleId: 'R561-ART8-24H',
         severity: 'infringement',
         at: latestReduced,
-        title: 'Descanso diario no iniciado a tiempo',
-        detail: `La jornada empezó el ${fmt(open.start)}: el descanso diario (al menos 9 h) debía empezar antes del ${fmt(latestReduced)} para completarse dentro de las 24 h. Art. 8.2.`,
+        title: N_('Descanso diario no iniciado a tiempo'),
+        ...I('detail', 'La jornada empezó el {p0}: el descanso diario (al menos 9 h) debía empezar antes del {p1} para completarse dentro de las 24 h. Art. 8.2.', { p0: fmt(open.start), p1: fmt(latestReduced) }),
       });
     } else {
       obligations.push({
         id: `daily-rest@${open.start}`,
         ruleId: 'R561-ART8-24H',
-        title: 'Descanso diario de la jornada actual',
+        title: N_('Descanso diario de la jornada actual'),
         dueAt: latestReduced,
         status: 'pending',
-        detail: `Empieza el descanso antes del ${fmt(open.windowEnd - LIMITS.DAILY_REST_NORMAL)} para que sea normal (11 h), o como muy tarde el ${fmt(latestReduced)} si es reducido (9 h).`,
+        ...I('detail', 'Empieza el descanso antes del {p0} para que sea normal (11 h), o como muy tarde el {p1} si es reducido (9 h).', { p0: fmt(open.windowEnd - LIMITS.DAILY_REST_NORMAL), p1: fmt(latestReduced) }),
       });
     }
   }
@@ -379,17 +393,17 @@ export function analyzeCompliance(
         ruleId: 'R561-ART8-6DAYS',
         severity: 'infringement',
         at: weeklyDue,
-        title: 'Descanso semanal pendiente fuera de plazo',
-        detail: `Desde el último descanso semanal (${fmt(lastWeeklyEnd)}) han pasado más de seis periodos de 24 h sin iniciar otro. Art. 8.6.`,
+        title: N_('Descanso semanal pendiente fuera de plazo'),
+        ...I('detail', 'Desde el último descanso semanal ({p0}) han pasado más de seis periodos de 24 h sin iniciar otro. Art. 8.6.', { p0: fmt(lastWeeklyEnd) }),
       });
     } else {
       obligations.push({
         id: `weekly-rest@${lastWeeklyEnd}`,
         ruleId: 'R561-ART8-6DAYS',
-        title: 'Próximo descanso semanal',
+        title: N_('Próximo descanso semanal'),
         dueAt: weeklyDue,
         status: 'pending',
-        detail: `Debe empezar antes del ${fmt(weeklyDue)} (seis periodos de 24 h desde el ${fmt(lastWeeklyEnd)}). Art. 8.6.`,
+        ...I('detail', 'Debe empezar antes del {p0} (seis periodos de 24 h desde el {p1}). Art. 8.6.', { p0: fmt(weeklyDue), p1: fmt(lastWeeklyEnd) }),
       });
     }
   }
@@ -408,8 +422,8 @@ export function analyzeCompliance(
           ruleId: 'R561-ART6-DAILY10',
           severity: 'infringement',
           at: drivingCrossing(events, p.start, to, LIMITS.DAILY_DRIVING, now) ?? p.start,
-          title: 'Tercera ampliación a 10 h en la misma semana',
-          detail: `La jornada del ${fmt(p.start)} supera 9 h de conducción y ya se habían usado las dos ampliaciones de la semana. Art. 6.1.`,
+          title: N_('Tercera ampliación a 10 h en la misma semana'),
+          ...I('detail', 'La jornada del {p0} supera 9 h de conducción y ya se habían usado las dos ampliaciones de la semana. Art. 6.1.', { p0: fmt(p.start) }),
         });
       }
     }
@@ -418,8 +432,8 @@ export function analyzeCompliance(
         ruleId: 'R561-ART6-DAILY10',
         severity: 'infringement',
         at: drivingCrossing(events, p.start, to, LIMITS.DAILY_DRIVING_EXTENDED, now) ?? p.start,
-        title: 'Conducción diaria superior a 10 h',
-        detail: `La jornada del ${fmt(p.start)} acumula ${h(p.drivingMs)} de conducción (máximo 10 h, y solo dos veces por semana). Art. 6.1.`,
+        title: N_('Conducción diaria superior a 10 h'),
+        ...I('detail', 'La jornada del {p0} acumula {p1} de conducción (máximo 10 h, y solo dos veces por semana). Art. 6.1.', { p0: fmt(p.start), p1: h(p.drivingMs) }),
       });
     }
   }
@@ -435,8 +449,8 @@ export function analyzeCompliance(
         ruleId: 'R561-ART6-WEEKLY56',
         severity: 'infringement',
         at: drivingCrossing(events, w.start, addZonedDays(w.start, 7, tz), LIMITS.WEEKLY_DRIVING, now) ?? w.start,
-        title: 'Conducción semanal superior a 56 h',
-        detail: `La semana del ${fmt(w.start)} acumula ${h(w.drivingMs)} de conducción. Art. 6.2.`,
+        title: N_('Conducción semanal superior a 56 h'),
+        ...I('detail', 'La semana del {p0} acumula {p1} de conducción. Art. 6.2.', { p0: fmt(w.start), p1: h(w.drivingMs) }),
       });
     }
   }
@@ -446,8 +460,8 @@ export function analyzeCompliance(
       ruleId: 'R561-ART6-BIWEEKLY90',
       severity: 'infringement',
       at: drivingCrossing(events, weeks[0]!.start, ctx.endsAt, LIMITS.BIWEEKLY_DRIVING, now) ?? weeks[1]!.start,
-      title: 'Más de 90 h de conducción en dos semanas consecutivas',
-      detail: `Las dos semanas del escenario suman ${h(total)} de conducción. Art. 6.3.`,
+      title: N_('Más de 90 h de conducción en dos semanas consecutivas'),
+      ...I('detail', 'Las dos semanas del escenario suman {p0} de conducción. Art. 6.3.', { p0: h(total) }),
     });
   }
 
@@ -458,8 +472,8 @@ export function analyzeCompliance(
       ruleId: 'R561-ART7-CONT',
       severity: 'infringement',
       at,
-      title: 'Más de 4 h 30 min de conducción sin pausa válida',
-      detail: 'Tras 4 h 30 min de conducción hay que hacer una pausa de 45 min (o 15 + 30). Art. 7.',
+      title: N_('Más de 4 h 30 min de conducción sin pausa válida'),
+      detail: N_('Tras 4 h 30 min de conducción hay que hacer una pausa de 45 min (o 15 + 30). Art. 7.'),
     });
   }
 
@@ -468,20 +482,20 @@ export function analyzeCompliance(
   const firm = inScenario.filter((r) => !r.provisional);
   const satisfied = firm.length >= 2 && firm.some((r) => r.normal);
   if (satisfied) {
-    obligations.push({ id: 'weekly-pair', ruleId: 'R561-ART8-WR24', title: 'Descansos semanales de las dos semanas', dueAt: ctx.endsAt, status: 'fulfilled', detail: 'Hay al menos dos descansos semanales y uno de ellos es normal (≥ 45 h).' });
+    obligations.push({ id: 'weekly-pair', ruleId: 'R561-ART8-WR24', title: N_('Descansos semanales de las dos semanas'), dueAt: ctx.endsAt, status: 'fulfilled', detail: N_('Hay al menos dos descansos semanales y uno de ellos es normal (≥ 45 h).') });
   } else if (now >= ctx.endsAt) {
     const pendingOne = inScenario.some((r) => r.provisional);
     add({
       ruleId: 'R561-ART8-WR24',
       severity: pendingOne ? 'needs-context' : 'infringement',
       at: ctx.endsAt,
-      title: 'Descansos semanales insuficientes en dos semanas',
-      detail: pendingOne
-        ? 'El último descanso semanal sigue en curso al terminar el escenario: su valoración depende de cuándo termine. Art. 8.6.'
-        : `En las dos semanas hay ${firm.length} descanso(s) semanal(es) y ${firm.filter((r) => r.normal).length} normal(es); se requieren dos normales, o uno normal y uno reducido de al menos 24 h. Art. 8.6.`,
+      title: N_('Descansos semanales insuficientes en dos semanas'),
+      ...(pendingOne
+        ? I('detail', 'El último descanso semanal sigue en curso al terminar el escenario: su valoración depende de cuándo termine. Art. 8.6.')
+        : I('detail', 'En las dos semanas hay {n} descanso(s) semanal(es) y {normal} normal(es); se requieren dos normales, o uno normal y uno reducido de al menos 24 h. Art. 8.6.', { n: firm.length, normal: firm.filter((r) => r.normal).length })),
     });
   } else {
-    obligations.push({ id: 'weekly-pair', ruleId: 'R561-ART8-WR24', title: 'Descansos semanales de las dos semanas', dueAt: ctx.endsAt, status: 'pending', detail: `Llevas ${firm.length} descanso(s) semanal(es) (${firm.filter((r) => r.normal).length} normal/es). Necesitas dos, al menos uno normal de 45 h. Art. 8.6.` });
+    obligations.push({ id: 'weekly-pair', ruleId: 'R561-ART8-WR24', title: N_('Descansos semanales de las dos semanas'), dueAt: ctx.endsAt, status: 'pending', ...I('detail', 'Llevas {p0} descanso(s) semanal(es) ({p1} normal/es). Necesitas dos, al menos uno normal de 45 h. Art. 8.6.', { p0: firm.length, p1: firm.filter((r) => r.normal).length }) });
   }
 
   // ---- 7. Compensación de descansos semanales reducidos (art. 8.6 ter y 8.7)
@@ -498,18 +512,20 @@ export function analyzeCompliance(
       return len - base >= owed;
     });
     const beyond = dueAt > ctx.endsAt;
-    const base = { id: `comp@${r.block.start}`, ruleId: 'R561-ART8-COMP', title: `Compensar ${h(owed)} del descanso semanal reducido del ${fmt(r.block.start)}`, dueAt, owedMs: owed };
+    const base = { id: `comp@${r.block.start}`, ruleId: 'R561-ART8-COMP', ...I('title', 'Compensar {p0} del descanso semanal reducido del {p1}', { p0: h(owed), p1: fmt(r.block.start) }), dueAt, owedMs: owed };
     if (carrier >= 0) {
       used.add(carrier);
-      obligations.push({ ...base, status: 'fulfilled', fulfilledAt: blocks[carrier]!.end, detail: `Compensado en una sola vez junto a un descanso que terminó el ${fmt(blocks[carrier]!.end)}.` });
+      obligations.push({ ...base, status: 'fulfilled', fulfilledAt: blocks[carrier]!.end, ...I('detail', 'Compensado en una sola vez junto a un descanso que terminó el {p0}.', { p0: fmt(blocks[carrier]!.end) }) });
     } else if (now >= dueAt) {
-      obligations.push({ ...base, status: 'overdue', detail: 'No se compensó antes del final de la tercera semana siguiente.' });
-      add({ ruleId: 'R561-ART8-COMP', severity: 'infringement', at: dueAt, title: 'Compensación de descanso semanal no realizada', detail: `${h(owed)} debían compensarse antes del ${fmt(dueAt)}. Art. 8.6 ter.` });
+      obligations.push({ ...base, status: 'overdue', detail: N_('No se compensó antes del final de la tercera semana siguiente.') });
+      add({ ruleId: 'R561-ART8-COMP', severity: 'infringement', at: dueAt, title: N_('Compensación de descanso semanal no realizada'), ...I('detail', '{p0} debían compensarse antes del {p1}. Art. 8.6 ter.', { p0: h(owed), p1: fmt(dueAt) }) });
     } else {
       obligations.push({
         ...base,
         status: 'pending',
-        detail: `Debe tomarse en una sola vez, unida a otro descanso de al menos 9 h, antes del ${fmt(dueAt)}${beyond ? ' — después del final del escenario: la obligación sigue pendiente aunque termine la simulación' : ''}. Art. 8.6 ter y 8.7.`,
+        ...(beyond
+          ? I('detail', 'Debe tomarse en una sola vez, unida a otro descanso de al menos 9 h, antes del {due} — después del final del escenario: la obligación sigue pendiente aunque termine la simulación. Art. 8.6 ter y 8.7.', { due: fmt(dueAt) })
+          : I('detail', 'Debe tomarse en una sola vez, unida a otro descanso de al menos 9 h, antes del {due}. Art. 8.6 ter y 8.7.', { due: fmt(dueAt) })),
       });
     }
   }
@@ -525,10 +541,10 @@ export function analyzeCompliance(
   const dailyCapMs =
     open?.extended || extensionsOther < LIMITS.EXTENSIONS_PER_WEEK ? LIMITS.DAILY_DRIVING_EXTENDED : LIMITS.DAILY_DRIVING;
   const limits: [string, number][] = [
-    [dailyCapMs === LIMITS.DAILY_DRIVING_EXTENDED ? 'conducción diaria (10 h con ampliación)' : 'conducción diaria (9 h)', dailyCapMs - dailyDrivingMs],
-    ['conducción semanal (56 h)', LIMITS.WEEKLY_DRIVING - weekDrivingMs],
-    ['dos semanas (90 h)', LIMITS.BIWEEKLY_DRIVING - biweekDrivingMs],
-    ['conducción continua (4 h 30)', CONTINUOUS_DRIVING_LIMIT - continuous.drivingSinceBreakMs],
+    [dailyCapMs === LIMITS.DAILY_DRIVING_EXTENDED ? N_('conducción diaria (10 h con ampliación)') : N_('conducción diaria (9 h)'), dailyCapMs - dailyDrivingMs],
+    [N_('conducción semanal (56 h)'), LIMITS.WEEKLY_DRIVING - weekDrivingMs],
+    [N_('dos semanas (90 h)'), LIMITS.BIWEEKLY_DRIVING - biweekDrivingMs],
+    [N_('conducción continua (4 h 30)'), CONTINUOUS_DRIVING_LIMIT - continuous.drivingSinceBreakMs],
   ];
   const [limitingFactor, avail] = limits.reduce((a, b) => (b[1] < a[1] ? b : a));
 

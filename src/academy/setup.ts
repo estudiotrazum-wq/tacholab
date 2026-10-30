@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 import type { Activity } from '@/shared/types';
 import { createInitialSim, type SimState } from '@/simulator/state';
 import { REFERENCE_ANCHOR } from '@/scenarios/scenario';
@@ -31,8 +32,8 @@ export function withCardInserted(sim: SimState, steps: Step[] = [], opts: { movi
     vehicle: { moving: opts.moving ?? false },
     device: { ...sim.device, insertedCardId: DRIVER, insertedAt: start, selected, screen: { kind: 'STANDARD', page: 0 } },
     log: [
-      { id: 1, at: start, kind: 'CARD_IN', text: 'Tarjeta SIM-ES-0000-A1 insertada', driverId: DRIVER },
-      { id: 2, at: start, kind: 'COUNTRY_START', text: 'País de inicio: España', driverId: DRIVER },
+      { id: 1, at: start, kind: 'CARD_IN', text: N_('Tarjeta SIM-ES-0000-A1 insertada'), driverId: DRIVER },
+      { id: 2, at: start, kind: 'COUNTRY_START', text: N_('País de inicio: España'), driverId: DRIVER },
     ],
     logSeq: 3,
   };

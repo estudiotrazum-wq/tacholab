@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 /**
  * Insignias de aprendizaje. Principios (sin mecánicas adictivas):
  *  - Solo premian hitos formativos superados, nunca la velocidad, las rachas
@@ -24,16 +25,16 @@ export interface Badge {
 const passed = (p: ProgressMap, id: string) => !!p[id]?.passed;
 
 export const BADGES: readonly Badge[] = [
-  { id: 'first-steps', title: 'Primeros pasos', description: 'Conoces los botones del tacógrafo.', earned: (p) => passed(p, 'buttons') },
-  { id: 'card-ready', title: 'Tarjeta en regla', description: 'Insertas la tarjeta y declaras el periodo sin tarjeta.', earned: (p) => passed(p, 'insert-card') },
-  { id: 'activities', title: 'Cuatro actividades', description: 'Distingues conducción, otros trabajos, disponibilidad y descanso.', earned: (p) => passed(p, 'activities') },
-  { id: 'first-day', title: 'Primera jornada', description: 'Completas una jornada sin infracciones.', earned: (p) => passed(p, 'simple-day') && (p['simple-day']?.bestScore ?? 0) === 100 },
-  { id: 'on-time', title: 'Pausa a tiempo', description: 'Paras antes de 4 h 30 min y descansas 45 min.', earned: (p) => passed(p, 'break-45') },
-  { id: 'basic-academy', title: 'Academia básica', description: 'Superas los cinco ejercicios iniciales.', earned: (p) => ['buttons', 'insert-card', 'activities', 'simple-day', 'break-45'].every((id) => passed(p, id)) },
-  { id: 'split', title: '15 + 30', description: 'Dominas la pausa fraccionada.', earned: (p) => passed(p, 'split-break') },
-  { id: 'compensation', title: 'Cuentas claras', description: 'Compensas un descanso semanal reducido.', earned: (p) => passed(p, 'compensation') },
-  { id: 'ninety', title: '90 horas legales', description: 'Planificas dos semanas al límite sin infracciones.', earned: (p) => passed(p, 'ninety') },
-  { id: 'inspector', title: 'Ojo de inspector', description: 'Identificas todos los errores de un historial.', earned: (p) => (p['find-errors']?.stars ?? 0) === 3 },
+  { id: 'first-steps', title: N_('Primeros pasos'), description: N_('Conoces los botones del tacógrafo.'), earned: (p) => passed(p, 'buttons') },
+  { id: 'card-ready', title: N_('Tarjeta en regla'), description: N_('Insertas la tarjeta y declaras el periodo sin tarjeta.'), earned: (p) => passed(p, 'insert-card') },
+  { id: 'activities', title: N_('Cuatro actividades'), description: N_('Distingues conducción, otros trabajos, disponibilidad y descanso.'), earned: (p) => passed(p, 'activities') },
+  { id: 'first-day', title: N_('Primera jornada'), description: N_('Completas una jornada sin infracciones.'), earned: (p) => passed(p, 'simple-day') && (p['simple-day']?.bestScore ?? 0) === 100 },
+  { id: 'on-time', title: N_('Pausa a tiempo'), description: N_('Paras antes de 4 h 30 min y descansas 45 min.'), earned: (p) => passed(p, 'break-45') },
+  { id: 'basic-academy', title: N_('Academia básica'), description: N_('Superas los cinco ejercicios iniciales.'), earned: (p) => ['buttons', 'insert-card', 'activities', 'simple-day', 'break-45'].every((id) => passed(p, id)) },
+  { id: 'split', title: '15 + 30', description: N_('Dominas la pausa fraccionada.'), earned: (p) => passed(p, 'split-break') },
+  { id: 'compensation', title: N_('Cuentas claras'), description: N_('Compensas un descanso semanal reducido.'), earned: (p) => passed(p, 'compensation') },
+  { id: 'ninety', title: N_('90 horas legales'), description: N_('Planificas dos semanas al límite sin infracciones.'), earned: (p) => passed(p, 'ninety') },
+  { id: 'inspector', title: N_('Ojo de inspector'), description: N_('Identificas todos los errores de un historial.'), earned: (p) => (p['find-errors']?.stars ?? 0) === 3 },
 ];
 
 export function earnedBadges(p: ProgressMap): Badge[] {

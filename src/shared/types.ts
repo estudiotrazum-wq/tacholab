@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 /** Instante absoluto en milisegundos desde epoch (UTC). Única representación interna del tiempo. */
 export type EpochMs = number;
 
@@ -11,10 +12,10 @@ export const ACTIVITIES: readonly Activity[] = ['DRIVING', 'WORK', 'AVAILABILITY
 export const SELECTABLE_ACTIVITIES: readonly SelectableActivity[] = ['WORK', 'AVAILABILITY', 'REST'];
 
 export const ACTIVITY_LABEL: Record<Activity, string> = {
-  DRIVING: 'Conducción',
-  WORK: 'Otros trabajos',
-  AVAILABILITY: 'Disponibilidad',
-  REST: 'Pausa / descanso',
+  DRIVING: N_('Conducción'),
+  WORK: N_('Otros trabajos'),
+  AVAILABILITY: N_('Disponibilidad'),
+  REST: N_('Pausa / descanso'),
 };
 
 export const ACTIVITY_SHORT: Record<Activity, string> = {

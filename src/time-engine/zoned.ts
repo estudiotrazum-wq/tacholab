@@ -1,3 +1,4 @@
+import { getLang, type Lang } from '@/i18n';
 import type { EpochMs } from '@/shared/types';
 import { HOUR } from './units';
 
@@ -123,10 +124,14 @@ export function formatDateTime(ms: EpochMs, timeZone: string): string {
   return `${formatDate(ms, timeZone)} ${formatTime(ms, timeZone)}`;
 }
 
-const WEEKDAYS_ES = ['', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+const WEEKDAYS: Record<Lang, string[]> = {
+  es: ['', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'],
+  en: ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+};
 
+/** Día de la semana abreviado en el idioma de la interfaz. */
 export function formatWeekday(ms: EpochMs, timeZone: string): string {
-  return WEEKDAYS_ES[zonedParts(ms, timeZone).isoWeekday] ?? '';
+  return WEEKDAYS[getLang()][zonedParts(ms, timeZone).isoWeekday] ?? '';
 }
 
 /** Valor para <input type="datetime-local"> en la zona indicada. */

@@ -1,3 +1,4 @@
+import { N_, type I18nText } from '@/i18n';
 import type { EpochMs } from '@/shared/types';
 import { addZonedDays, startOfZonedWeek } from '@/time-engine/zoned';
 import { HOUR } from '@/time-engine/units';
@@ -8,6 +9,8 @@ export const SCENARIO_DAYS = 14;
 export interface ScenarioMeta {
   id: string;
   title: string;
+  /** Título traducible (cuando lleva datos, p. ej. «Ejercicio 3: …»). */
+  titleI18n?: I18nText;
   /** Lunes 00:00 UTC de la semana 1. */
   weekOneStart: EpochMs;
   /** Instante en que arranca el reloj. */
@@ -42,7 +45,7 @@ export function createFreeScenario(
   const weekOneStart = startOfZonedWeek(anchor, timeZone);
   return {
     id,
-    title: 'Práctica libre — dos semanas',
+    title: N_('Práctica libre — dos semanas'),
     weekOneStart,
     startsAt: weekOneStart + 6 * HOUR,
     endsAt: addZonedDays(weekOneStart, SCENARIO_DAYS, timeZone),

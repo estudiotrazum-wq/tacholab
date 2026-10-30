@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { browserStorage, KEYS } from '@/persistence/storage';
 import { DEFAULT_ENTITLEMENTS, type Entitlements } from '@/billing/plans';
 import { sectionOf } from './shell/nav';
+import { detectLang, setLang, type Lang } from '@/i18n';
 
 /** Estado visual y preferencias. Separado del estado operativo del simulador. */
 export type View = 'cabin' | 'device' | 'calendar' | 'report' | 'scenarios' | 'academy' | 'premium' | 'settings' | 'guide';
@@ -38,9 +39,11 @@ interface Settings {
   background: 'atlas' | 'plain';
   /** Pantalla del tacógrafo: LCD clásico verde, nocturno (texto claro sobre oscuro) o ámbar. */
   lcdTheme: 'classic' | 'night' | 'amber';
+  /** Idioma de la interfaz. */
+  lang: Lang;
 }
 
-const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '', sfxOn: true, musicOn: false, volume: 0.7, musicVolume: 0.45, engineVolume: 0.5, background: 'atlas', lcdTheme: 'classic' };
+const DEFAULTS: Settings = { learningMode: 'assisted', disclaimerAccepted: false, warningsEnabled: true, ledColor: 'cyan', devPremiumPreview: false, tutorialDone: false, driverName: '', sfxOn: true, musicOn: false, volume: 0.7, musicVolume: 0.45, engineVolume: 0.5, background: 'atlas', lcdTheme: 'classic', lang: typeof window !== 'undefined' ? detectLang(window.navigator.language) : 'es' };
 
 function loadSettings(): Settings {
   try {
@@ -69,15 +72,23 @@ export const useUiStore = create<UiStore>((set, get) => ({
     if (typeof window !== 'undefined') window.scrollTo?.({ top: 0 });
   },
   update: (patch) => {
+    if (patch.lang) applyLang(patch.lang);
     set(patch);
-    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme } = get();
+    const { learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme, lang } = get();
     try {
-      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme }));
+      browserStorage().setItem(KEYS.settings, JSON.stringify({ learningMode, disclaimerAccepted, warningsEnabled, ledColor, devPremiumPreview, tutorialDone, driverName, sfxOn, musicOn, volume, musicVolume, engineVolume, background, lcdTheme, lang }));
     } catch {
       /* sin almacenamiento */
     }
   },
 }));
+
+/** Idioma activo: traducciones y atributo lang del documento. */
+function applyLang(lang: Lang): void {
+  setLang(lang);
+  if (typeof document !== 'undefined') document.documentElement.lang = lang;
+}
+applyLang(useUiStore.getState().lang);
 
 /**
  * Permisos comerciales efectivos en el cliente. En producción siempre «free»
