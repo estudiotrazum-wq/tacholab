@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { useSimStore } from '@/simulator/store';
 import { TUTORIAL_STEPS } from '@/tutorial/steps';
@@ -180,7 +181,7 @@ export function TutorialCoach() {
             left: rect.left - pad,
             width: rect.width + pad * 2,
             height: rect.height + pad * 2,
-            boxShadow: '0 0 0 9999px rgba(2,6,23,0.35), 0 0 24px 4px rgba(34,211,238,0.45)',
+            boxShadow: t('0 0 0 9999px rgba(2,6,23,0.35), 0 0 24px 4px rgba(34,211,238,0.45)'),
           }}
           data-testid="tutorial-spotlight"
         />
@@ -204,26 +205,26 @@ export function TutorialCoach() {
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-cyan-400 text-[11px] font-bold text-slate-950">{index + 1}</span>
             <div className="min-w-0 flex-1">
-              <h2 id="tutorial-title" className="truncate text-sm font-semibold text-white">{step.title}</h2>
-              <p className="truncate text-[11px] text-slate-400">{step.done ? 'Hazlo en el simulador' : 'Paso informativo'}</p>
+              <h2 id="tutorial-title" className="truncate text-sm font-semibold text-white">{t(step.title)}</h2>
+              <p className="truncate text-[11px] text-slate-400">{step.done ? t('Hazlo en el simulador') : t('Paso informativo')}</p>
             </div>
             {!step.done && (
-              <button type="button" onClick={() => next(sim)} className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900" data-testid="tutorial-next">Siguiente</button>
+              <button type="button" onClick={() => next(sim)} className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900" data-testid="tutorial-next">{t('Siguiente')}</button>
             )}
-            <button type="button" onClick={() => { setUserMin(false); setForceFull(true); }} title="Ver las instrucciones completas" className="shrink-0 rounded-lg bg-white/10 px-2 py-1.5 text-xs text-slate-200" data-testid="tutorial-expand" aria-label="Ver las instrucciones">▴</button>
-            <button type="button" onClick={quit} className="shrink-0 rounded-lg px-1.5 py-1.5 text-xs text-slate-400 hover:text-white" aria-label="Salir del tutorial" data-testid="tutorial-exit">✕</button>
+            <button type="button" onClick={() => { setUserMin(false); setForceFull(true); }} title={t('Ver las instrucciones completas')} className="shrink-0 rounded-lg bg-white/10 px-2 py-1.5 text-xs text-slate-200" data-testid="tutorial-expand" aria-label={t('Ver las instrucciones')}>▴</button>
+            <button type="button" onClick={quit} className="shrink-0 rounded-lg px-1.5 py-1.5 text-xs text-slate-400 hover:text-white" aria-label={t('Salir del tutorial')} data-testid="tutorial-exit">✕</button>
           </div>
         ) : (
         <>
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-cyan-300">
-          Tutorial · paso {index + 1} de {TUTORIAL_STEPS.length}
+          {t('Tutorial · paso {n} de {total}', { n: index + 1, total: TUTORIAL_STEPS.length })}
           {!centered && (
-            <button type="button" onClick={() => { setUserMin(true); setForceFull(false); }} className="ml-auto rounded-full px-2 py-0.5 text-[11px] normal-case tracking-normal text-slate-400 hover:bg-white/10 hover:text-white" data-testid="tutorial-minimize" aria-label="Minimizar el tutorial">
-              ▾ Minimizar
+            <button type="button" onClick={() => { setUserMin(true); setForceFull(false); }} className="ml-auto rounded-full px-2 py-0.5 text-[11px] normal-case tracking-normal text-slate-400 hover:bg-white/10 hover:text-white" data-testid="tutorial-minimize" aria-label={t('Minimizar el tutorial')}>
+              {t('▾ Minimizar')}
             </button>
           )}
           <button type="button" onClick={quit} className={`${centered ? 'ml-auto' : ''} rounded-full px-2 py-0.5 text-[11px] normal-case tracking-normal text-slate-400 hover:bg-white/10 hover:text-white`} data-testid="tutorial-exit">
-            Salir ✕
+            {t('Salir ✕')}
           </button>
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
@@ -232,42 +233,42 @@ export function TutorialCoach() {
 
         {!onPanel ? (
           <>
-            <h2 id="tutorial-title" className="mt-3 text-lg font-semibold text-white">El tutorial sigue en el Panel</h2>
-            <p className="mt-1 text-sm text-slate-300">Vuelve al simulador para continuar donde lo dejaste.</p>
-            <button type="button" onClick={() => go('device')} className="mt-4 w-full rounded-xl bg-white py-2.5 text-sm font-semibold text-slate-900">Volver al Panel</button>
+            <h2 id="tutorial-title" className="mt-3 text-lg font-semibold text-white">{t('El tutorial sigue en el Panel')}</h2>
+            <p className="mt-1 text-sm text-slate-300">{t('Vuelve al simulador para continuar donde lo dejaste.')}</p>
+            <button type="button" onClick={() => go('device')} className="mt-4 w-full rounded-xl bg-white py-2.5 text-sm font-semibold text-slate-900">{t('Volver al Panel')}</button>
           </>
         ) : (
           <>
-            <h2 id="tutorial-title" className="mt-3 text-lg font-semibold text-white">{step.title}</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-200" data-testid="tutorial-text">{step.text}</p>
-            {step.hint && <p className="mt-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-400">💡 {step.hint}</p>}
+            <h2 id="tutorial-title" className="mt-3 text-lg font-semibold text-white">{t(step.title)}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-200" data-testid="tutorial-text">{t(step.text)}</p>
+            {step.hint && <p className="mt-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-400">💡 {t(step.hint)}</p>}
             {step.id === 'intro' && (
               <div className="mt-3 rounded-xl bg-white/5 p-3">
-                <p className="mb-2 text-xs text-slate-300">Antes de empezar, pon tu nombre en la tarjeta (opcional):</p>
+                <p className="mb-2 text-xs text-slate-300">{t('Antes de empezar, pon tu nombre en la tarjeta (opcional):')}</p>
                 <DriverNameField compact />
               </div>
             )}
 
             <div className="mt-4 flex items-center gap-2">
               {index > 0 && !last && (
-                <button type="button" onClick={() => back(sim)} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10">← Atrás</button>
+                <button type="button" onClick={() => back(sim)} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10">{t('← Atrás')}</button>
               )}
               {last ? (
                 <>
-                  <button type="button" onClick={() => finish()} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10" data-testid="tutorial-finish">Terminar</button>
-                  <button type="button" onClick={() => finish('academy')} className="ml-auto rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900">Ir a la Academia →</button>
+                  <button type="button" onClick={() => finish()} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10" data-testid="tutorial-finish">{t('Terminar')}</button>
+                  <button type="button" onClick={() => finish('academy')} className="ml-auto rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900">{t('Ir a la Academia →')}</button>
                 </>
               ) : step.done ? (
                 <>
                   <span className="ml-auto flex items-center gap-2 text-xs text-cyan-200" data-testid="tutorial-waiting">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" aria-hidden="true" />
-                    Hazlo en el simulador
+                    {t('Hazlo en el simulador')}
                   </span>
-                  <button type="button" onClick={() => next(sim)} className="rounded-xl px-2 py-2 text-xs text-slate-500 hover:text-slate-200" title="Pasar al siguiente paso sin hacerlo">Saltar</button>
+                  <button type="button" onClick={() => next(sim)} className="rounded-xl px-2 py-2 text-xs text-slate-500 hover:text-slate-200" title={t('Pasar al siguiente paso sin hacerlo')}>{t('Saltar')}</button>
                 </>
               ) : (
                 <button type="button" autoFocus onClick={() => next(sim)} className="ml-auto rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900" data-testid="tutorial-next">
-                  {index === 0 ? 'Empezar' : 'Siguiente →'}
+                  {index === 0 ? t('Empezar') : t('Siguiente →')}
                 </button>
               )}
             </div>

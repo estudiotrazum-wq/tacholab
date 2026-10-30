@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { ACTIVITY_LABEL, ACTIVITIES } from '@/shared/types';
 import { deriveSummary } from '@/simulator/derived';
 import { useSimStore } from '@/simulator/store';
@@ -17,13 +18,13 @@ export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
     return (
       <div>
       <table className="mt-3 w-full text-xs">
-        <caption className="sr-only">Acumulados por actividad</caption>
+        <caption className="sr-only">{t('Acumulados por actividad')}</caption>
         <thead className="text-slate-500">
           <tr>
-            <th className="text-left font-normal">Actividad</th>
-            <th className="text-right font-normal">Hoy</th>
-            <th className="text-right font-normal">Semana {sum.weekIndex}</th>
-            <th className="text-right font-normal">14 días</th>
+            <th className="text-left font-normal">{t('Actividad')}</th>
+            <th className="text-right font-normal">{t('Hoy')}</th>
+            <th className="text-right font-normal">{t('Semana {n}', { n: sum.weekIndex })}</th>
+            <th className="text-right font-normal">{t('14 días')}</th>
           </tr>
         </thead>
         <tbody className="font-mono text-slate-200">
@@ -31,7 +32,7 @@ export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
             <tr key={a} className="border-t border-white/5">
               <td className="flex items-center gap-1.5 py-1 font-sans" style={{ color: ACTIVITY_COLOR[a] }}>
                 <ActivityIcon activity={a} className="h-4 w-4" />
-                <span className="text-slate-300">{ACTIVITY_LABEL[a]}</span>
+                <span className="text-slate-300">{t(ACTIVITY_LABEL[a])}</span>
               </td>
               <td className="text-right">{formatDuration(sum.today[a])}</td>
               <td className="text-right">{formatDuration(sum.week[a])}</td>
@@ -41,47 +42,47 @@ export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
         </tbody>
       </table>
       <p className="mt-2 text-[11px] leading-snug text-slate-500">
-        «Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».
+        {t('«Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».')}
       </p>
       </div>
     );
   }
   return (
-    <Panel title="Estado y acumulados">
+    <Panel title={t('Estado y acumulados')}>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <Field label="Seleccionado">{ACTIVITY_LABEL[sum.selected]}</Field>
-        <Field label="Registrado" testId="recorded-activity">{sum.recorded ? ACTIVITY_LABEL[sum.recorded] : '—'}</Field>
+        <Field label={t('Seleccionado')}>{t(ACTIVITY_LABEL[sum.selected])}</Field>
+        <Field label={t('Registrado')} testId="recorded-activity">{sum.recorded ? t(ACTIVITY_LABEL[sum.recorded]) : '—'}</Field>
       </div>
 
       {cont ? (
         <div className="mt-3">
           <div className="flex justify-between text-xs text-slate-400">
-            <span>Conducción continua</span>
+            <span>{t('Conducción continua')}</span>
             <span className={over ? 'text-rose-300' : 'text-slate-200'}>{formatDuration(cont.drivingSinceBreakMs)} / 4:30</span>
           </div>
-          <div className="mt-1 h-2 overflow-hidden rounded bg-ink-700" role="progressbar" aria-valuemin={0} aria-valuemax={270} aria-valuenow={Math.round(cont.drivingSinceBreakMs / 60000)} aria-label="Conducción desde la última pausa válida">
+          <div className="mt-1 h-2 overflow-hidden rounded bg-ink-700" role="progressbar" aria-valuemin={0} aria-valuemax={270} aria-valuenow={Math.round(cont.drivingSinceBreakMs / 60000)} aria-label={t('Conducción desde la última pausa válida')}>
             <div className={`h-full ${over ? 'bg-rose-500' : pct > 94 ? 'bg-amber-400' : 'bg-sky-400'}`} style={{ width: `${pct}%` }} />
           </div>
           <p className="mt-1 text-xs text-slate-500">
             {cont.currentBreakMs > 0
-              ? `Pausa en curso ${formatDuration(cont.currentBreakMs)} · faltan ${formatDuration(breakRemainingMs(cont))} para una pausa válida`
+              ? t('Pausa en curso {d} · faltan {r} para una pausa válida', { d: formatDuration(cont.currentBreakMs), r: formatDuration(breakRemainingMs(cont)) })
               : cont.splitFirstTaken
-                ? 'Primera fracción de 15 min realizada: la siguiente pausa debe ser de al menos 30 min.'
-                : 'Pausa válida: 45 min seguidos, o 15 min + 30 min (en ese orden).'}
+                ? t('Primera fracción de 15 min realizada: la siguiente pausa debe ser de al menos 30 min.')
+                : t('Pausa válida: 45 min seguidos, o 15 min + 30 min (en ese orden).')}
           </p>
         </div>
       ) : (
-        <p className="mt-3 text-sm text-slate-400">Sin tarjeta: los tiempos no se asignan a ningún conductor.</p>
+        <p className="mt-3 text-sm text-slate-400">{t('Sin tarjeta: los tiempos no se asignan a ningún conductor.')}</p>
       )}
 
       <table className="mt-3 w-full text-xs">
-        <caption className="sr-only">Acumulados por actividad</caption>
+        <caption className="sr-only">{t('Acumulados por actividad')}</caption>
         <thead className="text-slate-500">
           <tr>
-            <th className="text-left font-normal">Actividad</th>
-            <th className="text-right font-normal">Hoy</th>
-            <th className="text-right font-normal">Semana {sum.weekIndex}</th>
-            <th className="text-right font-normal">14 días</th>
+            <th className="text-left font-normal">{t('Actividad')}</th>
+            <th className="text-right font-normal">{t('Hoy')}</th>
+            <th className="text-right font-normal">{t('Semana {n}', { n: sum.weekIndex })}</th>
+            <th className="text-right font-normal">{t('14 días')}</th>
           </tr>
         </thead>
         <tbody className="font-mono text-slate-200">
@@ -89,7 +90,7 @@ export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
             <tr key={a} className="border-t border-white/5">
               <td className="flex items-center gap-1.5 py-1 font-sans" style={{ color: ACTIVITY_COLOR[a] }}>
                 <ActivityIcon activity={a} className="h-4 w-4" />
-                <span className="text-slate-300">{ACTIVITY_LABEL[a]}</span>
+                <span className="text-slate-300">{t(ACTIVITY_LABEL[a])}</span>
               </td>
               <td className="text-right">{formatDuration(sum.today[a])}</td>
               <td className="text-right">{formatDuration(sum.week[a])}</td>
@@ -99,7 +100,7 @@ export function StatusPanel({ bare = false }: { bare?: boolean } = {}) {
         </tbody>
       </table>
       <p className="mt-2 text-[11px] leading-snug text-slate-500">
-        «Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».
+        {t('«Hoy» es el día natural UTC; la semana va del lunes 00:00 al domingo 24:00 UTC. La jornada normativa (entre descansos) está en «Límites normativos».')}
       </p>
     </Panel>
   );

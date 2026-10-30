@@ -127,11 +127,11 @@ const ADVANCED: ExerciseDef[] = [
     quiz: {
       question: N_('Revisa el calendario y marca todos los errores que contiene la semana:'),
       options: [
-        { id: N_('cont'), text: N_('Conducción continua de más de 4 h 30 min'), correct: true },
-        { id: N_('daily10'), text: N_('Una jornada con más de 10 h de conducción'), correct: true },
-        { id: N_('rest'), text: N_('Un descanso diario insuficiente'), correct: true },
-        { id: N_('weekly56'), text: N_('Más de 56 h de conducción en la semana'), correct: false },
-        { id: N_('split'), text: N_('Una pausa fraccionada en orden incorrecto (30 + 15)'), correct: false },
+        { id: 'cont', text: N_('Conducción continua de más de 4 h 30 min'), correct: true },
+        { id: 'daily10', text: N_('Una jornada con más de 10 h de conducción'), correct: true },
+        { id: 'rest', text: N_('Un descanso diario insuficiente'), correct: true },
+        { id: 'weekly56', text: N_('Más de 56 h de conducción en la semana'), correct: false },
+        { id: 'split', text: N_('Una pausa fraccionada en orden incorrecto (30 + 15)'), correct: false },
       ],
     },
     success: [

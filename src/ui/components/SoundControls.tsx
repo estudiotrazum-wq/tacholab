@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { sound } from '../audio/sound';
 import { useUiStore } from '../uiStore';
@@ -39,25 +40,25 @@ export function SoundButton({ variant = 'rail' }: { variant?: 'rail' | 'header' 
           className={`flex w-20 flex-col items-center gap-1 rounded-2xl px-1 py-2.5 text-[11px] font-medium transition ${open ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
         >
           {icon}
-          Sonido
+          {t('Sonido')}
         </button>
       ) : (
-        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label="Sonido" className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={t('Sonido')} className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
           {icon}
         </button>
       )}
       {open && (
         <div
           role="dialog"
-          aria-label="Sonido"
+          aria-label={t('Sonido')}
           className={`absolute z-50 w-72 rounded-2xl border border-white/10 bg-[#0b1220] p-4 text-sm shadow-[0_24px_60px_-20px_rgba(0,0,0,0.9)] ${variant === 'rail' ? 'bottom-0 left-full ml-3' : 'right-0 top-full mt-2'}`}
         >
-          <Toggle label="Efectos" desc="Teclas, tarjeta, impresora, avisos y motor del camión" checked={ui.sfxOn} onChange={(v) => { ui.update({ sfxOn: v }); sound.unlock(); }} testId="sfx-toggle" />
-          <Toggle label="Música country" desc="«Ruta 561», melodía original de ambiente" checked={ui.musicOn} onChange={(v) => { sound.unlock(); ui.update({ musicOn: v }); }} testId="music-toggle" />
-          <Range label="Volumen general" value={ui.volume} onChange={(v) => ui.update({ volume: v })} id="volume" />
-          <Range label="Volumen del motor" value={ui.engineVolume} onChange={(v) => ui.update({ engineVolume: v })} id="engine-volume" />
-          <Range label="Volumen de la música" value={ui.musicVolume} onChange={(v) => ui.update({ musicVolume: v })} id="music-volume" />
-          <p className="mt-2 text-[11px] text-slate-500">Sonidos sintetizados en el navegador; el sonido empieza tras tu primer clic.</p>
+          <Toggle label={t('Efectos')} desc={t('Teclas, tarjeta, impresora, avisos y motor del camión')} checked={ui.sfxOn} onChange={(v) => { ui.update({ sfxOn: v }); sound.unlock(); }} testId="sfx-toggle" />
+          <Toggle label={t('Música country')} desc={t('«Ruta 561», melodía original de ambiente')} checked={ui.musicOn} onChange={(v) => { sound.unlock(); ui.update({ musicOn: v }); }} testId="music-toggle" />
+          <Range label={t('Volumen general')} value={ui.volume} onChange={(v) => ui.update({ volume: v })} id="volume" />
+          <Range label={t('Volumen del motor')} value={ui.engineVolume} onChange={(v) => ui.update({ engineVolume: v })} id="engine-volume" />
+          <Range label={t('Volumen de la música')} value={ui.musicVolume} onChange={(v) => ui.update({ musicVolume: v })} id="music-volume" />
+          <p className="mt-2 text-[11px] text-slate-500">{t('Sonidos sintetizados en el navegador; el sonido empieza tras tu primer clic.')}</p>
         </div>
       )}
     </div>

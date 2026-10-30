@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useMemo } from 'react';
 import { CONTINUOUS_DRIVING_LIMIT } from '@/regulations/continuousDriving';
 import { LIMITS } from '@/regulations/compliance';
@@ -34,30 +35,30 @@ export function RemainingStrip() {
   }, [sim]);
 
   if (!data) {
-    return <p className="mt-4 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-400" data-testid="remaining-strip">Inserta la tarjeta para ver lo que te queda de conducción y de jornada.</p>;
+    return <p className="mt-4 rounded-xl bg-white/5 px-3 py-2 text-xs text-slate-400" data-testid="remaining-strip">{t('Inserta la tarjeta para ver lo que te queda de conducción y de jornada.')}</p>;
   }
   const tz = sim.scenario.timeZone;
   const tone = (ms: number | null) => (ms === null ? 'text-slate-500' : ms <= 0 ? 'text-rose-300' : ms <= 30 * 60_000 ? 'text-amber-300' : 'text-white');
   const items = [
-    { label: 'Hasta la pausa', value: hm(data.pause), ms: data.pause, hint: 'Máx. 4h 30 seguidas' },
-    { label: 'Conducción hoy', value: hm(data.day), ms: data.day, hint: `Límite ${formatDuration(data.dayCap).replace(':', 'h ')} hoy` },
+    { label: t('Hasta la pausa'), value: hm(data.pause), ms: data.pause, hint: t('Máx. 4h 30 seguidas') },
+    { label: t('Conducción hoy'), value: hm(data.day), ms: data.day, hint: t('Límite {d} hoy', { d: formatDuration(data.dayCap).replace(':', 'h ') }) },
     {
-      label: 'Jornada 13 h',
+      label: t('Jornada 13 h'),
       value: data.j13 === null ? '—' : hm(data.j13),
       ms: data.j13,
-      hint: data.j13At ? `Desc. 11 h antes de ${formatTime(data.j13At, tz)} UTC` : 'Sin jornada abierta',
+      hint: data.j13At ? t('Desc. 11 h antes de {time} UTC', { time: formatTime(data.j13At, tz) }) : t('Sin jornada abierta'),
     },
     {
-      label: 'Jornada 15 h',
+      label: t('Jornada 15 h'),
       value: data.j15 === null ? (data.j13 === null ? '—' : 'agotada') : hm(data.j15),
       ms: data.j15,
-      hint: data.j15At ? `Desc. 9 h antes de ${formatTime(data.j15At, tz)} UTC (quedan ${data.reducedLeft})` : 'Ya usaste los 3 descansos reducidos',
+      hint: data.j15At ? t('Desc. 9 h antes de {time} UTC (quedan {n})', { time: formatTime(data.j15At, tz), n: data.reducedLeft }) : t('Ya usaste los 3 descansos reducidos'),
     },
-    { label: 'Semana', value: hm(data.week), ms: data.week, hint: 'Máx. 56 h' },
+    { label: t('Semana'), value: hm(data.week), ms: data.week, hint: t('Máx. 56 h') },
   ];
   return (
     <div className="mt-4" data-testid="remaining-strip">
-      <div className="mb-1.5 text-xs text-slate-300">Te queda</div>
+      <div className="mb-1.5 text-xs text-slate-300">{t('Te queda')}</div>
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {items.map((it) => (
           <div key={it.label} className="rounded-xl bg-white/5 px-3 py-2" title={it.hint}>

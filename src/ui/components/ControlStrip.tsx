@@ -1,3 +1,4 @@
+import { N_, t } from '@/i18n';
 import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { AssistTarget } from '@/academy/assist';
 import { DEFAULT_SPEED_KMH, MAX_SPEED_KMH, nextRelevantEvent } from '@/simulator/engine';
@@ -13,10 +14,10 @@ import { ResetMenu } from './ResetMenu';
 import { RemainingStrip } from './RemainingStrip';
 
 const CLOCK_STEPS: Speed[] = [0, 1, 5, 30, 60, 300, 900, 3600];
-const CLOCK_LABELS = ['Pausa', '×1', '×5', '×30', '×60', '×300', '×900', '×3600'];
+const CLOCK_LABELS = [N_('Pausa'), '×1', '×5', '×30', '×60', '×300', '×900', '×3600'];
 const CLOCK_TICKS = ['❚❚', '1', '5', '30', '60', '300', '900', '3600'];
 /** Descripción de cada velocidad: cuánto tiempo simulado pasa por segundo real. */
-const CLOCK_HINT = ['Pausa', 'Tiempo real', '5 s por segundo', '30 s por segundo', '1 min por segundo', '5 min por segundo', '15 min por segundo', '1 h por segundo'];
+const CLOCK_HINT = [N_('Pausa'), N_('Tiempo real'), N_('5 s por segundo'), N_('30 s por segundo'), N_('1 min por segundo'), N_('5 min por segundo'), N_('15 min por segundo'), N_('1 h por segundo')];
 const DAY_LETTERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 /**
@@ -34,7 +35,7 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
   const clockIndex = Math.max(0, CLOCK_STEPS.indexOf(speed));
 
   return (
-    <section aria-label="Controles de la simulación" className={`glass relative z-10 rounded-2xl p-4 ${highlight === 'CLOCK' ? 'assist-target' : ''}`} data-testid="control-dock">
+    <section aria-label={t('Controles de la simulación')} className={`glass relative z-10 rounded-2xl p-4 ${highlight === 'CLOCK' ? 'assist-target' : ''}`} data-testid="control-dock">
       {/* Reloj y acciones rápidas */}
       <div className="flex flex-wrap items-center gap-3" data-tour="time">
         <div className="min-w-0">
@@ -50,7 +51,7 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
           type="button"
           disabled={finished}
           onClick={() => dispatch({ type: 'SET_SPEED', speed: speed === 0 ? 60 : 0 })}
-          aria-label={speed === 0 ? 'Reproducir' : 'Pausa'}
+          aria-label={speed === 0 ? t('Reproducir') : t('Pausa')}
           data-testid="play-toggle"
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-slate-900 shadow-lg transition hover:scale-105 disabled:opacity-40"
         >
@@ -64,16 +65,16 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
           type="button"
           disabled={finished}
           onClick={() => dispatch({ type: 'JUMP_NEXT_EVENT' })}
-          title={`Saltar a: ${nextRelevantEvent(sim).label}`}
+          title={t('Saltar a: {label}', { label: t(nextRelevantEvent(sim).label) })}
           className="rounded-full bg-white/5 px-3 py-2 text-xs text-slate-200 hover:bg-white/10 disabled:opacity-40"
         >
-          Siguiente evento ⏭
+          {t('Siguiente evento ⏭')}
         </button>
         <div className="ml-auto">
           <ResetMenu />
         </div>
         <div className="relative">
-          <button type="button" onClick={() => setTools((t) => !t)} aria-expanded={tools} aria-label="Más controles de tiempo" data-testid="time-tools" className={`grid h-10 w-10 place-items-center rounded-xl text-slate-200 ${tools ? 'bg-white/15' : 'bg-white/5 hover:bg-white/10'}`}>
+          <button type="button" onClick={() => setTools((t) => !t)} aria-expanded={tools} aria-label={t('Más controles de tiempo')} data-testid="time-tools" className={`grid h-10 w-10 place-items-center rounded-xl text-slate-200 ${tools ? 'bg-white/15' : 'bg-white/5 hover:bg-white/10'}`}>
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
           </button>
           {tools && <TimeTools onClose={() => setTools(false)} />}
@@ -85,28 +86,28 @@ export function ControlStrip({ highlight }: { highlight: AssistTarget }) {
       <div className="mt-4 grid gap-5 sm:grid-cols-2">
         <Slider
           id="clock-speed"
-          label="Velocidad del reloj"
+          label={t('Velocidad del reloj')}
           value={clockIndex}
           min={0}
           max={CLOCK_STEPS.length - 1}
           step={1}
-          display={clockIndex === 0 ? 'Pausa' : `${CLOCK_LABELS[clockIndex]} · ${CLOCK_HINT[clockIndex]}`}
+          display={clockIndex === 0 ? t('Pausa') : `${CLOCK_LABELS[clockIndex]} · ${t(CLOCK_HINT[clockIndex]!)}`}
           ticks={CLOCK_TICKS}
           disabled={finished}
           onChange={(i) => dispatch({ type: 'SET_SPEED', speed: CLOCK_STEPS[i]! })}
-          valueText={(i) => `${CLOCK_LABELS[i]}: ${CLOCK_HINT[i]}`}
+          valueText={(i) => `${t(CLOCK_LABELS[i]!)}: ${t(CLOCK_HINT[i]!)}`}
         />
         <Slider
           id="truck-speed"
-          label="Acelerador"
+          label={t('Acelerador')}
           value={kmh}
           min={0}
           max={MAX_SPEED_KMH}
           step={5}
-          display={kmh === 0 ? 'Parado' : `${kmh} km/h`}
+          display={kmh === 0 ? t('Parado') : `${kmh} km/h`}
           ticks={['0', '30', '60', '90']}
           onChange={(v) => dispatch({ type: 'SET_VEHICLE_SPEED', kmh: v })}
-          valueText={(v) => (v === 0 ? 'Parado' : `${v} km/h`)}
+          valueText={(v) => (v === 0 ? t('Parado') : `${v} km/h`)}
           highlight={highlight === 'VEHICLE'}
           tour="accelerator"
         />
@@ -211,14 +212,14 @@ function Timeline() {
   return (
     <div className="mt-4">
       <div className="flex items-baseline justify-between text-xs">
-        <span className="text-slate-300">Tiempo · arrastra para avanzar</span>
+        <span className="text-slate-300">{t('Tiempo · arrastra para avanzar')}</span>
         <span className={`font-mono ${preview !== null ? 'text-cyan-200' : 'text-white'}`}>{formatWeekday(shown, tz)} {formatDateTime(shown, tz)} UTC</span>
       </div>
       <div
         ref={track}
         role="slider"
         tabIndex={0}
-        aria-label="Línea de tiempo de las dos semanas"
+        aria-label={t('Línea de tiempo de las dos semanas')}
         aria-valuemin={from}
         aria-valuemax={to}
         aria-valuenow={now}
@@ -257,8 +258,8 @@ function Timeline() {
         </span>
       </div>
       <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-        <span>Semana 1</span>
-        <span className={blocked ? 'text-amber-300' : ''}>{blocked ? 'El tiempo solo avanza: para volver atrás, restaura un punto guardado.' : 'Semana 2'}</span>
+        <span>{t('Semana 1')}</span>
+        <span className={blocked ? 'text-amber-300' : ''}>{blocked ? t('El tiempo solo avanza: para volver atrás, restaura un punto guardado.') : t('Semana 2')}</span>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { N_, t } from '@/i18n';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { LED_COLORS, type LedColor } from '../uiStore';
 
@@ -30,10 +31,10 @@ export interface CabinInteriorProps {
 export type CabinSwitch = 'headlights' | 'interiorLight' | 'hazards' | 'ledOn';
 
 const SWITCHES: { id: CabinSwitch; label: string; icon: string }[] = [
-  { id: 'headlights', label: 'Faros', icon: 'M6 8h6l3 4-3 4H6M17 9h4M17 12h4M17 15h4' },
-  { id: 'interiorLight', label: 'Luz interior', icon: 'M12 4v3M6 9l2 2M18 9l-2 2M8 15a4 4 0 0 1 8 0Z' },
-  { id: 'hazards', label: 'Luces de emergencia', icon: 'M12 5 20 19H4Z' },
-  { id: 'ledOn', label: 'Iluminación LED ambiental', icon: 'M5 12h14M7 8h10M7 16h10' },
+  { id: 'headlights', label: N_('Faros'), icon: 'M6 8h6l3 4-3 4H6M17 9h4M17 12h4M17 15h4' },
+  { id: 'interiorLight', label: N_('Luz interior'), icon: 'M12 4v3M6 9l2 2M18 9l-2 2M8 15a4 4 0 0 1 8 0Z' },
+  { id: 'hazards', label: N_('Luces de emergencia'), icon: 'M12 5 20 19H4Z' },
+  { id: 'ledOn', label: N_('Iluminación LED ambiental'), icon: 'M5 12h14M7 8h10M7 16h10' },
 ];
 
 /** Contorno del habitáculo: todo menos el parabrisas y las ventanillas laterales. */
@@ -94,7 +95,7 @@ export function CabinInterior(p: CabinInteriorProps) {
   const glow = p.night ? 1 : 0.65;
 
   return (
-    <svg viewBox="0 0 1600 900" className="absolute inset-0 h-full w-full" role="group" aria-label="Interior de la cabina del camión">
+    <svg viewBox="0 0 1600 900" className="absolute inset-0 h-full w-full" role="group" aria-label={t('Interior de la cabina del camión')}>
       <defs>
         <filter id="led-blur" x="-20%" y="-200%" width="140%" height="500%">
           <feGaussianBlur stdDeviation="7" />
@@ -150,7 +151,7 @@ export function CabinInterior(p: CabinInteriorProps) {
       </g>
 
       {/* Retrovisores (se ven a través de las ventanillas laterales) */}
-      <Hotspot label="Mirar el retrovisor izquierdo" onActivate={p.onMirror} testId="cab-mirror">
+      <Hotspot label={t('Mirar el retrovisor izquierdo')} onActivate={p.onMirror} testId="cab-mirror">
         <Mirror x={18} flip={false} hazards={p.hazards} />
         <rect x="12" y="214" width="86" height="206" rx="14" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="3" />
       </Hotspot>
@@ -181,7 +182,7 @@ export function CabinInterior(p: CabinInteriorProps) {
 
       {/* Consola de techo: selector de iluminación ambiental */}
       <g>
-        <Hotspot label="Acercarse a la consola de techo" onActivate={p.onRoof} testId="cab-roof">
+        <Hotspot label={t('Acercarse a la consola de techo')} onActivate={p.onRoof} testId="cab-roof">
           <rect x="636" y="12" width="328" height="84" rx="12" fill="#121923" stroke="#2a3644" />
           <rect x="632" y="8" width="336" height="92" rx="14" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="2" />
         </Hotspot>
@@ -190,7 +191,7 @@ export function CabinInterior(p: CabinInteriorProps) {
           const cx = 688 + i * 56;
           const active = p.ledColor === c;
           return (
-            <Hotspot key={c} label={`Luces LED ${LED_COLORS[c].label}`} onActivate={() => p.onLed(c)} testId={`led-${c}`}>
+            <Hotspot key={c} label={t('Luces LED {name}', { name: t(LED_COLORS[c].label) })} onActivate={() => p.onLed(c)} testId={`led-${c}`}>
               <circle cx={cx} cy="64" r="20" fill="transparent" />
               {active && <circle cx={cx} cy="64" r="19" fill="none" stroke={LED_COLORS[c].hex} strokeWidth="2.5" filter="url(#led-blur)" />}
               <circle cx={cx} cy="64" r="13" fill={LED_COLORS[c].hex} opacity={active ? 1 : 0.45} stroke={active ? '#fff' : '#0a0e14'} strokeWidth="2" />
@@ -201,8 +202,8 @@ export function CabinInterior(p: CabinInteriorProps) {
       </g>
 
       {/* Parasol izquierdo: se sube o se baja */}
-      <Hotspot label={p.visorDown ? 'Subir el parasol' : 'Bajar el parasol'} onActivate={p.onVisor} testId="cab-visor">
-        <g style={{ transform: p.visorDown ? 'none' : 'translateY(-58px) scaleY(0.25)', transformOrigin: '430px 112px', transition: 'transform 400ms ease' }}>
+      <Hotspot label={p.visorDown ? t('Subir el parasol') : t('Bajar el parasol')} onActivate={p.onVisor} testId="cab-visor">
+        <g style={{ transform: p.visorDown ? 'none' : t('translateY(-58px) scaleY(0.25)'), transformOrigin: t('430px 112px'), transition: t('transform 400ms ease') }}>
           <path d="M252 112 L610 112 L600 182 Q430 192 262 182Z" fill="#111821" opacity="0.94" stroke="#222d3a" />
         </g>
         <rect x="252" y="112" width="358" height="80" fill="transparent" />
@@ -245,7 +246,7 @@ export function CabinInterior(p: CabinInteriorProps) {
           const on = p[sw.id];
           const x = 164 + i * 38;
           return (
-            <Hotspot key={sw.id} label={`${sw.label}: ${on ? 'encendido' : 'apagado'}`} onActivate={() => p.onSwitch(sw.id)} testId={`switch-${sw.id}`}>
+            <Hotspot key={sw.id} label={on ? t('{name}: encendido', { name: t(sw.label) }) : t('{name}: apagado', { name: t(sw.label) })} onActivate={() => p.onSwitch(sw.id)} testId={`switch-${sw.id}`}>
               <rect x={x} y="704" width="28" height="42" rx="5" fill={on ? '#243042' : '#1a2330'} stroke={on ? '#3f5168' : '#2c3a4b'} />
               <circle cx={x + 14} cy="713" r="3.5" fill={on ? (sw.id === 'hazards' ? '#fbbf24' : '#34d399') : '#334155'} className={on && sw.id === 'hazards' ? 'hazard-blink' : ''} />
               <g transform={`translate(${x + 4} 720) scale(0.85)`}>
@@ -263,12 +264,12 @@ export function CabinInterior(p: CabinInteriorProps) {
       <g>
         <circle cx="440" cy="710" r="50" fill="#0a1019" stroke="#283648" strokeWidth="2" />
         <circle cx="440" cy="710" r="50" fill="none" className="led-core" strokeWidth="2" strokeDasharray="4 10" opacity="0.6" />
-        <line x1="440" y1="710" x2="440" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${needle} 440 710)`} style={{ transition: 'transform 1.2s ease' }} />
+        <line x1="440" y1="710" x2="440" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${needle} 440 710)`} style={{ transition: t('transform 1.2s ease') }} />
         <text x="440" y="748" textAnchor="middle" fill="#64748b" fontSize="11">km/h</text>
         <circle cx="680" cy="710" r="50" fill="#0a1019" stroke="#283648" strokeWidth="2" />
         <circle cx="680" cy="710" r="50" fill="none" className="led-core" strokeWidth="2" strokeDasharray="4 10" opacity="0.6" />
-        <line x1="680" y1="710" x2="680" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${rpm} 680 710)`} style={{ transition: 'transform 1.2s ease' }} />
-        <text x="680" y="748" textAnchor="middle" fill="#64748b" fontSize="11">rpm ×100</text>
+        <line x1="680" y1="710" x2="680" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${rpm} 680 710)`} style={{ transition: t('transform 1.2s ease') }} />
+        <text x="680" y="748" textAnchor="middle" fill="#64748b" fontSize="11">{t('rpm ×100')}</text>
         <rect x="503" y="668" width="114" height="84" rx="10" fill="#071722" stroke="#123445" />
         <text x="560" y="712" textAnchor="middle" fill="#7df9ff" fontSize="34" fontFamily="monospace">{speed}</text>
         <text x="560" y="740" textAnchor="middle" fill="#5eead4" fontSize="14" fontFamily="monospace">{p.localTime}</text>
@@ -278,7 +279,7 @@ export function CabinInterior(p: CabinInteriorProps) {
       </g>
 
       {/* Volante de camión: grande y casi horizontal */}
-      <Hotspot label="Claxon" onActivate={p.onHorn} testId="cab-horn">
+      <Hotspot label={t('Claxon')} onActivate={p.onHorn} testId="cab-horn">
         <ellipse cx="560" cy="930" rx="96" ry="58" fill="#121922" stroke="#2b3949" strokeWidth="2" />
         <text x="560" y="922" textAnchor="middle" fill="#3e4c5e" fontSize="16" fontWeight="700" letterSpacing="2">TL</text>
         <ellipse cx="560" cy="930" rx="104" ry="64" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="3" />
@@ -298,7 +299,7 @@ export function CabinInterior(p: CabinInteriorProps) {
       <Led d="M900 652 Q1110 622 1330 640" width={2.5} />
 
       {/* Tacógrafo TL-1: protagonista */}
-      <Hotspot label="Acercarse al tacógrafo" onActivate={p.onTacho} testId="cabin-tachograph">
+      <Hotspot label={t('Acercarse al tacógrafo')} onActivate={p.onTacho} testId="cabin-tachograph">
         <ellipse cx="1110" cy="712" rx="230" ry="90" fill="var(--led)" opacity={0.12 * glow} filter="url(#soft)" />
         <rect x="930" y="664" width="360" height="104" rx="12" fill="#1a2533" stroke="#3a4a5e" strokeWidth="2" />
         <rect x="926" y="660" width="368" height="112" rx="15" fill="none" stroke="var(--led)" strokeWidth="3" className={p.pulseTacho ? 'cab-tacho-ring' : 'hot-ring'} />
@@ -316,7 +317,7 @@ export function CabinInterior(p: CabinInteriorProps) {
       </Hotspot>
 
       {/* Selector de marcha: D = en marcha, N = parado */}
-      <Hotspot label={p.moving ? 'Selector de marcha: detener el vehículo' : 'Selector de marcha: iniciar la marcha'} onActivate={p.onGear} testId="cab-gear">
+      <Hotspot label={p.moving ? t('Selector de marcha: detener el vehículo') : t('Selector de marcha: iniciar la marcha')} onActivate={p.onGear} testId="cab-gear">
         <circle cx="1000" cy="846" r="58" fill="transparent" />
         <circle cx="1000" cy="846" r="40" fill="#121922" stroke="#33445a" strokeWidth="3" />
         <circle cx="1000" cy="846" r="30" fill="#0a0f15" />
@@ -352,7 +353,7 @@ export function CabinInterior(p: CabinInteriorProps) {
       {!p.timeRunning && p.moving && (
         <g pointerEvents="none">
           <rect x="560" y="300" width="480" height="54" rx="27" fill="rgba(5,8,13,0.8)" stroke="var(--led)" />
-          <text x="800" y="334" textAnchor="middle" fill="#e2e8f0" fontSize="20">Reloj en pausa · pulsa ▶ para avanzar</text>
+          <text x="800" y="334" textAnchor="middle" fill="#e2e8f0" fontSize="20">{t('Reloj en pausa · pulsa ▶ para avanzar')}</text>
         </g>
       )}
     </svg>

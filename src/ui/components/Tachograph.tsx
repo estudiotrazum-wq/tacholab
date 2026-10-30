@@ -1,3 +1,4 @@
+import { N_, t } from '@/i18n';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ACTIVITY_LABEL } from '@/shared/types';
 import { lcdPlain, renderDisplay } from '@/tachograph/display';
@@ -13,8 +14,8 @@ export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
 /** Temas de la pantalla: LCD clásico (positivo verde), nocturno (negativo) y ámbar. */
 export const LCD_THEMES = {
   classic: { on: 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)', off: 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', ink: '#1d2610', inkOff: '#2b3318', glow: '' },
-  night: { on: 'linear-gradient(180deg, #0c1a2b 0%, #08121f 100%)', off: 'linear-gradient(180deg, #070b11 0%, #05080c 100%)', ink: '#e6f4ff', inkOff: '#3a4656', glow: '0 0 6px rgba(125, 211, 252, 0.55)' },
-  amber: { on: 'linear-gradient(180deg, #1a1206 0%, #120c03 100%)', off: 'linear-gradient(180deg, #0b0804 0%, #070502 100%)', ink: '#ffb547', inkOff: '#4a3818', glow: '0 0 7px rgba(255, 170, 51, 0.6)' },
+  night: { on: 'linear-gradient(180deg, #0c1a2b 0%, #08121f 100%)', off: 'linear-gradient(180deg, #070b11 0%, #05080c 100%)', ink: '#e6f4ff', inkOff: '#3a4656', glow: N_('0 0 6px rgba(125, 211, 252, 0.55)') },
+  amber: { on: 'linear-gradient(180deg, #1a1206 0%, #120c03 100%)', off: 'linear-gradient(180deg, #0b0804 0%, #070502 100%)', ink: '#ffb547', inkOff: '#4a3818', glow: N_('0 0 7px rgba(255, 170, 51, 0.6)') },
 } as const;
 
 /** Tiempo que hay que mantener pulsada la tecla 1 para expulsar la tarjeta. */
@@ -49,17 +50,17 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
   };
 
   const print = () => {
-    if (!sim.device.insertedCardId) return flash('Para imprimir, inserta una tarjeta.');
+    if (!sim.device.insertedCardId) return flash(t('Para imprimir, inserta una tarjeta.'));
     dispatch({ type: 'PRINT_DAILY' });
   };
 
   return (
-    <section aria-label="Tacógrafo educativo TL-1" data-tour="tachograph" className={`relative mx-auto w-full ${compact ? 'max-w-2xl' : 'max-w-4xl'}`}>
+    <section aria-label={t('Tacógrafo educativo TL-1')} data-tour="tachograph" className={`relative mx-auto w-full ${compact ? 'max-w-2xl' : 'max-w-4xl'}`}>
       {/* Ticket impreso: sale por la ranura de la impresora */}
       {ticket && (
         <div className="absolute right-[4%] top-[34%] z-30 w-60 animate-[ticket_700ms_ease-out] rounded-b-sm border-t-4 border-dashed border-slate-400 bg-[#f7f5ee] px-3 pb-2 pt-3 font-mono text-[10px] leading-4 text-slate-800 shadow-2xl" data-testid="ticket">
           {ticket.map((l, i) => <div key={i} className="truncate">{l}</div>)}
-          <button type="button" onClick={() => setCutSeq(printout?.seq ?? 0)} className="mt-2 w-full rounded border border-slate-400 py-1 text-[11px] text-slate-700 hover:bg-slate-200">✂ Cortar ticket</button>
+          <button type="button" onClick={() => setCutSeq(printout?.seq ?? 0)} className="mt-2 w-full rounded border border-slate-400 py-1 text-[11px] text-slate-700 hover:bg-slate-200">{t('✂ Cortar ticket')}</button>
         </div>
       )}
 
@@ -71,16 +72,16 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
             <div data-tour="console">
               <div
                 className={`relative overflow-hidden rounded-md border-[3px] border-[#0b0c0e] px-3 py-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.55)] ${model.mode === 'warning' ? 'lcd-warning' : ''}`}
-                style={{ background: model.backlight ? lcd.on : lcd.off, transition: 'background 400ms' }}
+                style={{ background: model.backlight ? lcd.on : lcd.off, transition: t('background 400ms') }}
                 data-backlight={model.backlight ? 'on' : 'off'}
                 role="status"
                 aria-live="polite"
-                aria-label={`Pantalla: ${lcdPlain(model.lines[0]).trim()} / ${lcdPlain(model.lines[1]).trim()}`}
+                aria-label={t('Pantalla: {a} / {b}', { a: lcdPlain(model.lines[0]).trim(), b: lcdPlain(model.lines[1]).trim() })}
                 data-testid="tacho-display"
               >
                 {/* El texto se escala con el ancho del visor para que siempre quepan las 20 columnas */}
                 <div style={{ containerType: 'inline-size' }}>
-                <div className="lcd-text leading-[1.05]" style={{ color: model.backlight ? lcd.ink : lcd.inkOff, textShadow: lcd.glow && model.backlight ? lcd.glow : undefined, fontFamily: '"VT323", ui-monospace, monospace', fontSize: 'min(2.15rem, calc(100cqw / 10.4))' }}>
+                <div className="lcd-text leading-[1.05]" style={{ color: model.backlight ? lcd.ink : lcd.inkOff, textShadow: lcd.glow && model.backlight ? lcd.glow : undefined, fontFamily: '"VT323", ui-monospace, monospace', fontSize: t('min(2.15rem, calc(100cqw / 10.4))') }}>
                   <LcdLine text={model.lines[0]} testId="display-line-0" />
                   <LcdLine text={model.lines[1]} testId="display-line-1" />
                 </div>
@@ -88,11 +89,11 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
                 <span className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(0,0,0,0.05)_0_1px,transparent_1px_3px),repeating-linear-gradient(90deg,rgba(0,0,0,0.04)_0_1px,transparent_1px_3px)]" aria-hidden="true" />
               </div>
               {/* Teclas de menú */}
-              <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Teclas de menú" data-tour="keys">
-                <Key label="Retroceder" onClick={() => press('BACK')} className={hl('BACK')} shortcut="Esc">✕</Key>
-                <Key label="Arriba" onClick={() => press('UP')} className={hl('UP_DOWN')} shortcut="↑">▲</Key>
-                <Key label="Abajo" onClick={() => press('DOWN')} className={hl('UP_DOWN')} shortcut="↓">▼</Key>
-                <Key label="Confirmar / menú" onClick={() => press('OK')} className={hl('OK')} shortcut="Enter">OK</Key>
+              <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label={t('Teclas de menú')} data-tour="keys">
+                <Key label={t('Retroceder')} onClick={() => press('BACK')} className={hl('BACK')} shortcut="Esc">✕</Key>
+                <Key label={t('Arriba')} onClick={() => press('UP')} className={hl('UP_DOWN')} shortcut="↑">▲</Key>
+                <Key label={t('Abajo')} onClick={() => press('DOWN')} className={hl('UP_DOWN')} shortcut="↓">▼</Key>
+                <Key label={t('Confirmar / menú')} onClick={() => press('OK')} className={hl('OK')} shortcut="Enter">OK</Key>
               </div>
             </div>
 
@@ -105,8 +106,8 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
               <div className="rounded-md border border-black/60 bg-[#101215] p-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
                 <div className="h-1.5 rounded-full bg-black shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" aria-hidden="true" />
                 <div className="mt-1 h-1 bg-[repeating-linear-gradient(90deg,#3a3d44_0_3px,transparent_3px_6px)]" aria-hidden="true" />
-                <button type="button" onClick={print} aria-label="Imprimir el resumen diario" data-testid="print" className="mt-2 flex w-full items-center justify-center gap-1.5 rounded bg-gradient-to-b from-[#363a42] to-[#24272d] py-1.5 text-[11px] text-slate-200 shadow-[0_2px_0_#000] active:translate-y-px">
-                  <span aria-hidden="true">⎙</span> Imprimir
+                <button type="button" onClick={print} aria-label={t('Imprimir el resumen diario')} data-testid="print" className="mt-2 flex w-full items-center justify-center gap-1.5 rounded bg-gradient-to-b from-[#363a42] to-[#24272d] py-1.5 text-[11px] text-slate-200 shadow-[0_2px_0_#000] active:translate-y-px">
+                  <span aria-hidden="true">⎙</span> {t('Imprimir')}
                 </button>
               </div>
             </div>
@@ -170,7 +171,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
 
   const eject = () => {
     if (slot === 2) return unavailable();
-    if (!card) return onHint('La ranura 1 está vacía: no hay tarjeta que sacar.');
+    if (!card) return onHint(t('La ranura 1 está vacía: no hay tarjeta que sacar.'));
     sound.beep();
     dispatch({ type: 'PRESS', button: 'EJECT' });
   };
@@ -197,9 +198,9 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
     <div className="flex items-center gap-2">
       <button
         type="button"
-        aria-label={slot === 1 ? 'Botón de actividad' : 'Tecla 2 (segundo conductor)'}
+        aria-label={slot === 1 ? t('Botón de actividad') : t('Tecla 2 (segundo conductor)')}
         data-tour={slot === 1 ? 'activity' : undefined}
-        title={slot === 1 ? 'Tecla 1: pulsa para cambiar la actividad (A). Mantén pulsada para sacar la tarjeta (E).' : 'Tecla 2: segundo conductor'}
+        title={slot === 1 ? t('Tecla 1: pulsa para cambiar la actividad (A). Mantén pulsada para sacar la tarjeta (E).') : t('Tecla 2: segundo conductor')}
         onPointerDown={slot === 1 ? startPress : undefined}
         onPointerUp={slot === 1 ? endPress : undefined}
         onPointerLeave={slot === 1 ? endPress : undefined}
@@ -230,10 +231,10 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
         data-tour={slot === 1 ? 'card-slot' : undefined}
         aria-label={
           slot === 2
-            ? 'Ranura 2 (segundo conductor)'
+            ? t('Ranura 2 (segundo conductor)')
             : card
-              ? `Ranura 1: tarjeta de ${card.holderName} insertada`
-              : `Ranura 1: arrastra aquí una tarjeta o pulsa para insertar la de ${sim.cards['card-a']?.holderName ?? 'conductor'}`
+              ? t('Ranura 1: tarjeta de {name} insertada', { name: card.holderName })
+              : t('Ranura 1: arrastra aquí una tarjeta o pulsa para insertar la de {name}', { name: sim.cards['card-a']?.holderName ?? '' })
         }
         onClick={() => {
           if (slot === 2) return unavailable();
@@ -278,8 +279,8 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
       <button
         type="button"
         onClick={eject}
-        aria-label={slot === 1 ? 'Sacar tarjeta 1' : 'Sacar tarjeta 2'}
-        title={slot === 1 ? 'Sacar la tarjeta del conductor (E)' : 'Sacar la tarjeta 2'}
+        aria-label={slot === 1 ? t('Sacar tarjeta 1') : t('Sacar tarjeta 2')}
+        title={slot === 1 ? t('Sacar la tarjeta del conductor (E)') : t('Sacar la tarjeta 2')}
         data-testid={`eject-${slot}`}
         data-tour={slot === 1 ? 'eject' : undefined}
         className={`relative flex h-12 w-11 shrink-0 flex-col items-center justify-center rounded-md bg-gradient-to-b from-[#3a3e46] to-[#25282e] shadow-[0_3px_0_#050608,inset_0_1px_0_rgba(255,255,255,0.12)] transition active:translate-y-[2px] ${
@@ -287,7 +288,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
         } ${slot === 2 ? 'opacity-60' : ''} ${slot === 1 && highlight === 'EJECT' ? 'assist-target' : ''}`}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 5 4 15h16Z" /><rect x="4" y="17" width="16" height="2.5" rx="1" /></svg>
-        <span className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${card ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-700'}`} aria-label={card ? `Actividad: ${ACTIVITY_LABEL[sim.device.selected]}` : undefined} />
+        <span className={`absolute right-1 top-1 h-1.5 w-1.5 rounded-full ${card ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-slate-700'}`} aria-label={card ? `Actividad: ${t(ACTIVITY_LABEL[sim.device.selected])}` : undefined} />
       </button>
     </div>
   );

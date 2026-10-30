@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { DEFAULT_CARDS, normalizeHolderName, PERSONAL_CARD_ID } from '@/scenarios/cards';
 import { useSimStore } from '@/simulator/store';
 import { useUiStore } from './uiStore';
@@ -7,7 +8,7 @@ const EXAMPLE_NAME = DEFAULT_CARDS.find((c) => c.id === PERSONAL_CARD_ID)!.holde
 /** Guarda el nombre del alumno y lo pone en su tarjeta. Devuelve un mensaje de error o null. */
 export function setDriverName(raw: string): string | null {
   const name = normalizeHolderName(raw);
-  if (!name) return 'Escribe un nombre de 1 a 18 letras (se admiten espacios, guion y apóstrofo).';
+  if (!name) return t('Escribe un nombre de 1 a 18 letras (se admiten espacios, guion y apóstrofo).');
   useUiStore.getState().update({ driverName: name });
   useSimStore.getState().dispatch({ type: 'RENAME_CARD', cardId: PERSONAL_CARD_ID, name });
   return null;

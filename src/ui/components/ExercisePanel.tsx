@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { exerciseDef } from '@/academy/catalog';
 import { useAcademyStore } from '@/academy/store';
 import { useUiStore } from '../uiStore';
@@ -13,16 +14,16 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
   const done = session.stepIndex >= def.steps.length;
 
   return (
-    <section className="rounded-xl border border-violet-700/50 bg-violet-950/30 p-4 text-sm" aria-label="Ejercicio en curso" data-testid="exercise-panel">
+    <section className="rounded-xl border border-violet-700/50 bg-violet-950/30 p-4 text-sm" aria-label={t('Ejercicio en curso')} data-testid="exercise-panel">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-300">Ejercicio {def.number}</div>
-          <h2 className="font-semibold text-white">{def.title}</h2>
-          {!compact && <p className="mt-0.5 text-xs text-slate-300">{def.objective}</p>}
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-300">{t('Ejercicio {n}', { n: def.number })}</div>
+          <h2 className="font-semibold text-white">{t(def.title)}</h2>
+          {!compact && <p className="mt-0.5 text-xs text-slate-300">{t(def.objective)}</p>}
         </div>
         <label className="flex items-center gap-1.5 text-xs text-slate-300">
           <input type="checkbox" checked={session.showInstructions} onChange={(e) => setShowInstructions(e.target.checked)} className="accent-violet-400" />
-          Mostrar instrucciones
+          {t('Mostrar instrucciones')}
         </label>
       </div>
 
@@ -31,12 +32,12 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
           {def.steps.map((st, i) => {
             const state = i < session.stepIndex ? 'done' : i === session.stepIndex ? 'current' : 'todo';
             if (!session.showInstructions && state !== 'done') {
-              return state === 'current' ? <li key={i} className="text-xs text-slate-400">Paso {i + 1} de {def.steps.length} (instrucciones ocultas)</li> : null;
+              return state === 'current' ? <li key={i} className="text-xs text-slate-400">{t('Paso {n} de {total} (instrucciones ocultas)', { n: i + 1, total: def.steps.length })}</li> : null;
             }
             return (
               <li key={i} className={`flex gap-2 text-xs ${state === 'done' ? 'text-emerald-300' : state === 'current' ? 'font-medium text-white' : 'text-slate-500'}`}>
                 <span className="w-4 shrink-0">{state === 'done' ? '✓' : `${i + 1}.`}</span>
-                <span>{st.text}</span>
+                <span>{t(st.text)}</span>
               </li>
             );
           })}
@@ -45,16 +46,16 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
 
       {def.quiz && (
         <fieldset className="mt-3">
-          <legend className="text-xs text-slate-200">{def.quiz.question}</legend>
+          <legend className="text-xs text-slate-200">{t(def.quiz.question)}</legend>
           <div className="mt-1 space-y-1">
             {def.quiz.options.map((o) => (
               <label key={o.id} className="flex items-center gap-2 text-xs text-slate-300">
                 <input type="checkbox" checked={session.answers.includes(o.id)} onChange={() => toggleAnswer(o.id)} className="accent-violet-400" data-testid={`quiz-${o.id}`} />
-                {o.text}
+                {t(o.text)}
               </label>
             ))}
           </div>
-          <p className="mt-1 text-[11px] text-slate-500">Pista: consulta el Calendario y el Informe.</p>
+          <p className="mt-1 text-[11px] text-slate-500">{t('Pista: consulta el Calendario y el Informe.')}</p>
         </fieldset>
       )}
 
@@ -64,14 +65,14 @@ export function ExercisePanel({ compact = false }: { compact?: boolean }) {
           data-testid="exercise-finish"
           onClick={() => {
             if (done || def.quiz) finish();
-            else confirmThen('Aún no has completado todos los pasos. ¿Evaluar igualmente?', finish, { confirmLabel: 'Evaluar' });
+            else confirmThen(t('Aún no has completado todos los pasos. ¿Evaluar igualmente?'), finish, { confirmLabel: t('Evaluar') });
           }}
           className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${done || def.quiz ? 'bg-violet-500 text-white hover:bg-violet-400' : 'border border-violet-600/60 text-violet-200'}`}
         >
-          {done ? 'Evaluar ejercicio ✓' : 'Evaluar ahora'}
+          {done ? t('Evaluar ejercicio ✓') : t('Evaluar ahora')}
         </button>
-        <button type="button" onClick={() => confirmThen('¿Abandonar el ejercicio? No se guardará el resultado.', () => { close(); go('academy'); }, { confirmLabel: 'Abandonar', danger: true })} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300">
-          Abandonar
+        <button type="button" onClick={() => confirmThen(t('¿Abandonar el ejercicio? No se guardará el resultado.'), () => { close(); go('academy'); }, { confirmLabel: t('Abandonar'), danger: true })} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300">
+          {t('Abandonar')}
         </button>
       </div>
     </section>

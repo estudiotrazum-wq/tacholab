@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 /**
  * Cámara de la cabina: puntos de vista como zoom sobre el escenario 2D.
  * Todo se expresa en % del escenario; se limita el encuadre para no mostrar
@@ -13,10 +14,10 @@ export interface CameraPreset {
 }
 
 export const CAMERAS: Record<CameraId, CameraPreset> = {
-  driver: { label: 'Conducción', focus: [50, 50], scale: 1.06 },
-  tacho: { label: 'Tacógrafo', focus: [69.4, 79], scale: 2.4 },
-  mirror: { label: 'Retrovisor', focus: [3.5, 35], scale: 3 },
-  roof: { label: 'Consola de techo', focus: [50, 7], scale: 2.4 },
+  driver: { label: N_('Conducción'), focus: [50, 50], scale: 1.06 },
+  tacho: { label: N_('Tacógrafo'), focus: [69.4, 79], scale: 2.4 },
+  mirror: { label: N_('Retrovisor'), focus: [3.5, 35], scale: 3 },
+  roof: { label: N_('Consola de techo'), focus: [50, 7], scale: 2.4 },
 };
 
 /** Intervalo de desplazamiento válido para un eje (en % del escenario). */

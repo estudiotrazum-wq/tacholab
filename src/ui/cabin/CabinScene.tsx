@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { Lighting } from './lighting';
 
 /** Pseudoaleatorio determinista para colocar estrellas siempre en el mismo sitio. */
@@ -19,7 +20,7 @@ export function CabinScene({ light, headlights }: { light: Lighting; headlights:
         ))}
       {/* Luna */}
       {light.daylight < 0.6 && (
-        <span className="absolute rounded-full" style={{ left: '72%', top: '17%', width: 34, height: 34, background: '#e8ecf5', opacity: 1 - light.daylight, boxShadow: '0 0 30px 6px rgba(200,215,255,0.35)' }} />
+        <span className="absolute rounded-full" style={{ left: '72%', top: '17%', width: 34, height: 34, background: '#e8ecf5', opacity: 1 - light.daylight, boxShadow: t('0 0 30px 6px rgba(200,215,255,0.35)') }} />
       )}
       {/* Sol: recorre el cielo de este a oeste */}
       {light.sun.visible && (
@@ -57,7 +58,7 @@ export function CabinScene({ light, headlights }: { light: Lighting; headlights:
           style={{
             top: '42%',
             background: `radial-gradient(60% 85% at 52% 100%, rgba(255,244,214,${beam.toFixed(2)}) 0%, rgba(255,244,214,${(beam * 0.35).toFixed(2)}) 45%, transparent 75%)`,
-            clipPath: 'polygon(46% 0, 58% 0, 100% 100%, 0 100%)',
+            clipPath: t('polygon(46% 0, 58% 0, 100% 100%, 0 100%)'),
           }}
         />
       )}
@@ -69,12 +70,12 @@ export function CabinScene({ light, headlights }: { light: Lighting; headlights:
         <rect x="6" y="40" width="8" height="5" fill="#ff3b3b" />
         <rect x="46" y="40" width="8" height="5" fill="#ff3b3b" />
       </svg>
-      <div className="absolute flex items-center gap-1 rounded-sm border border-white/80 bg-[#0b5ea8] px-1.5 py-0.5 text-white shadow" style={{ left: '69%', top: '27%', fontSize: 'clamp(6px, 0.85vw, 11px)', filter: `brightness(${0.55 + light.daylight * 0.45})` }}>
+      <div className="absolute flex items-center gap-1 rounded-sm border border-white/80 bg-[#0b5ea8] px-1.5 py-0.5 text-white shadow" style={{ left: '69%', top: '27%', fontSize: t('clamp(6px, 0.85vw, 11px)'), filter: `brightness(${0.55 + light.daylight * 0.45})` }}>
         <svg viewBox="0 0 24 24" className="h-[1.6em] w-[1.6em]" fill="none" stroke="white" strokeWidth="2">
           <path d="M3 18V7M3 14h18v4M21 14v-2.5a2.5 2.5 0 0 0-2.5-2.5H10v5" />
           <circle cx="6.5" cy="11.5" r="1.6" />
         </svg>
-        <span className="font-semibold leading-tight">Área de descanso<br />12 km</span>
+        <span className="font-semibold leading-tight">{t('Área de descanso')}<br />{t('12 km')}</span>
       </div>
       <span className="absolute w-[0.25%] bg-slate-500" style={{ left: '72%', top: '32%', height: '8.5%' }} />
     </div>

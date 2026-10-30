@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useEffect } from 'react';
 import { useUiStore } from './uiStore';
 import { SECTIONS, sectionOf } from './shell/nav';
@@ -23,6 +24,7 @@ import { startTutorial } from './tutorial';
 import { syncDriverName } from './driverName';
 import { useSound } from './audio/useSound';
 import { SoundButton } from './components/SoundControls';
+import { LangSwitch } from './components/LangSwitch';
 import { AtlasBackground } from './background/AtlasBackground';
 import { DriverNameField } from './components/DriverNameField';
 
@@ -50,19 +52,20 @@ export function App() {
       {background === 'atlas' ? <AtlasBackground /> : <div className="app-bg" aria-hidden="true" />}
 
       {/* Menú lateral (escritorio) */}
-      <aside className="sticky top-0 z-30 hidden h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-white/5 bg-[#050913]/70 py-4 backdrop-blur-xl md:flex print:hidden" aria-label="Menú">
-        <span className="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.35)]" title="TachoLab EU">TL</span>
-        <nav aria-label="Secciones" className="flex flex-col gap-1">
+      <aside className="sticky top-0 z-30 hidden h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-white/5 bg-[#050913]/70 py-4 backdrop-blur-xl md:flex print:hidden" aria-label={t('Menú')}>
+        <span className="mb-4 grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-cyan-400 to-violet-500 font-mono text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.35)]" title={t('TachoLab EU')}>TL</span>
+        <nav aria-label={t('Secciones')} className="flex flex-col gap-1">
           {SECTIONS.map((sec) => (
-            <RailButton key={sec.id} label={sec.label} icon={sec.icon} active={section?.id === sec.id} onClick={() => go(lastViews[sec.id] ?? sec.views[0]!.id)} />
+            <RailButton key={sec.id} label={t(sec.label)} icon={sec.icon} active={section?.id === sec.id} onClick={() => go(lastViews[sec.id] ?? sec.views[0]!.id)} />
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-1">
-          <RailButton label="Guía" icon="book" active={view === 'guide'} onClick={() => go('guide')} />
+          <RailButton label={t('Guía')} icon="book" active={view === 'guide'} onClick={() => go('guide')} />
           <SoundButton />
-          <RailButton label={learningMode === 'assisted' ? 'Ayudas: sí' : 'Ayudas: no'} icon="bulb" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
-          <RailButton label="Premium" icon="star" active={view === 'premium'} onClick={() => go('premium')} />
-          <RailButton label="Ajustes" icon="settings" active={view === 'settings'} onClick={() => go('settings')} />
+          <RailButton label={learningMode === 'assisted' ? t('Ayudas: sí') : t('Ayudas: no')} icon="bulb" active={learningMode === 'assisted'} onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })} pressed={learningMode === 'assisted'} />
+          <RailButton label={t('Premium')} icon="star" active={view === 'premium'} onClick={() => go('premium')} />
+          <RailButton label={t('Ajustes')} icon="settings" active={view === 'settings'} onClick={() => go('settings')} />
+          <div className="mt-1 flex justify-center"><LangSwitch compact /></div>
         </div>
       </aside>
 
@@ -75,17 +78,18 @@ export function App() {
             type="button"
             onClick={() => update({ learningMode: learningMode === 'assisted' ? 'free' : 'assisted' })}
             aria-pressed={learningMode === 'assisted'}
-            aria-label={learningMode === 'assisted' ? 'Ayudas activadas' : 'Ayudas desactivadas'}
-            title="Ayudas contextuales"
+            aria-label={learningMode === 'assisted' ? t('Ayudas activadas') : t('Ayudas desactivadas')}
+            title={t('Ayudas contextuales')}
             className={`ml-auto grid h-9 w-9 place-items-center rounded-full ${learningMode === 'assisted' ? 'bg-cyan-400/15 text-cyan-200' : 'text-slate-400'}`}
           >
             <NavIcon name="bulb" />
           </button>
+          <LangSwitch compact />
           <SoundButton variant="header" />
-          <button type="button" onClick={() => go('guide')} aria-label="Guía y tutorial" className={`grid h-9 w-9 place-items-center rounded-full ${view === 'guide' ? 'bg-white/10 text-white' : 'text-slate-300'}`}>
+          <button type="button" onClick={() => go('guide')} aria-label={t('Guía y tutorial')} className={`grid h-9 w-9 place-items-center rounded-full ${view === 'guide' ? 'bg-white/10 text-white' : 'text-slate-300'}`}>
             <NavIcon name="book" />
           </button>
-          <button type="button" onClick={() => go('settings')} aria-label="Ajustes" className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
+          <button type="button" onClick={() => go('settings')} aria-label={t('Ajustes')} className="grid h-9 w-9 place-items-center rounded-full text-slate-300">
             <NavIcon name="settings" />
           </button>
         </header>
@@ -105,19 +109,19 @@ export function App() {
         </main>
 
         <footer className="px-4 pb-24 pt-2 text-center text-[11px] text-slate-500 md:pb-4 print:hidden">
-          TachoLab EU v0.19 · Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.
+          TachoLab EU v0.19 · {t('Simulador educativo independiente, no homologado. No sustituye la formación oficial ni los equipos reales.')}
         </footer>
       </div>
 
       {/* Navegación inferior en móvil */}
-      <nav aria-label="Secciones (móvil)" className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050913]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden print:hidden">
+      <nav aria-label={t('Secciones (móvil)')} className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#050913]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden print:hidden">
         <div className="grid grid-cols-3">
           {SECTIONS.map((sec) => {
             const active = section?.id === sec.id;
             return (
               <button key={sec.id} type="button" onClick={() => go(lastViews[sec.id] ?? sec.views[0]!.id)} aria-current={active ? 'page' : undefined} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active ? 'text-cyan-300' : 'text-slate-400'}`}>
                 <NavIcon name={sec.icon} />
-                {sec.label}
+                {t(sec.label)}
               </button>
             );
           })}
@@ -131,13 +135,16 @@ export function App() {
       {!disclaimerAccepted && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-auto bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="disc-title">
           <div className="glass-strong max-w-xl rounded-3xl p-7">
-            <h2 id="disc-title" className="text-xl font-semibold text-white">Bienvenido a TachoLab EU</h2>
-            <p className="mt-1 text-sm text-slate-400">Un simulador para aprender a usar el tacógrafo digital en tres pasos:</p>
+            <div className="flex items-start justify-between gap-3">
+              <h2 id="disc-title" className="text-xl font-semibold text-white">{t('Bienvenido a TachoLab EU')}</h2>
+              <LangSwitch />
+            </div>
+            <p className="mt-1 text-sm text-slate-400">{t('Un simulador para aprender a usar el tacógrafo digital en tres pasos:')}</p>
             <ol className="mt-4 grid gap-3 sm:grid-cols-3">
               {[
-                ['1', 'Mete la tarjeta', 'Arrástrala desde la izquierda hasta la ranura del tacógrafo.'],
-                ['2', 'Arranca el camión', 'Gira la llave a II y sube el acelerador: el tacógrafo registra la conducción solo.'],
-                ['3', 'Deja correr el tiempo', 'Con ▶ y la velocidad del reloj (hasta ×3600, una hora por segundo) verás pasar las horas.'],
+                ['1', t('Mete la tarjeta'), t('Arrástrala desde la izquierda hasta la ranura del tacógrafo.')],
+                ['2', t('Arranca el camión'), t('Gira la llave a II y sube el acelerador: el tacógrafo registra la conducción solo.')],
+                ['3', t('Deja correr el tiempo'), t('Con ▶ y la velocidad del reloj (hasta ×3600, una hora por segundo) verás pasar las horas.')],
               ].map(([n, t, d]) => (
                 <li key={n} className="rounded-2xl bg-white/5 p-3">
                   <span className="grid h-7 w-7 place-items-center rounded-full bg-cyan-400 text-sm font-bold text-slate-950">{n}</span>
@@ -147,10 +154,10 @@ export function App() {
               ))}
             </ol>
             <p className="mt-5 text-xs leading-relaxed text-slate-400">
-              Es un <strong className="text-slate-200">simulador educativo independiente</strong>: no está homologado, no reproduce ningún tacógrafo comercial y no sustituye la formación oficial ni los equipos reales. Los cálculos normativos son orientativos. Solo se usan tarjetas ficticias y los datos se guardan en tu navegador.
+              {t('Es un simulador educativo independiente: no está homologado, no reproduce ningún tacógrafo comercial y no sustituye la formación oficial ni los equipos reales. Los cálculos normativos son orientativos. Solo se usan tarjetas ficticias y los datos se guardan en tu navegador.')}
             </p>
             <div className="mt-5 rounded-2xl bg-white/5 p-4">
-              <p className="mb-2 text-sm font-medium text-white">¿Cómo te llamas? <span className="font-normal text-slate-400">(opcional)</span></p>
+              <p className="mb-2 text-sm font-medium text-white">{t('¿Cómo te llamas?')} <span className="font-normal text-slate-400">{t('(opcional)')}</span></p>
               <DriverNameField compact />
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto]">
@@ -164,13 +171,13 @@ export function App() {
                 }}
                 className="rounded-2xl bg-white py-3 font-semibold text-slate-900 transition hover:scale-[1.01]"
               >
-                ▶ Empezar el tutorial (5 min)
+                ▶ {t('Empezar el tutorial (5 min)')}
               </button>
               <button type="button" onClick={() => update({ disclaimerAccepted: true })} className="rounded-2xl bg-white/10 px-5 py-3 text-sm font-medium text-white hover:bg-white/15">
-                Explorar por mi cuenta
+                {t('Explorar por mi cuenta')}
               </button>
             </div>
-            <p className="mt-2 text-center text-[11px] text-slate-500">Puedes abrir el tutorial y la guía rápida cuando quieras desde «Guía».</p>
+            <p className="mt-2 text-center text-[11px] text-slate-500">{t('Puedes abrir el tutorial y la guía rápida cuando quieras desde «Guía».')}</p>
           </div>
         </div>
       )}

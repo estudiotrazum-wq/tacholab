@@ -1,6 +1,8 @@
+import { t, type Lang } from '@/i18n';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ODOMETER_START_KM } from '@/simulator/engine';
 import { useSimStore } from '@/simulator/store';
+import { useUiStore } from '../uiStore';
 import {
   ATLAS_H,
   ATLAS_W,
@@ -27,10 +29,11 @@ import {
 export function AtlasBackground() {
   const km = useSimStore((s) => (s.sim.vehicle.odometerKm ?? ODOMETER_START_KM) - ODOMETER_START_KM);
   const moving = useSimStore((s) => s.sim.vehicle.moving);
+  const lang = useUiStore((s) => s.lang);
   return (
     <div className="atlas-bg" aria-hidden="true" data-testid="atlas-bg">
       <svg viewBox={`0 0 ${ATLAS_W} ${ATLAS_H}`} preserveAspectRatio="xMidYMid slice" className="h-full w-full">
-        <AtlasStatic />
+        <AtlasStatic lang={lang} />
         <RouteLayer km={km} moving={moving} />
       </svg>
       <div className="atlas-vignette" />
@@ -83,7 +86,9 @@ function RouteLayer({ km, moving }: { km: number; moving: boolean }) {
 }
 
 /** Capa fija del mapa (se dibuja una sola vez). */
-const AtlasStatic = memo(function AtlasStatic() {
+// lang: vuelve a dibujarse al cambiar de idioma (nombres de ciudades y mares).
+const AtlasStatic = memo(function AtlasStatic({ lang }: { lang: Lang }) {
+  void lang;
   const [tlx, tly] = project([11.5, 47.6]);
   const [brx] = project([11.5, 35]);
   const land = `${smoothPath(COAST)} L${brx} ${tly} L${project([-2, 47.6])[0]} ${tly} Z`;
@@ -180,7 +185,7 @@ const AtlasStatic = memo(function AtlasStatic() {
               {onRoute && <circle r="10" fill="rgba(34,211,238,0.16)" filter="url(#atlas-glow)" />}
               <circle r={big ? 4.5 : 3} fill={onRoute ? '#a5f3fc' : '#cbd5e1'} opacity={onRoute ? 0.95 : 0.55} />
               <text x="8" y="4" fontSize={big ? 14 : 11.5} fontWeight={big ? 600 : 500} fill={onRoute ? 'rgba(207,250,254,0.75)' : 'rgba(203,213,225,0.42)'} letterSpacing="0.02em">
-                {CITIES[id].name}
+                {t(CITIES[id].name)}
               </text>
             </g>
           );
@@ -189,9 +194,9 @@ const AtlasStatic = memo(function AtlasStatic() {
 
       {/* Rotulación de mares */}
       <g fontFamily="Inter Variable, ui-sans-serif, system-ui" fill="rgba(125,211,252,0.22)" fontStyle="italic" letterSpacing="0.35em" fontSize="15">
-        <text x={project([-10.2, 40.6])[0]} y={project([-10.2, 40.6])[1]} transform={`rotate(-90 ${project([-10.2, 40.6]).join(' ')})`}>OCÉANO ATLÁNTICO</text>
-        <text x={project([-6.5, 44.6])[0]} y={project([-6.5, 44.6])[1]}>GOLFO DE VIZCAYA</text>
-        <text x={project([3.2, 38.6])[0]} y={project([3.2, 38.6])[1]}>MAR MEDITERRÁNEO</text>
+        <text x={project([-10.2, 40.6])[0]} y={project([-10.2, 40.6])[1]} transform={`rotate(-90 ${project([-10.2, 40.6]).join(' ')})`}>{t('OCÉANO ATLÁNTICO')}</text>
+        <text x={project([-6.5, 44.6])[0]} y={project([-6.5, 44.6])[1]}>{t('GOLFO DE VIZCAYA')}</text>
+        <text x={project([3.2, 38.6])[0]} y={project([3.2, 38.6])[1]}>{t('MAR MEDITERRÁNEO')}</text>
       </g>
 
       {/* Rosa de los vientos y escala */}

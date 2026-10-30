@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useAcademyStore } from '@/academy/store';
 import { useSimStore } from '@/simulator/store';
 import { useTutorialStore } from '@/tutorial/store';
@@ -14,5 +15,5 @@ export function startTutorial(): void {
   };
   const sim = useSimStore.getState().sim;
   if (sim.log.length === 0 && sim.timeline.events.length === 0) return begin();
-  confirmThen('El tutorial empieza un turno nuevo desde cero. Lo que has hecho en el simulador se perderá si no lo has guardado como punto de restauración.', begin, { confirmLabel: 'Empezar el tutorial' });
+  confirmThen(t('El tutorial empieza un turno nuevo desde cero. Lo que has hecho en el simulador se perderá si no lo has guardado como punto de restauración.'), begin, { confirmLabel: t('Empezar el tutorial') });
 }

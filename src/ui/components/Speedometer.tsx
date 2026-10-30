@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
 import { DEFAULT_SPEED_KMH, ODOMETER_START_KM } from '@/simulator/engine';
@@ -15,8 +16,8 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
   const km = sim.vehicle.odometerKm ?? ODOMETER_START_KM;
 
   return (
-    <section aria-label="Vehículo" className={`glass rounded-2xl p-4 ${compact ? 'flex items-center gap-4' : ''}`}>
-      <svg viewBox="0 0 200 170" className={compact ? 'h-28 w-32 shrink-0' : 'mx-auto w-full max-w-[15rem]'} role="img" aria-label={`Velocidad ${speed} km/h`}>
+    <section aria-label={t('Vehículo')} className={`glass rounded-2xl p-4 ${compact ? 'flex items-center gap-4' : ''}`}>
+      <svg viewBox="0 0 200 170" className={compact ? 'h-28 w-32 shrink-0' : 'mx-auto w-full max-w-[15rem]'} role="img" aria-label={t('Velocidad {v} km/h', { v: speed })}>
         <defs>
           <linearGradient id="arc" x1="0" x2="1">
             <stop offset="0" stopColor="#22d3ee" />
@@ -32,7 +33,7 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
             <text key={v} x={100 + Math.cos(a) * 58} y={100 + Math.sin(a) * 58 + 4} textAnchor="middle" fontSize="11" fill="#94a3b8">{v}</text>
           );
         })}
-        <g style={{ transform: `rotate(${angle(speed)}deg)`, transformOrigin: '100px 100px', transition: 'transform 900ms cubic-bezier(.3,1.4,.5,1)' }}>
+        <g style={{ transform: `rotate(${angle(speed)}deg)`, transformOrigin: t('100px 100px'), transition: 'transform 900ms cubic-bezier(.3,1.4,.5,1)' }}>
           <line x1="100" y1="100" x2="100" y2="38" stroke="#f8fafc" strokeWidth="3" strokeLinecap="round" />
         </g>
         <circle cx="100" cy="100" r="7" fill="#0b1220" stroke="#f8fafc" strokeWidth="2" />
@@ -44,14 +45,14 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
       <div className={compact ? 'flex-1' : 'mt-3'}>
         <div className={`flex items-center justify-center gap-2 rounded-xl bg-white/5 py-2 text-xs ${highlight === 'VEHICLE' ? 'assist-target' : ''}`} data-testid="vehicle-state">
           <span className={`h-2.5 w-2.5 rounded-full ${moving ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : ignition === 'running' ? 'bg-amber-400' : 'bg-slate-600'}`} aria-hidden="true" />
-          {moving ? 'En marcha' : ignition === 'running' ? 'Motor en ralentí' : ignition === 'on' ? 'Contacto puesto' : 'Motor apagado'}
+          {moving ? t('En marcha') : ignition === 'running' ? t('Motor en ralentí') : ignition === 'on' ? t('Contacto puesto') : t('Motor apagado')}
         </div>
         <p className="mt-2 text-center text-[11px] text-slate-400">
           {moving
-            ? 'El tacógrafo registra conducción. Baja el acelerador a 0 para detenerte.'
+            ? t('El tacógrafo registra conducción. Baja el acelerador a 0 para detenerte.')
             : ignition === 'running'
-              ? 'Sube el acelerador para empezar a circular.'
-              : 'Gira la llave a II para arrancar el motor.'}
+              ? t('Sube el acelerador para empezar a circular.')
+              : t('Gira la llave a II para arrancar el motor.')}
         </p>
       </div>
     </section>

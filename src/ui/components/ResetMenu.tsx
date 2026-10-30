@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { exerciseDef } from '@/academy/catalog';
 import { useAcademyStore } from '@/academy/store';
@@ -54,14 +55,14 @@ export function ResetMenu() {
         className={`flex h-10 items-center gap-1.5 rounded-xl px-3 text-xs font-medium text-slate-200 ${open ? 'bg-white/15' : 'bg-white/5 hover:bg-white/10'}`}
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" /></svg>
-        Reiniciar
+        {t('Reiniciar')}
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-full z-30 mt-2 w-[min(92vw,20rem)] rounded-2xl border border-white/10 bg-[#0b1220] p-2 text-sm shadow-[0_24px_60px_-20px_rgba(0,0,0,0.9)]">
           {inExercise ? (
-            <button type="button" role="menuitem" className={item} data-testid="restart-exercise" onClick={() => confirmThen('¿Repetir el ejercicio desde el principio?', restartExercise, { confirmLabel: 'Repetir' })}>
-              <div className="font-semibold text-white">↺ Repetir el ejercicio</div>
-              <div className="text-xs text-slate-400">Vuelve al inicio del ejercicio en curso.</div>
+            <button type="button" role="menuitem" className={item} data-testid="restart-exercise" onClick={() => confirmThen(t('¿Repetir el ejercicio desde el principio?'), restartExercise, { confirmLabel: t('Repetir') })}>
+              <div className="font-semibold text-white">{t('↺ Repetir el ejercicio')}</div>
+              <div className="text-xs text-slate-400">{t('Vuelve al inicio del ejercicio en curso.')}</div>
             </button>
           ) : (
             <>
@@ -72,15 +73,15 @@ export function ResetMenu() {
                 disabled={shiftAt === null}
                 data-testid="restart-shift"
                 onClick={() =>
-                  confirmThen('¿Repetir la jornada? Se borra todo lo hecho desde que metiste la tarjeta y vuelves a ese momento.', () => {
+                  confirmThen(t('¿Repetir la jornada? Se borra todo lo hecho desde que metiste la tarjeta y vuelves a ese momento.'), () => {
                     store.restartShift();
                     after();
-                  }, { confirmLabel: 'Repetir la jornada' })
+                  }, { confirmLabel: t('Repetir la jornada') })
                 }
               >
-                <div className="font-semibold text-white">↺ Repetir la jornada</div>
+                <div className="font-semibold text-white">{t('↺ Repetir la jornada')}</div>
                 <div className="text-xs text-slate-400">
-                  {shiftAt !== null ? `Vuelve a justo antes de meter la tarjeta (${formatDateTime(shiftAt, tz)} UTC).` : 'Disponible en cuanto metas la tarjeta.'}
+                  {shiftAt !== null ? t('Vuelve a justo antes de meter la tarjeta ({time} UTC).', { time: formatDateTime(shiftAt, tz) }) : t('Disponible en cuanto metas la tarjeta.')}
                 </div>
               </button>
               <button
@@ -89,14 +90,14 @@ export function ResetMenu() {
                 className={item}
                 data-testid="restart-all"
                 onClick={() =>
-                  confirmThen('¿Empezar de cero? Se borran las dos semanas y vuelves al lunes a las 06:00 UTC.', () => {
+                  confirmThen(t('¿Empezar de cero? Se borran las dos semanas y vuelves al lunes a las 06:00 UTC.'), () => {
                     store.reset();
                     after();
-                  }, { confirmLabel: 'Empezar de cero', danger: true })
+                  }, { confirmLabel: t('Empezar de cero'), danger: true })
                 }
               >
-                <div className="font-semibold text-rose-200">⟲ Empezar de cero</div>
-                <div className="text-xs text-slate-400">Borra todo el escenario de dos semanas.</div>
+                <div className="font-semibold text-rose-200">{t('⟲ Empezar de cero')}</div>
+                <div className="text-xs text-slate-400">{t('Borra todo el escenario de dos semanas.')}</div>
               </button>
             </>
           )}

@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 /**
  * Datos del fondo «atlas de carreteras»: un mapa estilizado (diseño propio) de la península ibérica,
  * el sur de Francia y el noroeste de Italia. Coordenadas aproximadas en grados (longitud, latitud)
@@ -18,28 +19,28 @@ export function project([lon, lat]: LonLat): [number, number] {
 }
 
 export const CITIES = {
-  lisboa: { name: 'Lisboa', at: [-9.14, 38.72] },
-  oporto: { name: 'Oporto', at: [-8.61, 41.15] },
-  coruna: { name: 'A Coruña', at: [-8.41, 43.36] },
-  valladolid: { name: 'Valladolid', at: [-4.72, 41.65] },
-  burgos: { name: 'Burgos', at: [-3.7, 42.34] },
-  bilbao: { name: 'Bilbao', at: [-2.93, 43.26] },
-  madrid: { name: 'Madrid', at: [-3.7, 40.42] },
-  zaragoza: { name: 'Zaragoza', at: [-0.89, 41.65] },
-  barcelona: { name: 'Barcelona', at: [2.17, 41.39] },
-  valencia: { name: 'Valencia', at: [-0.38, 39.47] },
-  murcia: { name: 'Murcia', at: [-1.13, 37.99] },
-  sevilla: { name: 'Sevilla', at: [-5.98, 37.39] },
-  malaga: { name: 'Málaga', at: [-4.42, 36.72] },
-  burdeos: { name: 'Burdeos', at: [-0.58, 44.84] },
-  toulouse: { name: 'Toulouse', at: [1.44, 43.6] },
-  perpignan: { name: 'Perpiñán', at: [2.9, 42.7] },
-  montpellier: { name: 'Montpellier', at: [3.88, 43.61] },
-  marsella: { name: 'Marsella', at: [5.37, 43.3] },
-  lyon: { name: 'Lyon', at: [4.84, 45.76] },
-  niza: { name: 'Niza', at: [7.26, 43.7] },
-  turin: { name: 'Turín', at: [7.69, 45.07] },
-  genova: { name: 'Génova', at: [8.93, 44.41] },
+  lisboa: { name: N_('Lisboa'), at: [-9.14, 38.72] },
+  oporto: { name: N_('Oporto'), at: [-8.61, 41.15] },
+  coruna: { name: N_('A Coruña'), at: [-8.41, 43.36] },
+  valladolid: { name: N_('Valladolid'), at: [-4.72, 41.65] },
+  burgos: { name: N_('Burgos'), at: [-3.7, 42.34] },
+  bilbao: { name: N_('Bilbao'), at: [-2.93, 43.26] },
+  madrid: { name: N_('Madrid'), at: [-3.7, 40.42] },
+  zaragoza: { name: N_('Zaragoza'), at: [-0.89, 41.65] },
+  barcelona: { name: N_('Barcelona'), at: [2.17, 41.39] },
+  valencia: { name: N_('Valencia'), at: [-0.38, 39.47] },
+  murcia: { name: N_('Murcia'), at: [-1.13, 37.99] },
+  sevilla: { name: N_('Sevilla'), at: [-5.98, 37.39] },
+  malaga: { name: N_('Málaga'), at: [-4.42, 36.72] },
+  burdeos: { name: N_('Burdeos'), at: [-0.58, 44.84] },
+  toulouse: { name: N_('Toulouse'), at: [1.44, 43.6] },
+  perpignan: { name: N_('Perpiñán'), at: [2.9, 42.7] },
+  montpellier: { name: N_('Montpellier'), at: [3.88, 43.61] },
+  marsella: { name: N_('Marsella'), at: [5.37, 43.3] },
+  lyon: { name: N_('Lyon'), at: [4.84, 45.76] },
+  niza: { name: N_('Niza'), at: [7.26, 43.7] },
+  turin: { name: N_('Turín'), at: [7.69, 45.07] },
+  genova: { name: N_('Génova'), at: [8.93, 44.41] },
 } as const satisfies Record<string, { name: string; at: LonLat }>;
 export type CityId = keyof typeof CITIES;
 

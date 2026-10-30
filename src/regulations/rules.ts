@@ -1,4 +1,4 @@
-import { N_ } from '@/i18n';
+import { N_, t } from '@/i18n';
 /**
  * Catálogo de reglas normativas. Cada regla documenta su referencia y su estado.
  *
@@ -82,7 +82,7 @@ export const RULES: readonly RuleDefinition[] = [
       ['R561-ART8-DR11', N_('Descanso diario normal 11 h'), N_('art. 4 g) y art. 8.2'),
         N_('Bloque de descanso ininterrumpido con al menos 11 h dentro de la ventana de 24 h de la jornada.'),
         N_('Lo que cuenta es la parte del descanso que cae dentro de las 24 h desde el fin del descanso anterior.')],
-      [N_('R561-ART8-DR3+9'), N_('Descanso diario fraccionado 3 + 9 h'), N_('art. 4 g)'),
+      ['R561-ART8-DR3+9', N_('Descanso diario fraccionado 3 + 9 h'), N_('art. 4 g)'),
         N_('Bloque de 3 h a 9 h seguido, en la misma jornada, de un bloque de al menos 9 h; ambos dentro de la ventana de 24 h.'),
         N_('El orden es obligatorio: 9 + 3 no es un descanso fraccionado (el de 9 h cuenta como reducido).')],
       ['R561-ART8-DR9', N_('Descanso diario reducido (≥ 9 h, máx. 3 entre descansos semanales)'), N_('art. 4 g) y art. 8.4'),
@@ -169,3 +169,8 @@ export const RULES: readonly RuleDefinition[] = [
     legallyVerified: false,
   })),
 ];
+
+/** Referencia normativa traducida (por partes cuando es «Reglamento…, artículo»). */
+export function ruleRef(r: RuleDefinition): string {
+  return r.article ? `${t(REF)}, ${t(r.article)}` : t(r.reference);
+}

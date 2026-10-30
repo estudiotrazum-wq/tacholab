@@ -1,3 +1,4 @@
+import { N_ } from '@/i18n';
 import type { View } from '../uiStore';
 
 /** Navegación mínima: el simulador es la pantalla principal; las demás secciones son de consulta. */
@@ -9,9 +10,9 @@ export interface Section {
 }
 
 export const SECTIONS: readonly Section[] = [
-  { id: 'drive', label: 'Simulador', icon: 'drive', views: [{ id: 'device', label: 'Panel' }, { id: 'cabin', label: 'Cabina' }] },
-  { id: 'weeks', label: 'Mis semanas', icon: 'weeks', views: [{ id: 'calendar', label: 'Calendario' }, { id: 'report', label: 'Informe' }] },
-  { id: 'learn', label: 'Academia', icon: 'learn', views: [{ id: 'academy', label: 'Ejercicios' }, { id: 'scenarios', label: 'Escenarios' }] },
+  { id: 'drive', label: N_('Simulador'), icon: 'drive', views: [{ id: 'device', label: N_('Panel') }, { id: 'cabin', label: N_('Cabina') }] },
+  { id: 'weeks', label: N_('Mis semanas'), icon: 'weeks', views: [{ id: 'calendar', label: N_('Calendario') }, { id: 'report', label: N_('Informe') }] },
+  { id: 'learn', label: N_('Academia'), icon: 'learn', views: [{ id: 'academy', label: N_('Ejercicios') }, { id: 'scenarios', label: N_('Escenarios') }] },
 ];
 
 export function sectionOf(view: View): Section | undefined {

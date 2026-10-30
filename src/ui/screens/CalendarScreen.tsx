@@ -1,3 +1,4 @@
+import { t, tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ExercisePanel } from '../components/ExercisePanel';
 import { ACTIVITY_LABEL, type EpochMs } from '@/shared/types';
@@ -32,12 +33,12 @@ function restTags(report: ComplianceReport): RestTag[] {
     const { start, end } = c.block;
     if (c.weekly) {
       const normal = end - start >= 45 * HOUR;
-      tags.push({ start, end, label: normal ? 'Descanso semanal normal' : 'Descanso semanal reducido', color: normal ? REST_COLORS.weeklyNormal : REST_COLORS.weeklyReduced });
+      tags.push({ start, end, label: normal ? t('Descanso semanal normal') : t('Descanso semanal reducido'), color: normal ? REST_COLORS.weeklyNormal : REST_COLORS.weeklyReduced });
     } else if (c.kind === 'SPLIT') {
-      tags.push({ start: c.splitFirst!.start, end: c.splitFirst!.end, label: 'Descanso fraccionado (1.ª parte, 3 h)', color: REST_COLORS.split });
-      tags.push({ start, end, label: 'Descanso fraccionado (2.ª parte, 9 h)', color: REST_COLORS.split });
+      tags.push({ start: c.splitFirst!.start, end: c.splitFirst!.end, label: t('Descanso fraccionado (1.ª parte, 3 h)'), color: REST_COLORS.split });
+      tags.push({ start, end, label: t('Descanso fraccionado (2.ª parte, 9 h)'), color: REST_COLORS.split });
     } else {
-      const map = { NORMAL: ['Descanso diario normal', REST_COLORS.dailyNormal], REDUCED: ['Descanso diario reducido', REST_COLORS.reduced], INSUFFICIENT: ['Descanso diario insuficiente', REST_COLORS.insufficient] } as const;
+      const map = { NORMAL: [t('Descanso diario normal'), REST_COLORS.dailyNormal], REDUCED: [t('Descanso diario reducido'), REST_COLORS.reduced], INSUFFICIENT: [t('Descanso diario insuficiente'), REST_COLORS.insufficient] } as const;
       const [label, color] = map[c.kind as 'NORMAL' | 'REDUCED' | 'INSUFFICIENT'];
       tags.push({ start, end, label, color });
     }
@@ -73,28 +74,28 @@ export function CalendarScreen() {
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
       <ExercisePanel compact />
       <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="cal-driver" className="text-sm text-slate-400">Conductor ficticio</label>
+        <label htmlFor="cal-driver" className="text-sm text-slate-400">{t('Conductor ficticio')}</label>
         <select id="cal-driver" value={driverId} onChange={(e) => setDriverId(e.target.value)} className="rounded-md border border-white/15 bg-[#0b1220] px-2 py-1 text-sm">
           {Object.values(sim.cards).map((card) => <option key={card.id} value={card.id}>{card.holderName} ({card.displayId})</option>)}
         </select>
-        <span className="text-xs text-slate-500">{sim.scenario.title} · todas las horas en UTC</span>
+        <span className="text-xs text-slate-500">{tx(sim.scenario.title, sim.scenario.titleI18n)} · {t('todas las horas en UTC')}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-        <Kpi label="Semana 1" value={formatDuration(report.weeks[0]!.drivingMs)} sub="/ 56:00" bad={report.weeks[0]!.drivingMs > 56 * HOUR} />
-        <Kpi label="Semana 2" value={formatDuration(report.weeks[1]!.drivingMs)} sub="/ 56:00" bad={report.weeks[1]!.drivingMs > 56 * HOUR} />
-        <Kpi label="Dos semanas" value={formatDuration(report.weeks[0]!.drivingMs + report.weeks[1]!.drivingMs)} sub="/ 90:00" bad={report.weeks[0]!.drivingMs + report.weeks[1]!.drivingMs > 90 * HOUR} />
-        <Kpi label="Ampliaciones 10 h" value={`${report.weeks[0]!.extensions} · ${report.weeks[1]!.extensions}`} sub="sem. 1 · sem. 2" bad={report.weeks.some((w) => w.extensions > 2)} />
-        <Kpi label="Reducidos" value={`${c.reducedDailySinceWeekly} / 3`} sub="desde el último semanal" bad={false} />
+        <Kpi label={t('Semana 1')} value={formatDuration(report.weeks[0]!.drivingMs)} sub="/ 56:00" bad={report.weeks[0]!.drivingMs > 56 * HOUR} />
+        <Kpi label={t('Semana 2')} value={formatDuration(report.weeks[1]!.drivingMs)} sub="/ 56:00" bad={report.weeks[1]!.drivingMs > 56 * HOUR} />
+        <Kpi label={t('Dos semanas')} value={formatDuration(report.weeks[0]!.drivingMs + report.weeks[1]!.drivingMs)} sub="/ 90:00" bad={report.weeks[0]!.drivingMs + report.weeks[1]!.drivingMs > 90 * HOUR} />
+        <Kpi label={t('Ampliaciones 10 h')} value={`${report.weeks[0]!.extensions} · ${report.weeks[1]!.extensions}`} sub={t('sem. 1 · sem. 2')} bad={report.weeks.some((w) => w.extensions > 2)} />
+        <Kpi label={t('Reducidos')} value={`${c.reducedDailySinceWeekly} / 3`} sub={t('desde el último semanal')} bad={false} />
         {now >= sim.scenario.endsAt ? (
-          <Kpi label="Disponible ahora" value="—" sub="escenario terminado" bad={false} />
+          <Kpi label={t('Disponible ahora')} value="—" sub={t('escenario terminado')} bad={false} />
         ) : (
-          <Kpi label="Disponible ahora" value={formatDuration(c.availableDrivingMs)} sub={c.limitingFactor} bad={false} />
+          <Kpi label={t('Disponible ahora')} value={formatDuration(c.availableDrivingMs)} sub={t(c.limitingFactor)} bad={false} />
         )}
-        <Kpi label="Infracciones" value={String(infr.length)} sub={`${report.obligations.filter((o) => o.status === 'pending').length} obligaciones pendientes`} bad={infr.length > 0} />
+        <Kpi label={t('Infracciones')} value={String(infr.length)} sub={t('{n} obligaciones pendientes', { n: report.obligations.filter((o) => o.status === 'pending').length })} bad={infr.length > 0} />
       </div>
 
-      <Panel title="Calendario de dos semanas" aside={<Legend />}>
+      <Panel title={t('Calendario de dos semanas')} aside={<Legend />}>
         <div className="space-y-1.5" data-testid="history-days">
           {days.map((d, i) => (
             <DayRow
@@ -112,18 +113,18 @@ export function CalendarScreen() {
           ))}
         </div>
         <p className="mt-3 text-[11px] text-slate-500">
-          Barra superior: actividad registrada (00–24 h UTC). Franja inferior: clasificación normativa de los descansos. ▲ = infracción simulada. Pulsa un día para ver el detalle.
+          {t('Barra superior: actividad registrada (00–24 h UTC). Franja inferior: clasificación normativa de los descansos. ▲ = infracción simulada. Pulsa un día para ver el detalle.')}
         </p>
       </Panel>
 
       <DayDetail day={day} events={events} tags={tags} findings={report.findings} now={now} tz={tz} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title={`Registro de actividades (${events.length})`}>
+        <Panel title={t('Registro de actividades ({n})', { n: events.length })}>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-xs" data-testid="history-table">
               <thead className="sticky top-0 bg-[#0b1220] text-slate-500">
-                <tr><th className="text-left font-normal">Actividad</th><th className="text-left font-normal">Inicio</th><th className="text-left font-normal">Fin</th><th className="text-right font-normal">Duración</th></tr>
+                <tr><th className="text-left font-normal">{t('Actividad')}</th><th className="text-left font-normal">{t('Inicio')}</th><th className="text-left font-normal">{t('Fin')}</th><th className="text-right font-normal">{t('Duración')}</th></tr>
               </thead>
               <tbody>
                 {[...events].reverse().map((e) => (
@@ -131,29 +132,29 @@ export function CalendarScreen() {
                     <td className="py-1">
                       <span className="flex items-center gap-1.5" style={{ color: ACTIVITY_COLOR[e.activity] }}>
                         <ActivityIcon activity={e.activity} className="h-4 w-4" />
-                        <span className="text-slate-200">{ACTIVITY_LABEL[e.activity]}</span>
+                        <span className="text-slate-200">{t(ACTIVITY_LABEL[e.activity])}</span>
                         {e.source === 'manual' && <span className="rounded bg-slate-700 px-1 text-[9px] text-slate-300">MANUAL</span>}
                       </span>
                     </td>
                     <td className="font-mono text-slate-300">{formatDateTime(e.start, tz)}</td>
-                    <td className="font-mono text-slate-300">{e.end === null ? 'en curso' : formatDateTime(e.end, tz)}</td>
+                    <td className="font-mono text-slate-300">{e.end === null ? t('en curso') : formatDateTime(e.end, tz)}</td>
                     <td className="text-right font-mono text-slate-200">{formatDuration(eventDuration(e, now))}</td>
                   </tr>
                 ))}
-                {events.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-500">Sin actividades registradas para este conductor.</td></tr>}
+                {events.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-500">{t('Sin actividades registradas para este conductor.')}</td></tr>}
               </tbody>
             </table>
           </div>
         </Panel>
-        <Panel title={`Registro del equipo (${sim.log.length})`}>
+        <Panel title={t('Registro del equipo ({n})', { n: sim.log.length })}>
           <ul className="max-h-96 space-y-1 overflow-auto text-xs">
             {[...sim.log].reverse().map((l) => (
               <li key={l.id} className={`flex gap-2 border-t border-white/5 py-1 ${l.kind === 'WARNING' ? 'text-amber-200' : 'text-slate-300'}`}>
                 <span className="shrink-0 font-mono text-slate-500">{formatDateTime(l.at, tz)}</span>
-                <span>{l.text}</span>
+                <span>{tx(l.text, l.i18n)}</span>
               </li>
             ))}
-            {sim.log.length === 0 && <li className="py-4 text-center text-slate-500">Sin eventos.</li>}
+            {sim.log.length === 0 && <li className="py-4 text-center text-slate-500">{t('Sin eventos.')}</li>}
           </ul>
         </Panel>
       </div>
@@ -178,7 +179,9 @@ function DayRow(p: { day: Day; index: number; selected: boolean; onSelect: () =>
       type="button"
       onClick={p.onSelect}
       aria-pressed={p.selected}
-      aria-label={`${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)}: ${formatDuration(driving)} de conducción${dayFindings.length ? `, ${dayFindings.length} infracción(es)` : ''}`}
+      aria-label={dayFindings.length
+        ? t('{day}: {d} de conducción, {n} infracción(es)', { day: `${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)}`, d: formatDuration(driving), n: dayFindings.length })
+        : t('{day}: {d} de conducción', { day: `${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)}`, d: formatDuration(driving) })}
       className={`flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left ${p.index === 7 ? 'mt-3' : ''} ${p.selected ? 'bg-cyan-500/10 ring-1 ring-cyan-700' : 'hover:bg-white/5'}`}
     >
       <div className="w-20 shrink-0 text-xs text-slate-400">
@@ -191,7 +194,7 @@ function DayRow(p: { day: Day; index: number; selected: boolean; onSelect: () =>
           {p.events.map((e) => {
             const c = clip(e.start, eventEnd(e, now), d);
             return c && (
-              <span key={e.id} className="absolute inset-y-0.5 rounded-sm" title={`${ACTIVITY_LABEL[e.activity]} ${formatTime(c.s, tz)}–${formatTime(c.e, tz)}`} style={{ left: `${c.left}%`, width: `${Math.max(0.2, c.width)}%`, background: ACTIVITY_COLOR[e.activity], opacity: e.source === 'manual' ? 0.55 : 1 }} />
+              <span key={e.id} className="absolute inset-y-0.5 rounded-sm" title={`${t(ACTIVITY_LABEL[e.activity])} ${formatTime(c.s, tz)}–${formatTime(c.e, tz)}`} style={{ left: `${c.left}%`, width: `${Math.max(0.2, c.width)}%`, background: ACTIVITY_COLOR[e.activity], opacity: e.source === 'manual' ? 0.55 : 1 }} />
             );
           })}
           {now > d.start && now < d.end && <span className="absolute inset-y-0 w-0.5 bg-white" style={{ left: `${((now - d.start) / (d.end - d.start)) * 100}%` }} />}
@@ -203,7 +206,7 @@ function DayRow(p: { day: Day; index: number; selected: boolean; onSelect: () =>
           })}
         </div>
         {dayFindings.map((f) => (
-          <span key={f.id} className="absolute -top-1 -translate-x-1/2 text-[10px] leading-none text-rose-400" style={{ left: `${((f.at - d.start) / (d.end - d.start)) * 100}%` }} title={f.title}>▲</span>
+          <span key={f.id} className="absolute -top-1 -translate-x-1/2 text-[10px] leading-none text-rose-400" style={{ left: `${((f.at - d.start) / (d.end - d.start)) * 100}%` }} title={tx(f.title, f.titleI18n)}>▲</span>
         ))}
       </div>
       <div className={`w-12 shrink-0 text-right font-mono text-xs ${driving > 10 * HOUR ? 'text-rose-300' : driving > 9 * HOUR ? 'text-amber-300' : 'text-slate-300'}`}>{formatDuration(driving)}</div>
@@ -218,12 +221,12 @@ function DayDetail(p: { day: Day; events: ActivityEvent[]; tags: RestTag[]; find
   const fs = p.findings.filter((f) => f.at >= d.start && f.at < d.end);
   const hours = Math.round((d.end - d.start) / HOUR);
   return (
-    <Panel title={`Detalle: ${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)} (UTC)`}>
+    <Panel title={t('Detalle: {day} (UTC)', { day: `${formatWeekday(d.start, tz)} ${formatDate(d.start, tz)}` })}>
       <div className="relative h-14 rounded bg-white/5" data-testid="day-detail">
         {evs.map((e) => {
           const c = clip(e.start, eventEnd(e, now), d);
           return c && (
-            <span key={e.id} className="absolute top-1 h-8 overflow-hidden rounded-sm px-1 text-[10px] leading-8 text-ink-950" style={{ left: `${c.left}%`, width: `${c.width}%`, background: ACTIVITY_COLOR[e.activity] }} title={`${ACTIVITY_LABEL[e.activity]} ${formatTime(c.s, tz)}–${formatTime(c.e, tz)}`}>
+            <span key={e.id} className="absolute top-1 h-8 overflow-hidden rounded-sm px-1 text-[10px] leading-8 text-ink-950" style={{ left: `${c.left}%`, width: `${c.width}%`, background: ACTIVITY_COLOR[e.activity] }} title={`${t(ACTIVITY_LABEL[e.activity])} ${formatTime(c.s, tz)}–${formatTime(c.e, tz)}`}>
               {c.width > 6 ? formatDuration(c.e - c.s) : ''}
             </span>
           );
@@ -244,20 +247,20 @@ function DayDetail(p: { day: Day; events: ActivityEvent[]; tags: RestTag[]; find
             <li key={e.id} className="flex items-center gap-2">
               <span style={{ color: ACTIVITY_COLOR[e.activity] }}><ActivityIcon activity={e.activity} className="h-4 w-4" /></span>
               <span className="w-28 font-mono text-slate-400">{formatTime(Math.max(e.start, d.start), tz)}–{eventEnd(e, now) >= d.end ? '24:00' : formatTime(eventEnd(e, now), tz)}</span>
-              <span className="text-slate-200">{ACTIVITY_LABEL[e.activity]}</span>
+              <span className="text-slate-200">{t(ACTIVITY_LABEL[e.activity])}</span>
               <span className="ml-auto font-mono text-slate-400">{formatDuration(eventDuration(e, now))}</span>
             </li>
           ))}
-          {evs.length === 0 && <li className="text-slate-500">Sin actividad registrada este día.</li>}
+          {evs.length === 0 && <li className="text-slate-500">{t('Sin actividad registrada este día.')}</li>}
         </ul>
         <ul className="space-y-1 text-xs">
           {fs.map((f) => (
             <li key={f.id} className={`rounded border px-2 py-1 ${f.severity === 'infringement' ? 'border-rose-500/40 text-rose-200' : 'border-violet-500/40 text-violet-200'}`}>
-              <strong>{formatTime(f.at, tz)} · {f.title}</strong>
-              <div className="text-slate-400">{f.detail}</div>
+              <strong>{formatTime(f.at, tz)} · {tx(f.title, f.titleI18n)}</strong>
+              <div className="text-slate-400">{tx(f.detail, f.detailI18n)}</div>
             </li>
           ))}
-          {fs.length === 0 && <li className="text-emerald-300">Sin infracciones este día.</li>}
+          {fs.length === 0 && <li className="text-emerald-300">{t('Sin infracciones este día.')}</li>}
         </ul>
       </div>
     </Panel>
@@ -276,13 +279,13 @@ function Kpi({ label, value, sub, bad }: { label: string; value: string; sub: st
 
 function Legend() {
   const items: [string, string][] = [
-    ...(['DRIVING', 'WORK', 'AVAILABILITY', 'REST'] as const).map((a): [string, string] => [ACTIVITY_LABEL[a], ACTIVITY_COLOR[a]]),
-    ['Diario normal', REST_COLORS.dailyNormal],
-    ['Fraccionado', REST_COLORS.split],
-    ['Reducido', REST_COLORS.reduced],
-    ['Semanal', REST_COLORS.weeklyNormal],
-    ['Sem. reducido', REST_COLORS.weeklyReduced],
-    ['Insuficiente', REST_COLORS.insufficient],
+    ...(['DRIVING', 'WORK', 'AVAILABILITY', 'REST'] as const).map((a): [string, string] => [t(ACTIVITY_LABEL[a]), ACTIVITY_COLOR[a]]),
+    [t('Diario normal'), REST_COLORS.dailyNormal],
+    [t('Fraccionado'), REST_COLORS.split],
+    [t('Reducido'), REST_COLORS.reduced],
+    [t('Semanal'), REST_COLORS.weeklyNormal],
+    [t('Sem. reducido'), REST_COLORS.weeklyReduced],
+    [t('Insuficiente'), REST_COLORS.insufficient],
   ];
   return (
     <div className="hidden flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] text-slate-400 md:flex">

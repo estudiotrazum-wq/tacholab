@@ -1,3 +1,4 @@
+import { N_, t } from '@/i18n';
 import { useEffect, useState } from 'react';
 import type { AssistTarget } from '@/academy/assist';
 import { useSimStore } from '@/simulator/store';
@@ -7,7 +8,7 @@ type Position = 'off' | 'on' | 'start';
 /** Ángulo de la llave en cada posición del contacto (0 · I · II). */
 const ANGLE: Record<Position, number> = { off: -50, on: 0, start: 50 };
 const LABEL: Record<Position, string> = { off: '0', on: 'I', start: 'II' };
-const NAME: Record<Position, string> = { off: 'Llave en 0: contacto quitado', on: 'Llave en I: contacto', start: 'Llave en II: arrancar motor' };
+const NAME: Record<Position, string> = { off: N_('Llave en 0: contacto quitado'), on: N_('Llave en I: contacto'), start: N_('Llave en II: arrancar motor') };
 
 /**
  * Cerradura de contacto genérica con tres posiciones, como en la cabina de un camión:
@@ -36,7 +37,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
 
   return (
     <section
-      aria-label="Llave de contacto"
+      aria-label={t('Llave de contacto')}
       data-testid="ignition"
       data-tour="ignition"
       className={`glass flex shrink-0 flex-row items-center gap-3 rounded-2xl p-3 sm:w-36 sm:flex-col sm:gap-2 ${highlight === 'VEHICLE' && !running ? 'assist-target' : ''}`}
@@ -44,7 +45,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
       <button
         type="button"
         onClick={() => turn(next())}
-        aria-label={`Girar la llave (ahora ${LABEL[ignition === 'running' ? 'on' : ignition]})`}
+        aria-label={t('Girar la llave (ahora {pos})', { pos: LABEL[ignition === 'running' ? 'on' : ignition] })}
         className="relative shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
       >
         <svg viewBox="0 0 120 120" className="h-24 w-24 overflow-visible sm:h-28 sm:w-28" aria-hidden="true">
@@ -96,7 +97,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
           <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(255,255,255,0.08)" />
           <circle cx="60" cy="60" r="27" fill="url(#ign-knob)" stroke="#05070a" strokeWidth="1.5" />
           {/* Llave de mando (fob) insertada: gira con la posición */}
-          <g style={{ transform: `rotate(${ANGLE[shown]}deg)`, transformOrigin: '60px 60px', transition: 'transform 380ms cubic-bezier(.3,1.35,.5,1)' }}>
+          <g style={{ transform: `rotate(${ANGLE[shown]}deg)`, transformOrigin: t('60px 60px'), transition: 'transform 380ms cubic-bezier(.3,1.35,.5,1)' }}>
             <rect x="49" y="31" width="22" height="58" rx="11" fill="url(#ign-fob)" stroke="url(#ign-chrome)" strokeWidth="1.4" />
             <rect x="53" y="36" width="14" height="3" rx="1.5" fill={running ? '#34d399' : ignition === 'on' ? '#fbbf24' : '#334155'} />
             {ignition !== 'off' && <rect x="53" y="36" width="14" height="3" rx="1.5" fill={running ? '#34d399' : '#fbbf24'} filter="url(#ign-glow)" />}
@@ -108,7 +109,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
       </button>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 sm:w-full">
-        <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/30 p-1" role="group" aria-label="Posiciones de la llave">
+        <div className="grid grid-cols-3 gap-1 rounded-xl bg-black/30 p-1" role="group" aria-label={t('Posiciones de la llave')}>
           {(['off', 'on', 'start'] as Position[]).map((p) => {
             const active = p === 'start' ? running : p === 'on' ? ignition === 'on' : ignition === 'off';
             return (
@@ -117,8 +118,8 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
                 type="button"
                 data-testid={`ignition-${p}`}
                 aria-pressed={active}
-                title={NAME[p]}
-                aria-label={NAME[p]}
+                title={t(NAME[p])}
+                aria-label={t(NAME[p])}
                 onClick={() => turn(p)}
                 className={`rounded-lg py-1.5 text-xs font-bold transition ${
                   active
@@ -137,7 +138,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
         </div>
         <div className="flex items-center gap-2 text-[11px] text-slate-300" data-testid="engine-status">
           <span className={`h-2.5 w-2.5 rounded-full ${running ? 'bg-emerald-400 shadow-[0_0_8px_#34d399]' : ignition === 'on' ? 'bg-amber-400 shadow-[0_0_8px_#fbbf24]' : 'bg-slate-600'}`} aria-hidden="true" />
-          {running ? 'Motor en marcha' : ignition === 'on' ? 'Contacto' : 'Motor apagado'}
+          {running ? t('Motor en marcha') : ignition === 'on' ? t('Contacto') : t('Motor apagado')}
         </div>
       </div>
     </section>

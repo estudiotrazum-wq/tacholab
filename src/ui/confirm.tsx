@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
@@ -17,7 +18,7 @@ const useConfirmStore = create<{ request: ConfirmRequest | null }>(() => ({ requ
 export function askConfirm(message: string, opts: { confirmLabel?: string; danger?: boolean } = {}): Promise<boolean> {
   return new Promise((resolve) => {
     useConfirmStore.getState().request?.resolve(false);
-    useConfirmStore.setState({ request: { message, confirmLabel: opts.confirmLabel ?? 'Aceptar', danger: opts.danger ?? false, resolve } });
+    useConfirmStore.setState({ request: { message, confirmLabel: opts.confirmLabel ?? t('Aceptar'), danger: opts.danger ?? false, resolve } });
   });
 }
 
@@ -51,7 +52,7 @@ export function ConfirmDialog() {
       <div className="glass-strong w-full max-w-sm rounded-3xl p-6" onClick={(e) => e.stopPropagation()}>
         <p id="confirm-msg" className="text-sm leading-relaxed text-slate-100">{request.message}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={() => close(false)} className="rounded-xl px-4 py-2 text-sm text-slate-300 hover:bg-white/5" data-testid="confirm-cancel">Cancelar</button>
+          <button type="button" onClick={() => close(false)} className="rounded-xl px-4 py-2 text-sm text-slate-300 hover:bg-white/5" data-testid="confirm-cancel">{t('Cancelar')}</button>
           <button
             ref={okRef}
             type="button"
