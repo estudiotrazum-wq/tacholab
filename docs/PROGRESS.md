@@ -2,6 +2,18 @@
 
 Última actualización: 29/10/2026 — Fase 1 + v0.2.
 
+## v0.20 — Aplicación en español e inglés (rama `ui-rediseno`)
+- [x] Sistema de traducciones tipo gettext (`src/i18n/`): `t()`, `N_()`, `msg()`/`tx()` para textos guardados en
+      el estado (registro, avisos, informe) con parámetros traducibles; detalles en `docs/I18N.md`
+- [x] **Inglés completo** (≈ 1.210 textos): interfaz, visor del tacógrafo (abreviado a 20 columnas), menús, avisos,
+      motor normativo e informe, academia, escenarios, tutorial, guía, cabina y mapa. Terminología de la versión
+      inglesa oficial del R. (CE) 561/2006
+- [x] Selector **ES · EN** en el menú lateral, la cabecera móvil, la bienvenida y Ajustes; idioma inicial según el
+      navegador; días de la semana e iniciales de la línea de tiempo por idioma
+- [x] Pruebas: cobertura del catálogo (falta, sobra, marcadores), longitudes del visor en inglés, recorrido del
+      visor en inglés; E2E con navegador en inglés y cambio de idioma en caliente. 153 pruebas unitarias + E2E
+- Pendiente: revisión de la traducción por un formador nativo
+
 ## v0.19 — Amplitud de la jornada (13 h / 15 h) a la vista (rama `ui-rediseno`)
 - [x] Nueva pantalla del tacógrafo (▼ ×3): **Jornada 13h** (tiempo que queda para empezar el descanso diario normal
       de 11 h dentro de las 24 h) y **Reducida 15h** (con descanso reducido de 9 h, mientras queden reducidos). Art. 8.2

@@ -1,4 +1,4 @@
-import { N_, t } from '@/i18n';
+import { getLang, type Lang, N_, t } from '@/i18n';
 import { useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { AssistTarget } from '@/academy/assist';
 import { DEFAULT_SPEED_KMH, MAX_SPEED_KMH, nextRelevantEvent } from '@/simulator/engine';
@@ -18,7 +18,8 @@ const CLOCK_LABELS = [N_('Pausa'), '×1', '×5', '×30', '×60', '×300', '×900
 const CLOCK_TICKS = ['❚❚', '1', '5', '30', '60', '300', '900', '3600'];
 /** Descripción de cada velocidad: cuánto tiempo simulado pasa por segundo real. */
 const CLOCK_HINT = [N_('Pausa'), N_('Tiempo real'), N_('5 s por segundo'), N_('30 s por segundo'), N_('1 min por segundo'), N_('5 min por segundo'), N_('15 min por segundo'), N_('1 h por segundo')];
-const DAY_LETTERS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+/** Iniciales de los días de la semana (lunes a domingo) por idioma. */
+const DAY_LETTERS: Record<Lang, string[]> = { es: ['L', 'M', 'X', 'J', 'V', 'S', 'D'], en: ['M', 'T', 'W', 'T', 'F', 'S', 'S'] };
 
 /**
  * Barra de control bajo el tacógrafo, manejable con el cursor:
@@ -235,7 +236,7 @@ function Timeline() {
         {/* Días */}
         {Array.from({ length: SCENARIO_DAYS }, (_, i) => (
           <span key={i} className={`absolute inset-y-0 border-l ${i === 7 ? 'border-white/30' : 'border-white/10'}`} style={{ left: `${(i / SCENARIO_DAYS) * 100}%` }}>
-            <span className="absolute left-1 top-0.5 text-[9px] text-slate-500">{DAY_LETTERS[i % 7]}</span>
+            <span className="absolute left-1 top-0.5 text-[9px] text-slate-500">{DAY_LETTERS[getLang()][i % 7]}</span>
           </span>
         ))}
         {/* Actividad registrada */}

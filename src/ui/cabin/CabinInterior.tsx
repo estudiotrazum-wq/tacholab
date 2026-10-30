@@ -186,7 +186,7 @@ export function CabinInterior(p: CabinInteriorProps) {
           <rect x="636" y="12" width="328" height="84" rx="12" fill="#121923" stroke="#2a3644" />
           <rect x="632" y="8" width="336" height="92" rx="14" className="hot-ring" fill="none" stroke="var(--led)" strokeWidth="2" />
         </Hotspot>
-        <text x="800" y="36" textAnchor="middle" fill="#7c8a9c" fontSize="13" letterSpacing="4">AMBIENTE LED</text>
+        <text x="800" y="36" textAnchor="middle" fill="#7c8a9c" fontSize="13" letterSpacing="4">{t('AMBIENTE LED')}</text>
         {(Object.keys(LED_COLORS) as LedColor[]).map((c, i) => {
           const cx = 688 + i * 56;
           const active = p.ledColor === c;
@@ -203,7 +203,7 @@ export function CabinInterior(p: CabinInteriorProps) {
 
       {/* Parasol izquierdo: se sube o se baja */}
       <Hotspot label={p.visorDown ? t('Subir el parasol') : t('Bajar el parasol')} onActivate={p.onVisor} testId="cab-visor">
-        <g style={{ transform: p.visorDown ? 'none' : t('translateY(-58px) scaleY(0.25)'), transformOrigin: t('430px 112px'), transition: t('transform 400ms ease') }}>
+        <g style={{ transform: p.visorDown ? 'none' : 'translateY(-58px) scaleY(0.25)', transformOrigin: '430px 112px', transition: 'transform 400ms ease' }}>
           <path d="M252 112 L610 112 L600 182 Q430 192 262 182Z" fill="#111821" opacity="0.94" stroke="#222d3a" />
         </g>
         <rect x="252" y="112" width="358" height="80" fill="transparent" />
@@ -264,11 +264,11 @@ export function CabinInterior(p: CabinInteriorProps) {
       <g>
         <circle cx="440" cy="710" r="50" fill="#0a1019" stroke="#283648" strokeWidth="2" />
         <circle cx="440" cy="710" r="50" fill="none" className="led-core" strokeWidth="2" strokeDasharray="4 10" opacity="0.6" />
-        <line x1="440" y1="710" x2="440" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${needle} 440 710)`} style={{ transition: t('transform 1.2s ease') }} />
+        <line x1="440" y1="710" x2="440" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${needle} 440 710)`} style={{ transition: 'transform 1.2s ease' }} />
         <text x="440" y="748" textAnchor="middle" fill="#64748b" fontSize="11">km/h</text>
         <circle cx="680" cy="710" r="50" fill="#0a1019" stroke="#283648" strokeWidth="2" />
         <circle cx="680" cy="710" r="50" fill="none" className="led-core" strokeWidth="2" strokeDasharray="4 10" opacity="0.6" />
-        <line x1="680" y1="710" x2="680" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${rpm} 680 710)`} style={{ transition: t('transform 1.2s ease') }} />
+        <line x1="680" y1="710" x2="680" y2="670" stroke="#ff6b4a" strokeWidth="4" strokeLinecap="round" transform={`rotate(${rpm} 680 710)`} style={{ transition: 'transform 1.2s ease' }} />
         <text x="680" y="748" textAnchor="middle" fill="#64748b" fontSize="11">{t('rpm ×100')}</text>
         <rect x="503" y="668" width="114" height="84" rx="10" fill="#071722" stroke="#123445" />
         <text x="560" y="712" textAnchor="middle" fill="#7df9ff" fontSize="34" fontFamily="monospace">{speed}</text>

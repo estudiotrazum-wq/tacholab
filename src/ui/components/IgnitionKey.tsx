@@ -97,7 +97,7 @@ export function IgnitionKey({ highlight }: { highlight: AssistTarget }) {
           <circle cx="60" cy="60" r="34" fill="none" stroke="rgba(255,255,255,0.08)" />
           <circle cx="60" cy="60" r="27" fill="url(#ign-knob)" stroke="#05070a" strokeWidth="1.5" />
           {/* Llave de mando (fob) insertada: gira con la posición */}
-          <g style={{ transform: `rotate(${ANGLE[shown]}deg)`, transformOrigin: t('60px 60px'), transition: 'transform 380ms cubic-bezier(.3,1.35,.5,1)' }}>
+          <g style={{ transform: `rotate(${ANGLE[shown]}deg)`, transformOrigin: '60px 60px', transition: 'transform 380ms cubic-bezier(.3,1.35,.5,1)' }}>
             <rect x="49" y="31" width="22" height="58" rx="11" fill="url(#ign-fob)" stroke="url(#ign-chrome)" strokeWidth="1.4" />
             <rect x="53" y="36" width="14" height="3" rx="1.5" fill={running ? '#34d399' : ignition === 'on' ? '#fbbf24' : '#334155'} />
             {ignition !== 'off' && <rect x="53" y="36" width="14" height="3" rx="1.5" fill={running ? '#34d399' : '#fbbf24'} filter="url(#ign-glow)" />}

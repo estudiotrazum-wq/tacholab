@@ -85,9 +85,9 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     summary: N_('Demostración completa de dos semanas legales: 56 h la primera (con las dos ampliaciones) y 34 h la segunda.'),
     feature: 'active-scenario',
     objectives: [
-      N_('Observa en el calendario cómo se reparten las 56 h: seis jornadas, dos de ellas de 10 h.N_('),
-      N_(')Comprueba que el descanso semanal del fin de semana dura más de 45 h.N_('),
-      N_(')Verifica en el informe que 56 + 34 = 90 h no supera ningún límite.'),
+      N_('Observa en el calendario cómo se reparten las 56 h: seis jornadas, dos de ellas de 10 h.'),
+      N_('Comprueba que el descanso semanal del fin de semana dura más de 45 h.'),
+      N_('Verifica en el informe que 56 + 34 = 90 h no supera ningún límite.'),
     ],
     build: () => {
       const def = { id: 'ref-5634', title: N_('Referencia: 56 h + 34 h = 90 h') };
@@ -106,9 +106,9 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     summary: N_('La semana 1 ya tiene 56 h. Planifica la semana 2 para llegar a 90 h sin superar ningún límite.'),
     feature: 'complex-scenarios',
     objectives: [
-      N_('Conduce 34 h en la semana 2 (total 90 h).N_('),
-      N_(')Respeta pausas, jornadas y descansos diarios.N_('),
-      N_(')Termina el escenario con un descanso semanal normal.'),
+      N_('Conduce 34 h en la semana 2 (total 90 h).'),
+      N_('Respeta pausas, jornadas y descansos diarios.'),
+      N_('Termina el escenario con un descanso semanal normal.'),
     ],
     build: () => {
       const def = { id: 'week2-34', title: N_('Semana 2: completa las 34 h') };
@@ -136,9 +136,9 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     summary: N_('Tras seis jornadas, solo descansas 30 h el fin de semana. Debes compensar 15 h antes de la fecha límite.'),
     feature: 'complex-scenarios',
     objectives: [
-      N_('Identifica en el informe la compensación pendiente y su fecha límite.N_('),
-      N_(')En la semana 2, toma un descanso semanal normal (obligatorio tras un reducido).N_('),
-      N_(')Para compensar dentro del escenario, ese descanso debe durar al menos 45 h + 15 h = 60 h.'),
+      N_('Identifica en el informe la compensación pendiente y su fecha límite.'),
+      N_('En la semana 2, toma un descanso semanal normal (obligatorio tras un reducido).'),
+      N_('Para compensar dentro del escenario, ese descanso debe durar al menos 45 h + 15 h = 60 h.'),
     ],
     build: () => {
       const def = { id: 'reduced-weekly', title: N_('Descanso semanal reducido y compensación') };
@@ -162,10 +162,10 @@ export const SCENARIOS: readonly ScenarioDef[] = [
     summary: N_('Una semana registrada con varios errores típicos. Analiza el calendario y el informe para encontrarlos.'),
     feature: 'detailed-evaluation',
     objectives: [
-      N_('Localiza la conducción continua de más de 4 h 30 min.N_('),
-      N_(')Localiza la jornada con más de 10 h de conducción.N_('),
-      N_(')Localiza el descanso diario insuficiente.N_('),
-      N_(')Explica cómo se habría evitado cada error.'),
+      N_('Localiza la conducción continua de más de 4 h 30 min.'),
+      N_('Localiza la jornada con más de 10 h de conducción.'),
+      N_('Localiza el descanso diario insuficiente.'),
+      N_('Explica cómo se habría evitado cada error.'),
     ],
     build: () => {
       const def = { id: 'find-errors', title: N_('Encuentra los errores') };

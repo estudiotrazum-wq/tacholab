@@ -25,7 +25,7 @@ const errors = [];
 try {
   await waitForServer();
   browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1400, height: 950 } });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 950 }, locale: 'es-ES' });
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   mkdirSync('e2e/screenshots', { recursive: true });
@@ -388,6 +388,36 @@ try {
   await page.getByTestId('driver-name-clear').click();
   await goTo('Simulador', 'Panel');
   assert((await page.getByTestId('card-card-a').innerText()).includes('Alex Prácticas'), 'se puede borrar el nombre y volver al de ejemplo');
+
+  // Cambio de idioma en caliente (ES → EN → ES) desde Ajustes
+  await page.getByRole('button', { name: 'Ajustes' }).first().click();
+  await page.getByTestId('lang-en').first().click();
+  assert((await page.getByRole('heading', { name: 'Language' }).count()) > 0, 'el selector de idioma cambia la interfaz a inglés');
+  await page.getByTestId('lang-es').first().click();
+  assert((await page.getByRole('heading', { name: 'Idioma' }).count()) > 0, 'y vuelve a español');
+
+  // Navegador en inglés: la aplicación arranca en inglés
+  const enPage = await browser.newPage({ viewport: { width: 1400, height: 950 }, locale: 'en-GB' });
+  enPage.on('pageerror', (e) => errors.push(e.message));
+  await enPage.goto(URL);
+  assert(await enPage.getByRole('heading', { name: 'Welcome to TachoLab EU' }).isVisible(), 'EN: bienvenida en inglés según el idioma del navegador');
+  await enPage.getByRole('button', { name: 'Explore on my own' }).click();
+  const enLine = (i) => enPage.getByTestId(`display-line-${i}`).innerText();
+  assert((await enLine(1)).includes('Insert card'), 'EN: el visor pide la tarjeta en inglés');
+  await enPage.getByTestId('card-slot').click();
+  await enPage.getByRole('button', { name: 'Confirm / menu' }).click();
+  assert((await enLine(0)).includes('Last withdrawal') && (await enLine(1)).includes('first use'), 'EN: última retirada en inglés');
+  await enPage.getByRole('button', { name: 'Confirm / menu' }).click();
+  assert((await enLine(0)).includes('Start country') && (await enLine(1)).includes('Spain'), 'EN: país de inicio en inglés');
+  await enPage.getByRole('button', { name: 'Confirm / menu' }).click();
+  assert((await enLine(1)).includes('Andalusia'), 'EN: comunidades autónomas en inglés');
+  await enPage.getByRole('button', { name: 'Confirm / menu' }).click();
+  assert((await enLine(0)).includes('Ready to drive'), 'EN: «Ready to drive»');
+  await enPage.getByRole('button', { name: 'My weeks' }).first().click();
+  await enPage.getByRole('tab', { name: 'Report', exact: true }).click();
+  assert(await enPage.getByRole('heading', { name: 'Obligations' }).isVisible(), 'EN: informe en inglés');
+  await enPage.screenshot({ path: 'e2e/screenshots/17-report-en.png' });
+  await enPage.close();
 
   assert(errors.length === 0, `sin errores de ejecución en consola${errors.length ? ': ' + errors.join(' | ') : ''}`);
   console.log('\nE2E OK');

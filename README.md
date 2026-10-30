@@ -5,6 +5,10 @@ No reproduce ningún dispositivo comercial y no sustituye la formación oficial 
 
 Estado: **v0.8** — Fases 1 a 5 y simulador en una sola pantalla (ver `docs/PROGRESS.md`) — ver [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
+## Idiomas
+
+Español e inglés (selector ES · EN; idioma inicial según el navegador). Cómo añadir idiomas: `docs/I18N.md`.
+
 ## Requisitos
 - Node.js ≥ 20 (probado con 22)
 

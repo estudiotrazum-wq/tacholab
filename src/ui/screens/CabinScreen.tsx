@@ -111,7 +111,7 @@ export function CabinScreen() {
         </div>
       )}
       {/* La cabina se ajusta a la altura de la ventana para que quepa sobre la barra de control. */}
-      <div className="mx-auto" style={{ maxWidth: t('min(100%, calc((100vh - 17.5rem) * 16 / 9))') }}>
+      <div className="mx-auto" style={{ maxWidth: 'min(100%, calc((100vh - 17.5rem) * 16 / 9))' }}>
       <div
         className={stageClasses}
         style={{ ['--led' as string]: LED_COLORS[ledColor].hex, ['--road-speed' as string]: roadSpeed, ['--led-intensity' as string]: String(cab.ledBrightness) }}

@@ -33,7 +33,7 @@ export function Speedometer({ highlight, compact = false }: { highlight: AssistT
             <text key={v} x={100 + Math.cos(a) * 58} y={100 + Math.sin(a) * 58 + 4} textAnchor="middle" fontSize="11" fill="#94a3b8">{v}</text>
           );
         })}
-        <g style={{ transform: `rotate(${angle(speed)}deg)`, transformOrigin: t('100px 100px'), transition: 'transform 900ms cubic-bezier(.3,1.4,.5,1)' }}>
+        <g style={{ transform: `rotate(${angle(speed)}deg)`, transformOrigin: '100px 100px', transition: 'transform 900ms cubic-bezier(.3,1.4,.5,1)' }}>
           <line x1="100" y1="100" x2="100" y2="38" stroke="#f8fafc" strokeWidth="3" strokeLinecap="round" />
         </g>
         <circle cx="100" cy="100" r="7" fill="#0b1220" stroke="#f8fafc" strokeWidth="2" />

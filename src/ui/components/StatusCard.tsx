@@ -126,7 +126,7 @@ function Meter({ label, value, max, hint }: { label: string; value: number; max:
         </span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={Math.round(max / 60000)} aria-valuenow={Math.round(value / 60000)}>
-        <div className={`h-full rounded-full ${over ? 'bg-rose-500' : pct > 90 ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-400 to-sky-500'}`} style={{ width: `${pct}%`, transition: t('width 300ms ease') }} />
+        <div className={`h-full rounded-full ${over ? 'bg-rose-500' : pct > 90 ? 'bg-amber-400' : 'bg-gradient-to-r from-cyan-400 to-sky-500'}`} style={{ width: `${pct}%`, transition: 'width 300ms ease' }} />
       </div>
       {hint && <div className="mt-0.5 text-[11px] text-slate-500">{hint}</div>}
     </div>

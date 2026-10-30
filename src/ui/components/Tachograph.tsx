@@ -1,4 +1,4 @@
-import { N_, t } from '@/i18n';
+import { t } from '@/i18n';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ACTIVITY_LABEL } from '@/shared/types';
 import { lcdPlain, renderDisplay } from '@/tachograph/display';
@@ -14,8 +14,8 @@ export const CARD_DRAG_TYPE = 'application/x-tacholab-card';
 /** Temas de la pantalla: LCD clásico (positivo verde), nocturno (negativo) y ámbar. */
 export const LCD_THEMES = {
   classic: { on: 'linear-gradient(180deg, #c9d67a 0%, #b4c262 100%)', off: 'linear-gradient(180deg, #7d8456 0%, #6c7349 100%)', ink: '#1d2610', inkOff: '#2b3318', glow: '' },
-  night: { on: 'linear-gradient(180deg, #0c1a2b 0%, #08121f 100%)', off: 'linear-gradient(180deg, #070b11 0%, #05080c 100%)', ink: '#e6f4ff', inkOff: '#3a4656', glow: N_('0 0 6px rgba(125, 211, 252, 0.55)') },
-  amber: { on: 'linear-gradient(180deg, #1a1206 0%, #120c03 100%)', off: 'linear-gradient(180deg, #0b0804 0%, #070502 100%)', ink: '#ffb547', inkOff: '#4a3818', glow: N_('0 0 7px rgba(255, 170, 51, 0.6)') },
+  night: { on: 'linear-gradient(180deg, #0c1a2b 0%, #08121f 100%)', off: 'linear-gradient(180deg, #070b11 0%, #05080c 100%)', ink: '#e6f4ff', inkOff: '#3a4656', glow: '0 0 6px rgba(125, 211, 252, 0.55)' },
+  amber: { on: 'linear-gradient(180deg, #1a1206 0%, #120c03 100%)', off: 'linear-gradient(180deg, #0b0804 0%, #070502 100%)', ink: '#ffb547', inkOff: '#4a3818', glow: '0 0 7px rgba(255, 170, 51, 0.6)' },
 } as const;
 
 /** Tiempo que hay que mantener pulsada la tecla 1 para expulsar la tarjeta. */
@@ -72,7 +72,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
             <div data-tour="console">
               <div
                 className={`relative overflow-hidden rounded-md border-[3px] border-[#0b0c0e] px-3 py-2 shadow-[inset_0_2px_8px_rgba(0,0,0,0.55)] ${model.mode === 'warning' ? 'lcd-warning' : ''}`}
-                style={{ background: model.backlight ? lcd.on : lcd.off, transition: t('background 400ms') }}
+                style={{ background: model.backlight ? lcd.on : lcd.off, transition: 'background 400ms' }}
                 data-backlight={model.backlight ? 'on' : 'off'}
                 role="status"
                 aria-live="polite"
@@ -81,7 +81,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
               >
                 {/* El texto se escala con el ancho del visor para que siempre quepan las 20 columnas */}
                 <div style={{ containerType: 'inline-size' }}>
-                <div className="lcd-text leading-[1.05]" style={{ color: model.backlight ? lcd.ink : lcd.inkOff, textShadow: lcd.glow && model.backlight ? lcd.glow : undefined, fontFamily: '"VT323", ui-monospace, monospace', fontSize: t('min(2.15rem, calc(100cqw / 10.4))') }}>
+                <div className="lcd-text leading-[1.05]" style={{ color: model.backlight ? lcd.ink : lcd.inkOff, textShadow: lcd.glow && model.backlight ? lcd.glow : undefined, fontFamily: '"VT323", ui-monospace, monospace', fontSize: 'min(2.15rem, calc(100cqw / 10.4))' }}>
                   <LcdLine text={model.lines[0]} testId="display-line-0" />
                   <LcdLine text={model.lines[1]} testId="display-line-1" />
                 </div>
@@ -101,7 +101,7 @@ export function Tachograph({ highlight, compact = false }: { highlight: AssistTa
             <div className="flex flex-col justify-between gap-3">
               <div className="flex items-start justify-between text-[9px] font-semibold tracking-[0.2em] text-slate-500">
                 <span>TL-1 EDU</span>
-                <span className="text-right">SIMULADOR<br />NO HOMOLOGADO</span>
+                <span className="text-right">{t('SIMULADOR')}<br />{t('NO HOMOLOGADO')}</span>
               </div>
               <div className="rounded-md border border-black/60 bg-[#101215] p-2 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
                 <div className="h-1.5 rounded-full bg-black shadow-[inset_0_1px_2px_rgba(0,0,0,0.9)]" aria-hidden="true" />
@@ -271,7 +271,7 @@ function CardSlot({ slot, highlight, onHint }: { slot: 1 | 2; highlight: AssistT
           </span>
         ) : (
           <span className={`absolute bottom-1 left-0 right-0 text-center text-[9px] tracking-[0.2em] ${over ? 'text-cyan-200' : 'text-slate-500'}`}>
-            {over ? 'SUELTA LA TARJETA' : slot === 1 ? 'TARJETA 1' : 'TARJETA 2'}
+            {over ? t('SUELTA LA TARJETA') : slot === 1 ? t('TARJETA 1') : t('TARJETA 2')}
           </span>
         )}
       </button>

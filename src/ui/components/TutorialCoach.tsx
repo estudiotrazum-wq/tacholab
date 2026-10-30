@@ -181,7 +181,7 @@ export function TutorialCoach() {
             left: rect.left - pad,
             width: rect.width + pad * 2,
             height: rect.height + pad * 2,
-            boxShadow: t('0 0 0 9999px rgba(2,6,23,0.35), 0 0 24px 4px rgba(34,211,238,0.45)'),
+            boxShadow: '0 0 0 9999px rgba(2,6,23,0.35), 0 0 24px 4px rgba(34,211,238,0.45)',
           }}
           data-testid="tutorial-spotlight"
         />
